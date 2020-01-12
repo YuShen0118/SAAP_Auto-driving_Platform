@@ -1,0 +1,310 @@
+﻿using System;
+using UnityEngine;
+using UnityStandardAssets.CrossPlatformInput;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+
+namespace UnityStandardAssets.Vehicles.Car
+{
+    [RequireComponent(typeof(CarController))]
+    public class CarRemoteControl : MonoBehaviour
+    {
+
+        public string mode;
+        private CarController m_Car; // the car controller we want to use
+        private List<float> ExtSteeringAngles;
+
+        /// <summary>
+        /// Received values from the remote control module:
+        /// If more values either model predictions or other values needed in the simulator from the remote control module
+        /// In control module python script (e.g., driving.py), editing the following places:
+        ///	def telemetry -> send_control()
+        /// 	def connect -> send_control()
+        /// 	def send_control -> data = {}
+        /// In Unity, editing the following places:
+        ///     CarRemoteControl.cs -> public definitions
+        /// 	CommandServer.cs -> void OnSteer()
+        /// </summary>
+        public float SteeringAngle { get; set; }
+        public float Acceleration { get; set; }
+        public float AddInput { get; set; }
+
+
+        /// <summary>
+        /// else
+        /// </summary>
+        private bool obstacle_flag = false;
+        private bool doOnce_flag = true; 
+        StreamReader reader;
+        private UnityEngine.Object[] obtAll;
+        private int obtIdx;
+        private GameObject obtTmp;
+        private bool repeatFlag;
+        private Vector3 obtPos;
+        private Vector3 obtScl;
+        private Vector3 carPos;
+
+        private List<Vector3> carTrajRecord;
+        private List<int> carTrajIdxRecord;
+        private List<float> thresXRecord;
+        private List<float> thresZRecord;
+        private int carTrajIdx;
+        private string logName;
+
+        private bool fICRA19;
+        private int roadType;
+        private float sampleAngle;
+        private float thresX, thresZ, thresZmin, thresZmax;
+        private float maxSpeed;
+
+
+
+        // for open scenario
+        private GameObject[] agents;
+
+
+        private void Awake()
+        {
+
+            //*****************************************
+            m_Car = GetComponent<CarController>();
+            roadType   = 3; // 1 - straight, 2 - curved, 3 - open
+            repeatFlag = false;
+            fICRA19    = false;
+
+            maxSpeed = 20f;
+
+            if (fICRA19)
+            {
+                //obtAll = Resources.LoadAll("AV_testing3"); //Const_prop_sets / Prefab /
+                logName = "C:/DeepDrive/new.csv";
+                //obtIdx = 0;
+                carTrajIdx = 0;
+                //obtPos = new Vector3(-21f, 0f, 41.42f);
+                //obtScl = new Vector3(2f, 10f, 2f);
+
+                switch(roadType)
+                {
+                    case 1:
+                        carPos = new Vector3(1.875f, 0f, 0f);
+                        thresX = UnityEngine.Random.Range(-1.2f, 0f);   
+                        thresZ = UnityEngine.Random.Range(65f, 75f);
+                        break;
+                    case 2:
+                        carPos = new Vector3(-48.2f, 0f, -100f);
+                        thresZmin = UnityEngine.Random.Range(24f, 26f); 
+                        thresZmax = UnityEngine.Random.Range(39f, 41f);
+                        break;
+                    case 3:
+                        carPos = new Vector3(0f, 0f, -100f);
+                        thresZmin = UnityEngine.Random.Range(-34f, -36f);
+                        thresZmax = UnityEngine.Random.Range(-11f, -9f);
+                        if (agents == null)
+                            agents = GameObject.FindGameObjectsWithTag("obstCar");
+                        break;
+                    default:
+                        break;
+                }
+
+                carTrajRecord = new List<Vector3>();
+                carTrajIdxRecord = new List<int>();
+                thresXRecord = new List<float>();
+                thresZRecord = new List<float>();
+
+                //m_Car.transform.position = carPos;
+                //m_Car.transform.position = new Vector3(1.875f, 0f, -50f);
+
+                //obtTmp = (GameObject)Instantiate(obtAll[obtIdx]) as GameObject;
+                //obtTmp.AddComponent<Rigidbody>();
+                //obtTmp.transform.position = obtPos;
+                //obtTmp.transform.localScale = obtScl;
+
+
+            }
+            //**********************************//
+
+            Debug.Log("4321");
+        }
+
+
+        private void FixedUpdate()
+        {
+            //Time.timeScale = 1;
+
+            if (mode == "manual") // Manual driving
+            {
+                float h = CrossPlatformInputManager.GetAxis("Horizontal");
+                float v = CrossPlatformInputManager.GetAxis("Vertical");
+                float handbrake = CrossPlatformInputManager.GetAxis("Jump");
+                m_Car.Move(h, v, v, handbrake);
+            }
+            else // Autonomous driving
+            {
+                
+
+                if (fICRA19)
+                {
+                    Vector3 pos = m_Car.transform.position;
+                    switch (roadType)
+                    {
+                        case 1:
+                            if (pos.x >= thresX && pos.z >= thresZ)
+                            {
+                                sampleAngle = UnityEngine.Random.Range(-0.1f, 0.01f);
+                                m_Car.Move(sampleAngle, Acceleration, Acceleration, 0f);
+                            }
+                            else
+                                m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f); 
+                            break;
+                        case 2:
+                            //Debug.Log(thresZmin.ToString() + " " + thresZmax.ToString());
+                            if (pos.z >= thresZmin && pos.z <= thresZmax && pos.x < 0)
+                            {
+                                sampleAngle = UnityEngine.Random.Range(-0.005f, 0f);
+                                m_Car.Move(sampleAngle, Acceleration, Acceleration, 0f);
+                            }
+                            else
+                                m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+                            break;
+                        case 3:
+                            //Debug.Log(thresZmin.ToString() + " " + thresZmax.ToString());
+                            if (pos.z >= thresZmin && pos.z <= thresZmax)
+                            {
+                                sampleAngle = UnityEngine.Random.Range(0.01f, 0.1f);
+                                m_Car.Move(sampleAngle, Acceleration, Acceleration, 0f);
+                            }
+                            else
+                                m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+                            break;
+                            //for (int i = 0; i < agents.Length; i++)
+                            //{
+                            //    agents[i].transform.Translate(Vector3.forward * maxSpeed * Time.deltaTime);
+                            //}                              
+                        default:
+                            m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+                            break;
+                    }
+                }
+                else
+                {
+                    //if(m_Car.transform.position.z > -99)
+                    //{
+                    //    thresXRecord.Add(m_Car.transform.position.x);
+                    //    thresZRecord.Add(m_Car.transform.position.z);
+                    //}
+
+                    m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+
+                    if (Input.GetKeyDown("space"))
+                    {
+                        StreamWriter writer = new StreamWriter(logName, true);
+                        for (int i = 0; i < carTrajRecord.Count; i++)
+                        {
+                            writer.WriteLine(carTrajRecord[i].x + "," + carTrajRecord[i].z);
+                        }
+                        writer.Close();
+                        UnityEditor.EditorApplication.isPlaying = false;
+                    }
+                }
+
+
+
+                if (repeatFlag)
+                {
+                    if (carTrajIdx > 0)
+                    {
+                        carTrajRecord.Add(m_Car.transform.position);
+                        carTrajIdxRecord.Add(carTrajIdx);
+                        thresXRecord.Add(thresX);
+                        thresZRecord.Add(thresZ);
+                    }
+
+                    switch (roadType)
+                    {
+                        case 1:
+                            if (m_Car.transform.position.z > 140)
+                            {
+                                m_Car.transform.position = carPos;
+                                m_Car.transform.rotation = Quaternion.identity;
+
+                                thresX = UnityEngine.Random.Range(-1.2f, 0f);   
+                                thresZ = UnityEngine.Random.Range(68f, 72f);
+
+                                carTrajIdx++;
+                                Debug.Log(carTrajIdx);
+                            }
+                            break;
+                        case 2:
+                            if (m_Car.transform.position.x > 0)
+                            {
+                                m_Car.transform.position = carPos;
+                                m_Car.transform.rotation = Quaternion.identity;
+
+                                thresZmin = UnityEngine.Random.Range(24f, 26f);
+                                thresZmax = UnityEngine.Random.Range(39f, 41f);
+
+                                carTrajIdx++;
+                            }
+                            break;
+                        case 3:
+                            if (m_Car.transform.position.z > 50)
+                            {
+                                m_Car.transform.position = carPos;
+                                m_Car.transform.rotation = Quaternion.identity;
+                                carTrajIdx++;
+                            }
+                            break;
+                        default:
+                            m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+                            break;
+                    }
+
+                    //obtTmp = (GameObject)Instantiate(obtAll[11]) as GameObject;
+                    //obtTmp.transform.position = obtPos;
+                    //obtTmp.transform.localScale = obtScl;
+                    //Destroy(collider);
+                    //Destroy(obtTmp.GetComponent<MeshCollider>());
+                    Debug.Log(carTrajIdx);
+                    if (carTrajIdx == 50 || Input.GetKeyDown("space"))
+                    {
+                        ExportLog();
+                        UnityEditor.EditorApplication.isPlaying = false;
+                    }
+
+                }
+            }
+        }
+
+
+        private void ExportLog()
+        {
+            StreamWriter writer = new StreamWriter(logName, true);
+            for (int i=0; i<carTrajIdxRecord.Count; i++)
+            {
+                writer.WriteLine(carTrajIdxRecord[i] + "," + carTrajRecord[i].x + "," + carTrajRecord[i].z + "," + thresXRecord[i] + "," + thresZRecord[i]);
+            }
+            writer.Close();
+
+        }
+
+        private void LoadSteeringAngle(ref List<float> SteeringAngles)
+        {
+            SteeringAngles.Clear();
+
+            string fileName = "C:/DeepDrive/training/2018_01/new/steering_label";
+
+
+            reader = new StreamReader(fileName);
+            string line = reader.ReadLine();
+            while (line != null)
+            {
+                SteeringAngles.Add(float.Parse(line));
+                line = reader.ReadLine();
+            }
+            reader.Close();
+        }
+
+    }
+
+}
