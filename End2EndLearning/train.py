@@ -24,7 +24,7 @@ if __name__ == "__main__":
 	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
 	
 	## train
-	trainPath = 'D:/data/Kitti/object/training_simu_20200109/'
+	trainPath = 'D:/projects/gitProjects/SAAP_Auto-driving_Platform/Data/training_simu_1/'
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
 	train_dnn(trainPath, netType, flags, specs)
 	

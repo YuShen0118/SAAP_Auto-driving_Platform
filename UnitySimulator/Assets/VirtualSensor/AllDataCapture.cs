@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class AllDataCapture : MonoBehaviour
 {
-    public string outputPath = "D:\\data\\Kitti\\object\\training_simu_20200109\\";
+    public string outputPath = "D:/projects/gitProjects/SAAP_Auto-driving_Platform/Data/training_simu_1/";
 
     public Camera mainCam; //待截图的目标摄像机
 
@@ -15,7 +15,7 @@ public class AllDataCapture : MonoBehaviour
     public bool captureDepthMap = true;
     public bool capturePointCloud = true;
     public bool copyCameraCalibration = true;
-    public bool saveEnd2EndLabels = true;
+    public bool saveEnd2EndLabel = true;
 
     public bool speedupCapture = true;
 
@@ -67,7 +67,7 @@ public class AllDataCapture : MonoBehaviour
         if (saveEnd2EndLabels)
         {
             //clear history
-            File.WriteAllText(outputPath + "end2endLabels.csv", "");
+            File.WriteAllText(outputPath + "/end2endLabels.csv", "");
         }
     }
 

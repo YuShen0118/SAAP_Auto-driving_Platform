@@ -56,8 +56,8 @@ nFramesLSTM = 5
 curSampleLSTM = np.empty((nFramesLSTM, 66, 200, 3))
 
 # !!!! hard coded path
-netPath =  'D:/data/Kitti/object/training_simu_20200109/trainedModels/models-cnn/'
-netModel = netPath + 'model130.h5' 
+netPath =  'D:/projects/gitProjects/SAAP_Auto-driving_Platform/Data/training_simu_1/trainedModels/models-cnn/'
+netModel = netPath + 'model856.h5' 
 
 ###################################
 
