@@ -64,7 +64,7 @@ public class AllDataCapture : MonoBehaviour
 
         pointCloud = new float[rt.height * rt.width * 4];
 
-        if (saveEnd2EndLabels)
+        if (saveEnd2EndLabel)
         {
             //clear history
             File.WriteAllText(outputPath + "/end2endLabels.csv", "");
@@ -283,7 +283,7 @@ public class AllDataCapture : MonoBehaviour
                 System.IO.File.Copy(sourceFile, destFile, true);
             }
 
-            if (saveEnd2EndLabels)
+            if (saveEnd2EndLabel)
             {
                 string fileName = outputPath + "end2endLabels.csv";
                 UnityStandardAssets.Vehicles.Car.CarController carController =
