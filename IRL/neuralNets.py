@@ -20,20 +20,20 @@ class LossHistory(Callback):
 
 
 def net1(numInputs, numOutputs, params, weights=''):
-	netInputs = Input(shape=(numInputs,))
-	x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(netInputs)
-	x = Dropout(0.2)(x)
-	x = Dense(params[1], kernel_initializer='lecun_uniform', activation='relu')(x)
-	x = Dropout(0.2)(x)
-	netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='linear')(x)
+    netInputs = Input(shape=(numInputs,))
+    x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(netInputs)
+    x = Dropout(0.2)(x)
+    x = Dense(params[1], kernel_initializer='lecun_uniform', activation='relu')(x)
+    x = Dropout(0.2)(x)
+    netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='linear')(x)
 
-	model = Model(inputs = netInputs, outputs = netOutputs)
-	model.compile(optimizer='rmsprop', loss='mse')
+    model = Model(inputs = netInputs, outputs = netOutputs)
+    model.compile(optimizer='rmsprop', loss='mse')
 
-	if weights:
-		model.load_weights(weights)
+    if weights:
+        model.load_weights(weights)
 
-	return model
+    return model
 
 
 def net1_old(numFeatures, numNodes, weights=''):
