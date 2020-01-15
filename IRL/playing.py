@@ -14,7 +14,7 @@ NUM_ACTIONS = 3 # number of actions
 GAMMA = 0.9
 
 
-def play(model, weights, play_frames):
+def play(model, weights, play_frames=10000):
 
     # init
     car_move = 0
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     FRAME = sys.argv[3]
     
     modelType = BEHAVIOR
-    model_dir = 'results_models-'+ modelType +'/'
-    saved_model = model_dir+'-164-150-100-50000-'+str(FRAME)+str(ITERATION)+'.h5'
+    model_dir = 'results/models-'+ modelType +'/'
+    saved_model = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
     weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
-    model = neural_net(NUM_INPUT, NUM_OUTPUT, [164, 150], saved_model)
+    model = net1(8, 3, [164, 150], saved_model)
     print (play(model, weights))

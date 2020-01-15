@@ -132,6 +132,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public float CurrentSpeed{ get { return m_Rigidbody.velocity.magnitude * 2.23693629f; } }
 
         public float MaxSpeed{ get { return m_Topspeed; } }
+        public float MaxSteerAngleInDegree { get { return m_MaximumSteerAngle; } }
 
         public float Revs { get; private set; }
 

@@ -172,7 +172,7 @@ class GameState:
         self.space.step(self.simstep)
         if draw_screen:
             pygame.display.flip()
-        clock.tick(50)
+        clock.tick()
 
         # Get the current location and the readings there.
         x, y = self.car_body.position
@@ -228,7 +228,7 @@ class GameState:
                 self.space.step(self.simstep)
                 if draw_screen:
                     pygame.display.flip()
-                clock.tick(50)
+                clock.tick()
 
     # def sum_readings(self, readings):
     #     """Sum the number of non-zero readings."""

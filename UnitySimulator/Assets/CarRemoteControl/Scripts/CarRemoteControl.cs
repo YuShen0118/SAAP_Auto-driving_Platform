@@ -192,7 +192,7 @@ namespace UnityStandardAssets.Vehicles.Car
             while (delta_direction > Math.PI) delta_direction -= Math.PI * 2;
             while (delta_direction < -Math.PI) delta_direction += Math.PI * 2;
 
-            SteeringAngle = (float)(delta_direction);
+            SteeringAngle = (float)(delta_direction / Math.PI * 180.0 / m_Car.MaxSteerAngleInDegree);
 
             float current_speed = m_Car.CurrentSpeed;
             var desired_velocity = Simulator.Instance.getAgentVelocity(0);
