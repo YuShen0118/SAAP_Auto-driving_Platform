@@ -63,13 +63,13 @@ class IRLAgent:
         return weights # return the normalized weights
 
 
-    def UpdatePolicyFEList(self, weights, opt_count):  
+    def UpdatePolicyFEList(self, weights, opt_count, scene_file_name):  
         # store feature expecations of a newly learned policy and its difference to the expert policy	
         print("Updating Policy FE list starts......")
         
         
         start_time = timeit.default_timer()
-        model_name = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count)	
+        model_name = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name)	
         iter_time = timeit.default_timer() - start_time
         print("Consumed time: ", iter_time)
         exit()
@@ -90,7 +90,7 @@ class IRLAgent:
         return temp_hyper_dis 
         
         
-    def IRL(self):
+    def IRL(self, scene_file_name):
         # create a folder for storing results
         if not os.path.exists(self.results_folder):
             os.makedirs(self.results_folder)
@@ -109,7 +109,7 @@ class IRLAgent:
             
             # Main Step 2: update the policy feature expectations list
             # and compute the distance between the lastest policy and expert feature expecations
-            self.current_dis = self.UpdatePolicyFEList(weights_new, opt_count)
+            self.current_dis = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name)
             
             # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
             print("The stopping distance thresould is: ", epsilon)
@@ -147,14 +147,16 @@ if __name__ == '__main__':
     }
     epsilon = 0.1 # termination when t<0.1
     num_features = 8
-    num_actions = 3
+    num_actions = 25
     train_frames = 2000   # number of RL training frames per iteration of IRL
     play_frames = 2000 # the number of frames we play for getting the feature expectations of a policy online
-    behavior_type = 'red' # yellow/brown/red/bumping
+    behavior_type = 'city' # yellow/brown/red/bumping
     results_folder = 'results/'
+
+    scene_file_name = 'scenes/scene-city.txt'
 
     irl_learner = IRLAgent(params, random_fe, expert_red_fe, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
-    irl_learner.IRL()
+    irl_learner.IRL(scene_file_name)
 

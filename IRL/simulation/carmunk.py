@@ -26,9 +26,13 @@ flag = True
 show_sensors = flag
 draw_screen = flag
 
+multi = 5 # enlarge the size of simulation scenario
+multiVec = pymunk.Vec2d(multi, multi)
+offset = 70
+
 
 class GameState:
-    def __init__(self, weights=''):
+    def __init__(self, weights='', scene_file_name=''):
         # Global-ish.
         self.crashed = False
 
@@ -42,10 +46,15 @@ class GameState:
         self.draw_options = pymunk.pygame_util.DrawOptions(screen)
         self.space = pymunk.Space()
         self.space.gravity = pymunk.Vec2d(0., 0.)
-        self.simstep = 0.0625 # 16 FPS 
+
+        c_handler = self.space.add_collision_handler(1, 2)
+        c_handler.begin = self.collision_callback
+        
+        self.simstep = 0.02 # 50 FPS 
+        #self.simstep = 0.0625 # 16 FPS 
 
         # Create the car.
-        self.create_car(150, 20, 15)
+        self.create_car((80+offset)*multi, (0+offset)*multi, 15)
 
         # Record steps.
         self.num_steps = 0
@@ -81,30 +90,71 @@ class GameState:
         #self.obstacles.append(self.create_obstacle(780, 330, 70, "brown"))
         #self.obstacles.append(self.create_obstacle(530, 500, 70, "brown"))
 
-        self.obstacles.append(self.create_obstacle([100, 100], [100, 585] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([450, 600], [100, 600] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([900, 100], [900, 585] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([900, 600], [550, 600] , 7, "yellow"))
+        minx = 99999999999
+        maxx = 0
+        miny = 99999999999
+        maxy = 0
+        if scene_file_name!='':
+            #load scene
+            with open(scene_file_name) as f:
+                obj_num = int(f.readline())
+                for i in range(obj_num):
+                    poly = []
+                    pt_num = int(f.readline())
+                    for j in range(pt_num):
+                        line = f.readline()
+                        pt = []
+                        for s in line.split(' '):
+                            pt.append(multi*(float(s)+offset))
+                            #pt.append((float(s)+0))
+                        poly.append((pt[0],pt[1]))
+                        if minx > pt[0]:
+                            minx = pt[0]
+                        if maxx < pt[0]:
+                            maxx = pt[0]
+                        if miny > pt[1]:
+                            miny = pt[1]
+                        if maxy < pt[1]:
+                            maxy = pt[1]
 
-        self.obstacles.append(self.create_obstacle([200, 100], [200, 480] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([450, 500], [200, 500] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([800, 100], [800, 480] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([800, 500], [550, 500] , 7, "yellow"))
+                        #poly.append(pt)
+                    self.obstacles.append(self.create_obstacle_poly(poly, "red"))
+            self.obstacles.append(self.create_obstacle([minx, miny], [minx, maxy], 1, "red"))
+            self.obstacles.append(self.create_obstacle([minx, maxy], [maxx, maxy], 1, "red"))
+            self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], 1, "red"))
+            self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], 1, "red"))
+        else:
+            #default scene
+            self.obstacles.append(self.create_obstacle([100, 100], [100, 585] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([450, 600], [100, 600] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([900, 100], [900, 585] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([900, 600], [550, 600] , 7, "yellow"))
 
-        self.obstacles.append(self.create_obstacle([300, 100], [300, 350] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([700, 380], [300, 380] , 7, "yellow"))
-        self.obstacles.append(self.create_obstacle([700, 100], [700, 350] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([200, 100], [200, 480] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([450, 500], [200, 500] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([800, 100], [800, 480] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([800, 500], [550, 500] , 7, "yellow"))
 
-        self.obstacles.append(self.create_obstacle([400, 100], [600, 100] , 7, "brown"))
-        self.obstacles.append(self.create_obstacle([400, 200], [600, 200] , 7, "brown"))
-        self.obstacles.append(self.create_obstacle([400, 300], [600, 300] , 7, "brown"))
+            self.obstacles.append(self.create_obstacle([300, 100], [300, 350] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([700, 380], [300, 380] , 7, "yellow"))
+            self.obstacles.append(self.create_obstacle([700, 100], [700, 350] , 7, "yellow"))
 
-        self.obstacles.append(self.create_obstacle([700, 370], [300, 370] , 7, "brown"))
-        self.obstacles.append(self.create_obstacle([310, 100], [310, 350] , 7, "brown"))
-        self.obstacles.append(self.create_obstacle([690, 100], [690, 350] , 7, "brown"))
+            self.obstacles.append(self.create_obstacle([400, 100], [600, 100] , 7, "brown"))
+            self.obstacles.append(self.create_obstacle([400, 200], [600, 200] , 7, "brown"))
+            self.obstacles.append(self.create_obstacle([400, 300], [600, 300] , 7, "brown"))
+
+            self.obstacles.append(self.create_obstacle([700, 370], [300, 370] , 7, "brown"))
+            self.obstacles.append(self.create_obstacle([310, 100], [310, 350] , 7, "brown"))
+            self.obstacles.append(self.create_obstacle([690, 100], [690, 350] , 7, "brown"))
 
         # Create a cat.
         #self.create_cat()
+        
+    def collision_callback(self, arbiter, space, data):
+        if arbiter.is_first_contact:
+            print('collision!!!')
+            self.crashed = True
+            return True
 
     def create_obstacle(self, xy1, xy2, r, color):
         c_body = pymunk.Body(pymunk.inf, pymunk.inf, pymunk.Body.KINEMATIC)
@@ -112,6 +162,16 @@ class GameState:
         c_shape = pymunk.Segment(c_body, xy1, xy2, r)
         #c_shape.elasticity = 1.0
         #c_body.position = x, y
+        c_shape.friction = 1.
+        c_shape.group = 1
+        c_shape.collision_type = 1
+        c_shape.color = THECOLORS[color]
+        self.space.add(c_body, c_shape)
+        return c_body
+    
+    def create_obstacle_poly(self, poly, color):
+        c_body = pymunk.Body(pymunk.inf, pymunk.inf, pymunk.Body.KINEMATIC)
+        c_shape = pymunk.Poly(c_body, poly)
         c_shape.friction = 1.
         c_shape.group = 1
         c_shape.collision_type = 1
@@ -131,33 +191,55 @@ class GameState:
         self.space.add(self.cat_body, self.cat_shape)
 
     def create_car(self, x, y, r):
-        inertia = pymunk.moment_for_circle(1, 0, 14, (0, 0))
-        self.car_body = pymunk.Body(1, inertia)
+        
+        carMass = 1
+        carSize = multiVec * (4.5, 2.5)
+        self.car_body = pymunk.Body(carMass, pymunk.moment_for_box(carMass, carSize))
+        self.car_shape = pymunk.Poly.create_box(self.car_body, carSize)
+        self.car_shape.collision_type = 2
+        
+        #inertia = pymunk.moment_for_circle(1, 0, 14, (0, 0))
+        #self.car_body = pymunk.Body(1, inertia)
+        #self.car_shape = pymunk.Circle(self.car_body, r)
+
         self.car_body.position = x, y
-        self.car_shape = pymunk.Circle(self.car_body, r)
+        self.car_body.init_position = self.car_body.position
         self.car_shape.color = THECOLORS["green"]
         self.car_shape.elasticity = 1.0
-        self.car_body.angle = 1.4
+        self.car_body.angle = math.pi / 2
+        self.car_body.init_angle = self.car_body.angle
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         self.car_body.apply_impulse_at_local_point(driving_direction)
         self.space.add(self.car_body, self.car_shape)
+        self.car_reverse_driving = False
+        
 
     def frame_step(self, action):
-        if action == 0:  # Turn left.
-            self.car_body.angle -= .3
-        elif action == 1:  # Turn right.
-            self.car_body.angle += .3
+        self.crashed = False
+        steer_action = int(action / 5)
+        acc_action = action % 5
 
-        # Move obstacles.
-        #if self.num_steps % 100 == 0:
-            #self.move_obstacles()
 
-        # Move cat.
-        #if self.num_steps % 5 == 0:
-            #self.move_cat()
+        self.car_body.angle += (steer_action - 2) * (25 / 180 * math.pi) * self.simstep
+        print(self.car_body.angle)
+        self.car_body.angular_velocity = 0
 
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
-        self.car_body.velocity = 100 * driving_direction
+        v = self.car_body.velocity.length
+        if (self.car_reverse_driving):
+           v = -v
+        v += (acc_action - 1) * 200 * self.simstep # acc 30 m/s^2 at most
+        if (v > 0):
+            self.car_reverse_driving = False
+        else:
+            #self.car_reverse_driving = True
+            v = 0
+
+        if (v > 100):
+            v = 100
+        elif (v < 0):
+            v = 0
+        self.car_body.velocity = v * driving_direction
         
         # quit the game
         for event in pygame.event.get():
@@ -208,15 +290,24 @@ class GameState:
         self.cat_body.velocity = speed * direction
 
     def car_is_crashed(self, readings):
+        return self.crashed
+        '''
         if readings[0] >= 0.96 or readings[1] >= 0.96 or readings[2] >= 0.96:
             return True
         else:
             return False
+        '''
 
     def recover_from_crash(self, driving_direction):
         """
         We hit something, so recover.
         """
+
+        self.car_body.position = self.car_body.init_position
+        self.car_body.angle = self.car_body.init_angle
+        self.car_body.velocity = (0, 0)
+
+        '''
         while self.crashed:
             # Go backwards.
             self.car_body.velocity = -100 * driving_direction
@@ -229,6 +320,7 @@ class GameState:
                 if draw_screen:
                     pygame.display.flip()
                 clock.tick()
+        '''
 
     # def sum_readings(self, readings):
     #     """Sum the number of non-zero readings."""

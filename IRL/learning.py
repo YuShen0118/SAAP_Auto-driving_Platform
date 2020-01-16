@@ -30,7 +30,7 @@ def IRLHelper(weights, behavior_type, train_frames, opt_count):
 '''            
 
             
-def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count):
+def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -58,7 +58,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     model = net1(num_features, num_actions, params['nn'])
      
     # create a new game instance and get the initial state by moving forward
-    game_state = carmunk.GameState(weights)
+    game_state = carmunk.GameState(weights, scene_file_name)
     _, state, _ = game_state.frame_step((2))
 
     # let's time it
@@ -80,7 +80,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         # choose an action.
         # before we reach the number of observing frame (for training) we just sample random actions
         if random.random() < epsilon or frame_idx < observe_frames:
-            action = np.random.randint(0, 3)  # produce action 0, 1, or 2
+            action = np.random.randint(0, 25)  # produce action 0, 1, or 2
         else:
             # get Q values for each action. Q values are scores associated with each action (there are in total 3 actions)
             qval = model.predict(state, batch_size=1)
@@ -178,7 +178,8 @@ def process_minibatch(minibatch, model):
         
         # get our best move
         maxQ = np.max(nextQ)
-        y = np.zeros((1, 3)) 
+        num_action = 25
+        y = np.zeros((1, num_action)) 
         y[:] = currentQ[:]
         
         # check for terminal state
@@ -190,7 +191,7 @@ def process_minibatch(minibatch, model):
         # update the Q value for the action we take on the current state (i.e., state_m)
         y[0][action_m] = update
         X_train.append(state_m.reshape(NUM_FEATURES,))
-        y_train.append(y.reshape(3,)) 
+        y_train.append(y.reshape(num_action,)) 
 
     X_train = np.array(X_train)
     y_train = np.array(y_train)
