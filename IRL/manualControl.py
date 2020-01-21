@@ -20,7 +20,7 @@ import msvcrt
 #import curses # for keypress, doesn't work for Windows
 
 
-NUM_FEATURES = 8
+NUM_FEATURES = 46
 GAMMA = 0.9 # the discount factor for RL algorithm
 
 def demo(screen):
@@ -39,7 +39,7 @@ def play():
     The goal is to get feature expectations of a policy. Note that feature expectations are independent from weights.
     '''
     
-    game_state = carmunk.GameState()   # set up the simulation environment
+    game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt')   # set up the simulation environment
     game_state.frame_step((2)) # make a forward move in the simulation
     currFeatureExp = np.zeros(NUM_FEATURES)
     prevFeatureExp = np.zeros(NUM_FEATURES)
@@ -51,13 +51,18 @@ def play():
         # get the actual move from keyboard
         move = msvcrt.getch()
         if move == b'H':   # UP key -- move forward
-            action = 2
+            #action = 2
+            action = 14
         elif move == b'K': # LEFT key -- turn left
-            action = 1
+            #action = 1
+            action = 20
         elif move == b'M': # RIGHT key -- turn right
+            #action = 0
             action = 0
         else:
-            action = 2
+            #action = 2
+            action = random.randrange(25)
+            #print(action)
 
         '''
         # curses
@@ -103,4 +108,7 @@ if __name__ == "__main__":
     '''
 
     featureExp = play()
-    print (featureExp)
+    print('[', end='')
+    for feature in featureExp:
+        print("%.5f" % round(feature,5), end=', ')
+    print (']')

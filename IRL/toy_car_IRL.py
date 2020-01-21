@@ -136,7 +136,10 @@ if __name__ == '__main__':
     expert_red_fe = [7.9100e+00, 5.3745e-01, 5.2363e+00, 2.8652e+00, 3.3120e+00, 3.6478e-06, 3.82276074e+00, 1.0219e-17] 
     expert_brown_fe = [5.2210e+00,  5.6980e+00,  7.7984e+00, 4.8440e-01, 2.0885e-04, 9.2215e+00, 2.9386e-01, 4.8498e-17]
     expert_bumping_fe = [7.5313e+00, 8.2716e+00, 8.0021e+00, 2.5849e-03, 2.4300e+01, 9.5962e+01, 1.5814e+01, 1.5538e+03]
-    expert_me1 = [7.61899296e+00, 5.57997070e+00, 4.05467547e+00, 7.06288984e-01, 8.47292102e-01, 2.08010868e-12, 8.44641891e+00, 0.00000000e+00]
+    expert_me1_fe = [7.61899296e+00, 5.57997070e+00, 4.05467547e+00, 7.06288984e-01, 8.47292102e-01, 2.08010868e-12, 8.44641891e+00, 0.00000000e+00]
+    
+    random_fe = [45.16965, 51.62903, 55.84101, 64.65182, 74.78856, 90.46633, 113.45914, 137.13300, 152.57598, 162.98980, 180.00261, 198.95925, 228.79739, 267.95084, 327.91051, 428.06988, 451.92122, 263.78044, 152.64403, 130.79640, 116.01192, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 4.97997, 4.95111, 4.80826, 5.00000, 5.00000, 5.00000, 42.62056, 0.05593, 15.63755, 0.01078]
+    expert_city_fe = [52.72018, 57.54477, 62.24114, 69.71412, 76.95464, 90.42736, 106.56914, 129.54432, 157.43855, 206.61816, 239.03757, 256.96736, 284.76613, 323.39457, 378.64623, 410.54772, 433.42094, 194.71432, 130.74410, 113.02894, 99.19676, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 4.99958, 4.99978, 4.99962, 4.99965, 4.99957, 4.98407, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 39.04116, 0.00493, 16.95020, 0.00000]
 
     # training parameters
     nn_param = [164, 150]
@@ -146,16 +149,16 @@ if __name__ == '__main__':
         "nn": nn_param
     }
     epsilon = 0.1 # termination when t<0.1
-    num_features = 8
+    num_features = 46
     num_actions = 25
-    train_frames = 2000   # number of RL training frames per iteration of IRL
+    train_frames = 20000   # number of RL training frames per iteration of IRL
     play_frames = 2000 # the number of frames we play for getting the feature expectations of a policy online
     behavior_type = 'city' # yellow/brown/red/bumping
     results_folder = 'results/'
 
     scene_file_name = 'scenes/scene-city.txt'
 
-    irl_learner = IRLAgent(params, random_fe, expert_red_fe, epsilon, \
+    irl_learner = IRLAgent(params, random_fe, expert_city_fe, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
     irl_learner.IRL(scene_file_name)

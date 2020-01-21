@@ -2,6 +2,8 @@ import sys
 import random
 import math
 import numpy as np
+from ctypes import *
+import ctypes
 
 import pygame
 from pygame.color import THECOLORS
@@ -31,16 +33,26 @@ multiVec = pymunk.Vec2d(multi, multi)
 offset = 70
 
 
+class Vector2(Structure):
+    _fields_ = [("x", c_float),
+                ("y", c_float)]
+
+
 class GameState:
-    def __init__(self, weights='', scene_file_name=''):
+    def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=False):
+        if use_expert:
+            # for windows
+            self.expert_lib = ctypes.WinDLL ("self.expert_lib.dll")
+
         # Global-ish.
         self.crashed = False
 
         # set weights for calculating the reward function
-        if len(weights) == 8:
+        if len(weights) == state_num:
             self.W = weights 
         else:
-            self.W = [1, 1, 1, 1, 1, 1, 1, 1] # randomly assign weights if not provided
+            #self.W = [1, 1, 1, 1, 1, 1, 1, 1] # randomly assign weights if not provided
+            self.W = np.ones(state_num)
 
         # Physics stuff.
         self.draw_options = pymunk.pygame_util.DrawOptions(screen)
@@ -85,11 +97,13 @@ class GameState:
         # Create some obstacles, semi-randomly.
         # We'll create three and they'll move around to prevent over-fitting.
         self.obstacles = []
+        self.obstacles_poly = []
         #self.obstacles.append(self.create_obstacle(380, 220, 70, "yellow"))
         #self.obstacles.append(self.create_obstacle(250, 500, 70, "yellow"))
         #self.obstacles.append(self.create_obstacle(780, 330, 70, "brown"))
         #self.obstacles.append(self.create_obstacle(530, 500, 70, "brown"))
 
+        obstacle_color = "brown"
         minx = 99999999999
         maxx = 0
         miny = 99999999999
@@ -107,7 +121,8 @@ class GameState:
                         for s in line.split(' '):
                             pt.append(multi*(float(s)+offset))
                             #pt.append((float(s)+0))
-                        poly.append((pt[0],pt[1]))
+                        #poly.append((pt[0],pt[1]))
+                        poly.append(pt)
                         if minx > pt[0]:
                             minx = pt[0]
                         if maxx < pt[0]:
@@ -118,11 +133,35 @@ class GameState:
                             maxy = pt[1]
 
                         #poly.append(pt)
-                    self.obstacles.append(self.create_obstacle_poly(poly, "red"))
-            self.obstacles.append(self.create_obstacle([minx, miny], [minx, maxy], 1, "red"))
-            self.obstacles.append(self.create_obstacle([minx, maxy], [maxx, maxy], 1, "red"))
-            self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], 1, "red"))
-            self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], 1, "red"))
+                    self.obstacles.append(self.create_obstacle_poly(poly, obstacle_color))
+                    self.obstacles_poly.append(poly)
+
+            segment_radius = 5
+            poly_tmp = self.create_poly_from_vertical_segment([minx, miny], [minx, maxy], segment_radius)
+            self.obstacles.append(self.create_obstacle_poly(poly_tmp, obstacle_color))
+            
+            poly_tmp = self.create_poly_from_vertical_segment([maxx, miny], [maxx, maxy], segment_radius)
+            self.obstacles.append(self.create_obstacle_poly(poly_tmp, obstacle_color))
+            
+            poly_tmp = self.create_poly_from_horizontal_segment([minx, miny], [maxx, miny], segment_radius)
+            self.obstacles.append(self.create_obstacle_poly(poly_tmp, obstacle_color))
+            
+            poly_tmp = self.create_poly_from_horizontal_segment([minx, maxy], [maxx, maxy], segment_radius)
+            self.obstacles.append(self.create_obstacle_poly(poly_tmp, obstacle_color))
+            
+            
+            #self.obstacles.append(self.create_obstacle([minx, miny], [minx, maxy], segment_radius, "brown"))
+            #self.obstacles.append(self.create_obstacle([minx, maxy], [maxx, maxy], segment_radius, "brown"))
+            #self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], segment_radius, "brown"))
+            #self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], segment_radius, "brown"))
+
+            self.goals = [[50,44],[-47,46],[-52,-45],[-10,-66],[-3,42]]
+            for goal in self.goals:
+                goal[0] = (goal[0] + offset) * multi 
+                goal[1] = (goal[1] + offset) * multi 
+            self.current_goal_id = 0
+            
+            self.pre_goal_dist = (self.goals[0] - self.car_body.position).length
         else:
             #default scene
             self.obstacles.append(self.create_obstacle([100, 100], [100, 585] , 7, "yellow"))
@@ -179,6 +218,24 @@ class GameState:
         self.space.add(c_body, c_shape)
         return c_body
 
+    def create_poly_from_vertical_segment(self, xy1, xy2, r):
+        # counterclockwise
+        poly = []
+        poly.append([xy1[0]-r, xy1[1]-r])
+        poly.append([xy1[0]+r, xy1[1]-r])
+        poly.append([xy2[0]+r, xy2[1]+r])
+        poly.append([xy2[0]-r, xy2[1]+r])
+        return poly
+        
+    def create_poly_from_horizontal_segment(self, xy1, xy2, r):
+        # counterclockwise
+        poly = []
+        poly.append([xy1[0]-r, xy1[1]-r])
+        poly.append([xy2[0]+r, xy2[1]-r])
+        poly.append([xy2[0]+r, xy2[1]+r])
+        poly.append([xy1[0]-r, xy1[1]+r])
+        return poly
+
     def create_cat(self):
         inertia = pymunk.moment_for_circle(1, 0, 14, (0, 0))
         self.cat_body = pymunk.Body(1, inertia)
@@ -213,22 +270,98 @@ class GameState:
         self.space.add(self.car_body, self.car_shape)
         self.car_reverse_driving = False
         
+        
+    def setup_scenario(self, RVO_handler):
+        self.expert_lib.RVO_setTimeStep(RVO_handler, c_float(0.02))
+    
+        velo = self.car_body.velocity
+        velocity = Vector2(velo[0], velo[1])
+        # Specify the default parameters for agents that are subsequently added.
+        self.expert_lib.RVO_setAgentDefaults(RVO_handler, c_float(15.0**multi), 10, c_float(1.0), c_float(0.1), c_float(1.5*multi), c_float(20.0*multi), velocity)
+        pos = self.car_body.position
+        position = Vector2(pos[0], pos[1])
+        self.expert_lib.RVO_addAgent(RVO_handler, position)
+            
+    def set_preferred_velocities(self, RVO_handler):
+        # Set the preferred velocity to be a vector of unit magnitude (speed) in the
+        # direction of the goal.
+
+        current_goal = self.goals[self.current_goal_id]
+        agent_id = 0
+        position = Vector2(0, 0)
+        self.expert_lib.RVO_getAgentPosition(RVO_handler, agent_id, byref(position))
+        goalVector = Vector2(current_goal.x - position.x, current_goal.y - position.y)
+
+        norm = math.sqrt(goalVector.x*goalVector.x + goalVector.y*goalVector.y)
+        if (norm > 1.0):
+            goalVector.x = goalVector.x / norm
+            goalVector.y = goalVector.y / norm
+
+        self.expert_lib.RVO_setAgentPrefVelocity(RVO_handler, agent_id, goalVector)
+        
+    def get_instruction_from_RVO(self, RVO_handler):
+        agent_id = 0
+        position_new = Vector2(0, 0)
+        self.expert_lib.RVO_getAgentPosition(RVO_handler, agent_id, byref(position_new))
+
+        car_direction = self.car_body.angle
+        dx = position_new[0] - self.car_body.position[0]
+        dy = position_new[1] - self.car_body.position[1]
+        target_direction = -math.atan2(dy, dx) + math.pi / 2.0
+        delta_direction = target_direction - car_direction
+        while (delta_direction > math.pi):
+           delta_direction -= math.pi * 2
+        while (delta_direction < -math.pi):
+           delta_direction += math.pi * 2
+           
+        steer_angle = delta_direction / self.simstep
+        
+        desired_velocity = Vector2(0, 0)
+        self.expert_lib.RVO_getAgentVelocity(RVO_handler, agent_id, byref(desired_velocity))
+        desired_speed = math.sqrt(desired_velocity[0]*desired_velocity[0] + desired_velocity[1]*desired_velocity[1])
+        current_speed = self.car_body.velocity.length
+        acceleration = (desired_speed - current_speed) / self.simstep
+
+        return [steer_angle, acceleration]
+    
+    def get_action_from_instruction(self, instruction):
+        [steer_angle, acceleration] = instruction
+
+
+    def get_expert_action(self):
+        RVO_handler = c_longlong(0)
+        self.expert_lib.RVO_createEnvironment(byref(RVO_handler))
+
+        self.setup_scenario(RVO_handler);
+        self.set_preferred_velocities(RVO_handler)
+
+        self.expert_lib.RVO_doStep(RVO_handler)
+        instruction = self.get_instruction_from_RVO(RVO_handler)
+        action = self.get_action_from_instruction(instruction)
+        
+        self.expert_lib.RVO_deleteEnvironment(byref(RVO_handler))
+        return action
+
+    def get_instruction_from_action(self, action):
+        steer_action = int(action / 5)
+        acc_action = action % 5
+        steer_angle = (steer_action - 2) * (100 / 180 * math.pi)
+        acceleration = (acc_action - 1) * 40 * multi
+        return [steer_angle, acceleration]
+
 
     def frame_step(self, action):
         self.crashed = False
-        steer_action = int(action / 5)
-        acc_action = action % 5
+        [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
-
-        self.car_body.angle += (steer_action - 2) * (25 / 180 * math.pi) * self.simstep
-        print(self.car_body.angle)
+        self.car_body.angle += steer_angle * self.simstep
         self.car_body.angular_velocity = 0
 
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         v = self.car_body.velocity.length
         if (self.car_reverse_driving):
            v = -v
-        v += (acc_action - 1) * 200 * self.simstep # acc 30 m/s^2 at most
+        v += acceleration * self.simstep # acc 30 m/s^2 at most
         if (v > 0):
             self.car_reverse_driving = False
         else:
@@ -252,13 +385,38 @@ class GameState:
         screen.fill(THECOLORS["black"])
         self.space.debug_draw(self.draw_options)
         self.space.step(self.simstep)
+
         if draw_screen:
             pygame.display.flip()
-        clock.tick()
 
         # Get the current location and the readings there.
         x, y = self.car_body.position
-        readings = self.get_sonar_readings(x, y, self.car_body.angle)
+        unit_range = 10
+        angle_range = math.pi / 3
+        readings = self.get_sonar_readings(x, y, self.car_body.angle, unit_range, angle_range)
+        
+
+        # Goal related features
+        # Goal direction, 1 channel
+        current_goal = self.goals[self.current_goal_id]
+        angle_unit = angle_range /unit_range
+        goal_direction = self.get_direction(self.car_body.position, self.car_body.angle, current_goal, angle_unit)
+        readings.append(abs(goal_direction))
+        section_number = unit_range*2 + 1
+
+        # Whether there's obstacle in the goal direction, 1 channel
+        if (goal_direction <= unit_range and goal_direction >= -unit_range):
+            if (readings[section_number + goal_direction + unit_range] == 0):
+                readings.append(1)
+            else:
+                readings.append(0)
+        else:
+            readings.append(0)
+
+        # The difference between the distance to the goal of current frame and last frame, 1 channel
+        current_goal_dist = (current_goal - self.car_body.position).length
+        readings.append(self.pre_goal_dist - current_goal_dist)
+        self.pre_goal_dist = current_goal_dist
 
         # Set the reward.
         # Car crashed when any reading == 1
@@ -273,6 +431,19 @@ class GameState:
         state = np.array([readings])
 
         self.num_steps += 1
+
+        # Check whether the goal need to be updated
+        if current_goal_dist < 2 * multi:
+            self.current_goal_id = self.current_goal_id + 1
+            if self.current_goal_id >= len(self.goals):
+                self.current_goal_id = 1
+            self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
+        
+        if draw_screen:
+            #draw current goal
+            pygame.draw.circle(screen, (0, 0, 255), (current_goal[0], height - current_goal[1]), 4)
+            pygame.display.update()
+            clock.tick()
 
         return reward, state, readings
 
@@ -306,6 +477,7 @@ class GameState:
         self.car_body.position = self.car_body.init_position
         self.car_body.angle = self.car_body.init_angle
         self.car_body.velocity = (0, 0)
+        self.current_goal_id = 0
 
         '''
         while self.crashed:
@@ -330,7 +502,19 @@ class GameState:
     #         tot += i
     #     return tot
 
-    def get_sonar_readings(self, x, y, angle):
+    def get_direction(self, base_position, base_direction, goal_position, angle_unit):
+        dir = goal_position - base_position
+        angle = math.atan2(dir[1], dir[0])
+        relative_angle = angle - base_direction
+        if relative_angle > math.pi:
+            relative_angle -= math.pi
+        elif relative_angle < -math.pi:
+            relative_angle += math.pi
+
+        section_id = round(relative_angle / angle_unit)
+        return section_id
+
+    def get_sonar_readings(self, x, y, angle, unit_range = 10, angle_range = math.pi / 3):
         readings = []
         """
         Instead of using a grid of boolean(ish) sensors, sonar readings
@@ -340,15 +524,23 @@ class GameState:
         in a sonar "arm" is non-zero, then that arm returns a distance of 5.
         """
         # Make our arms.
-        arm_left = self.make_sonar_arm(x, y)
-        arm_middle = arm_left
-        arm_right = arm_left
+        one_arm = self.make_sonar_arm(x, y)
         
-        obstacleType = []
-        obstacleType.append(self.get_arm_distance(arm_left, x, y, angle, 0.75)[1])
-        obstacleType.append(self.get_arm_distance(arm_middle, x, y, angle, 0)[1])
-        obstacleType.append(self.get_arm_distance(arm_right, x, y, angle, -0.75)[1])
+        obstacle_types = []
+        angle_unit = angle_range /unit_range
+        for i in range(-unit_range, unit_range+1):
+            one_ray = self.get_arm_distance(one_arm, x, y, angle, i*angle_unit)
+            obstacle_types.append(one_ray[1])
+            readings.append(one_ray[0])
+            
+        for obs_type in obstacle_types:
+            readings.append(obs_type / 2) #normalize to 1
 
+        #readings = readings[0:7]
+        '''
+        obstacleType.append(self.get_arm_distance(arm_left, x, y, angle, angle_unit)[1])
+        obstacleType.append(self.get_arm_distance(arm_middle, x, y, angle, 0)[1])
+        obstacleType.append(self.get_arm_distance(arm_right, x, y, angle, -angle_unit)[1])
         ObstacleNumber = np.zeros(self.num_obstacles_type)
 
         for i in obstacleType:
@@ -360,16 +552,13 @@ class GameState:
                 ObstacleNumber[2] += 1
             elif i == 3: # #sensors seeing red color ( /3 to normalize)
                 ObstacleNumber[3] += 1
-           
 
         # Rotate them and get readings.
-        readings.append(1.0 - float(self.get_arm_distance(arm_left, x, y, angle, 0.75)[0]/39.0)) # 39 = max distance
+        readings.append(1.0 - float(self.get_arm_distance(arm_left, x, y, angle, angle_unit)[0]/39.0)) # 39 = max distance
         readings.append(1.0 - float(self.get_arm_distance(arm_middle, x, y, angle, 0)[0]/39.0))
-        readings.append(1.0 - float(self.get_arm_distance(arm_right, x, y, angle, -0.75)[0]/39.0))
-        readings.append(float(ObstacleNumber[0]/3.0))
-        readings.append(float(ObstacleNumber[1]/3.0))
-        readings.append(float(ObstacleNumber[2]/3.0))
-        readings.append(float(ObstacleNumber[3]/3.0))
+        readings.append(1.0 - float(self.get_arm_distance(arm_right, x, y, angle, -angle_unit)[0]/39.0))
+        
+        '''
 
         if show_sensors:
             pygame.display.update()
@@ -401,18 +590,21 @@ class GameState:
                     return [i, temp] #sensor hit a round obstacle, return the type of obstacle
 
             if show_sensors:
-                pygame.draw.circle(screen, (255, 255, 255), (rotated_p), 2)
+                pygame.draw.circle(screen, (255, 255, 255), (rotated_p), 1)
+                #pygame.display.update()
+                #clock.tick()
+
 
         # Return the distance for the arm.
         return [i, 0] #sensor did not hit anything return 0 for black space
 
-    def make_sonar_arm(self, x, y):
-        spread = 8  # Default spread.
-        distance = 7  # Gap before first sensor.
+    def make_sonar_arm(self, x, y, distance=12, spread=4, point_num=100):
+        #spread: Spread between two adjacent points.
+        #distance: Gap before first sensor.
         arm_points = []
         # Make an arm. We build it flat because we'll rotate it about the
         # center later.
-        for i in range(1, 40):
+        for i in range(point_num):
             arm_points.append((distance + x + (spread * i), y))
 
         return arm_points
@@ -435,9 +627,9 @@ class GameState:
 
     def get_track_or_not(self, reading): # basically differentiate b/w the objects the car views.
         if reading == THECOLORS['yellow']:
-            return 1  # Sensor is on a yellow obstacle
+            return 2  # Sensor is on a yellow obstacle
         elif reading == THECOLORS['brown']:
-            return 2  # Sensor is on brown obstacle
+            return 1  # Sensor is on brown obstacle
         else:
             return 0 #for black
 

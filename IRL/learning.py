@@ -7,8 +7,6 @@ import os
 import os.path
 import timeit
 
-NUM_FEATURES = 8 # number of features
-NUM_ACTIONS = 3 # number of actions
 GAMMA = 0.9  # discount factor
 TUNING = False  # If False, just use arbitrary, pre-selected params
 
@@ -103,7 +101,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             mini_batch = random.sample(replay, my_batch_size) # currently batchSize = 100
 
             # get training data
-            X_train, y_train = process_minibatch(mini_batch, model)
+            X_train, y_train = process_minibatch(mini_batch, model, num_features, num_actions)
 
             # train a model on this batch
             history = LossHistory()
@@ -161,7 +159,7 @@ def log_results(results_folder, filename, survive_data, loss_log):
             wr.writerow(loss_item)
 
 
-def process_minibatch(minibatch, model):  
+def process_minibatch(minibatch, model, num_features, num_actions):  
     X_train = [] # states of the agent
     y_train = [] # three actions and their corresponding rewards
     
@@ -178,8 +176,7 @@ def process_minibatch(minibatch, model):
         
         # get our best move
         maxQ = np.max(nextQ)
-        num_action = 25
-        y = np.zeros((1, num_action)) 
+        y = np.zeros((1, num_actions)) 
         y[:] = currentQ[:]
         
         # check for terminal state
@@ -190,8 +187,8 @@ def process_minibatch(minibatch, model):
         
         # update the Q value for the action we take on the current state (i.e., state_m)
         y[0][action_m] = update
-        X_train.append(state_m.reshape(NUM_FEATURES,))
-        y_train.append(y.reshape(num_action,)) 
+        X_train.append(state_m.reshape(num_features,))
+        y_train.append(y.reshape(num_actions,)) 
 
     X_train = np.array(X_train)
     y_train = np.array(y_train)
