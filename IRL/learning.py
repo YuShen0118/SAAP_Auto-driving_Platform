@@ -58,6 +58,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     # create a new game instance and get the initial state by moving forward
     game_state = carmunk.GameState(weights, scene_file_name)
     _, state, _ = game_state.frame_step((2))
+    #_, state, _ = game_state.frame_step((0,1))
 
     # let's time it
     start_time = timeit.default_timer()
@@ -79,10 +80,12 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         # before we reach the number of observing frame (for training) we just sample random actions
         if random.random() < epsilon or frame_idx < observe_frames:
             action = np.random.randint(0, 25)  # produce action 0, 1, or 2
+            #action = np.random.random([2])*2-1
         else:
             # get Q values for each action. Q values are scores associated with each action (there are in total 3 actions)
             qval = model.predict(state, batch_size=1)
             action = (np.argmax(qval))  # get the best action
+            #action = model.predict(state, batch_size=1)
 
         # execute action, receive a reward and get the next state
         reward, next_state, _ = game_state.frame_step(action)

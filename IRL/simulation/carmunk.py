@@ -42,7 +42,7 @@ class GameState:
     def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=False):
         if use_expert:
             # for windows
-            self.expert_lib = ctypes.WinDLL ("self.expert_lib.dll")
+            self.expert_lib = ctypes.WinDLL ("./3thPartLib/RVO2/RVO_warper.dll")
 
         # Global-ish.
         self.crashed = False
@@ -64,6 +64,16 @@ class GameState:
         
         self.simstep = 0.02 # 50 FPS 
         #self.simstep = 0.0625 # 16 FPS 
+        
+        self.steer_section_number = 5
+        self.steer_zero_section_no = 2
+        self.steer_per_section = math.pi / 2
+
+        self.acc_section_number = 5
+        self.acc_zero_section_no = 1
+        self.acc_per_section = 40
+
+        self.preferred_speed = 20.0
 
         # Create the car.
         self.create_car((80+offset)*multi, (0+offset)*multi, 15)
@@ -123,18 +133,21 @@ class GameState:
                             #pt.append((float(s)+0))
                         #poly.append((pt[0],pt[1]))
                         poly.append(pt)
-                        if minx > pt[0]:
-                            minx = pt[0]
-                        if maxx < pt[0]:
-                            maxx = pt[0]
-                        if miny > pt[1]:
-                            miny = pt[1]
-                        if maxy < pt[1]:
-                            maxy = pt[1]
+                        
+                        #pygame.draw.circle(screen, (255, 255, 255), (int(pt[0]), height-int(pt[1])), 4)
+                        #pygame.display.update()
+                        #pygame.event.get()
+                        
+                        minx = min(minx, pt[0])
+                        maxx = max(maxx, pt[0])
+                        miny = min(miny, pt[1])
+                        maxy = max(maxy, pt[1])
 
-                        #poly.append(pt)
                     self.obstacles.append(self.create_obstacle_poly(poly, obstacle_color))
                     self.obstacles_poly.append(poly)
+                    
+                    #screen.fill(THECOLORS["black"])
+                    #self.space.debug_draw(self.draw_options)
 
             segment_radius = 5
             poly_tmp = self.create_poly_from_vertical_segment([minx, miny], [minx, maxy], segment_radius)
@@ -155,7 +168,7 @@ class GameState:
             #self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], segment_radius, "brown"))
             #self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], segment_radius, "brown"))
 
-            self.goals = [[50,44],[-47,46],[-52,-45],[-10,-66],[-3,42]]
+            self.goals = [[50,44],[-47,46],[-52,-45],[-10,-66],[-3,42],[80,-60]]
             for goal in self.goals:
                 goal[0] = (goal[0] + offset) * multi 
                 goal[1] = (goal[1] + offset) * multi 
@@ -269,18 +282,36 @@ class GameState:
         self.car_body.apply_impulse_at_local_point(driving_direction)
         self.space.add(self.car_body, self.car_shape)
         self.car_reverse_driving = False
+
+        self.car_body.angular_velocity = 0
+        self.car_body.velocity = (0,0)
         
-        
+    def getVecter2List(self, poly):
+        vertices=(Vector2*len(poly))()
+        i=0
+        for vertex in vertices:
+            vertex.x = poly[i][0]
+            vertex.y = poly[i][1]
+            i = i + 1
+
+        return vertices
+
     def setup_scenario(self, RVO_handler):
         self.expert_lib.RVO_setTimeStep(RVO_handler, c_float(0.02))
     
         velo = self.car_body.velocity
         velocity = Vector2(velo[0], velo[1])
         # Specify the default parameters for agents that are subsequently added.
-        self.expert_lib.RVO_setAgentDefaults(RVO_handler, c_float(15.0**multi), 10, c_float(1.0), c_float(0.1), c_float(1.5*multi), c_float(20.0*multi), velocity)
+        self.expert_lib.RVO_setAgentDefaults(RVO_handler, c_float(15.0**multi), 10, c_float(1.0), c_float(0.1), c_float(3*multi), c_float(20.0*multi), velocity)
         pos = self.car_body.position
         position = Vector2(pos[0], pos[1])
         self.expert_lib.RVO_addAgent(RVO_handler, position)
+        
+        for obstacle in self.obstacles_poly:
+            vertexNum = len(obstacle)
+            vertices = self.getVecter2List(obstacle)
+            self.expert_lib.RVO_addObstacle(RVO_handler, vertexNum, byref(vertices[0]))
+        self.expert_lib.RVO_processObstacles(RVO_handler)
             
     def set_preferred_velocities(self, RVO_handler):
         # Set the preferred velocity to be a vector of unit magnitude (speed) in the
@@ -290,12 +321,12 @@ class GameState:
         agent_id = 0
         position = Vector2(0, 0)
         self.expert_lib.RVO_getAgentPosition(RVO_handler, agent_id, byref(position))
-        goalVector = Vector2(current_goal.x - position.x, current_goal.y - position.y)
+        goalVector = Vector2(current_goal[0] - position.x, current_goal[1] - position.y)
 
         norm = math.sqrt(goalVector.x*goalVector.x + goalVector.y*goalVector.y)
-        if (norm > 1.0):
-            goalVector.x = goalVector.x / norm
-            goalVector.y = goalVector.y / norm
+        if (norm > self.preferred_speed):
+            goalVector.x = goalVector.x / norm * self.preferred_speed
+            goalVector.y = goalVector.y / norm * self.preferred_speed
 
         self.expert_lib.RVO_setAgentPrefVelocity(RVO_handler, agent_id, goalVector)
         
@@ -305,9 +336,10 @@ class GameState:
         self.expert_lib.RVO_getAgentPosition(RVO_handler, agent_id, byref(position_new))
 
         car_direction = self.car_body.angle
-        dx = position_new[0] - self.car_body.position[0]
-        dy = position_new[1] - self.car_body.position[1]
-        target_direction = -math.atan2(dy, dx) + math.pi / 2.0
+        dx = position_new.x - self.car_body.position.x
+        dy = position_new.y - self.car_body.position.y
+        #target_direction = -math.atan2(dy, dx) + math.pi / 2.0
+        target_direction = math.atan2(dy, dx)
         delta_direction = target_direction - car_direction
         while (delta_direction > math.pi):
            delta_direction -= math.pi * 2
@@ -316,9 +348,9 @@ class GameState:
            
         steer_angle = delta_direction / self.simstep
         
-        desired_velocity = Vector2(0, 0)
-        self.expert_lib.RVO_getAgentVelocity(RVO_handler, agent_id, byref(desired_velocity))
-        desired_speed = math.sqrt(desired_velocity[0]*desired_velocity[0] + desired_velocity[1]*desired_velocity[1])
+        desired_velocity = Vector2(dx / self.simstep, dy / self.simstep)
+        #self.expert_lib.RVO_getAgentVelocity(RVO_handler, agent_id, byref(desired_velocity))
+        desired_speed = math.sqrt(desired_velocity.x*desired_velocity.x + desired_velocity.y*desired_velocity.y)
         current_speed = self.car_body.velocity.length
         acceleration = (desired_speed - current_speed) / self.simstep
 
@@ -326,6 +358,13 @@ class GameState:
     
     def get_action_from_instruction(self, instruction):
         [steer_angle, acceleration] = instruction
+        steer_action = round(steer_angle / self.steer_per_section) + self.steer_zero_section_no
+        acc_action = round(acceleration / self.acc_per_section) + self.acc_zero_section_no
+        
+        steer_action = np.clip(steer_action, 0, self.steer_section_number - 1)
+        acc_action = np.clip(acc_action, 0, self.acc_section_number - 1)
+
+        return steer_action * self.acc_section_number + acc_action
 
 
     def get_expert_action(self):
@@ -343,10 +382,13 @@ class GameState:
         return action
 
     def get_instruction_from_action(self, action):
-        steer_action = int(action / 5)
-        acc_action = action % 5
-        steer_angle = (steer_action - 2) * (100 / 180 * math.pi)
-        acceleration = (acc_action - 1) * 40 * multi
+        #return [action[0] * self.max_steer, action[1] * self.max_acceleration]
+        steer_action = int(action / self.acc_section_number)
+        acc_action = action % self.acc_section_number
+
+        steer_angle = (steer_action - self.steer_zero_section_no) * self.steer_per_section
+        acceleration = (acc_action - self.acc_zero_section_no) * self.acc_per_section * multi
+
         return [steer_angle, acceleration]
 
 
@@ -355,7 +397,6 @@ class GameState:
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
         self.car_body.angle += steer_angle * self.simstep
-        self.car_body.angular_velocity = 0
 
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         v = self.car_body.velocity.length
@@ -434,7 +475,8 @@ class GameState:
 
         # Check whether the goal need to be updated
         if current_goal_dist < 2 * multi:
-            self.current_goal_id = self.current_goal_id + 1
+            #self.current_goal_id = self.current_goal_id + 1
+            self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
                 self.current_goal_id = 1
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length

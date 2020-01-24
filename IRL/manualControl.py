@@ -34,13 +34,13 @@ def demo(screen):
             return
         screen.refresh()
     
-def play():
+def play(use_expert = False):
     '''
     The goal is to get feature expectations of a policy. Note that feature expectations are independent from weights.
     '''
     
-    game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt')   # set up the simulation environment
-    game_state.frame_step((2)) # make a forward move in the simulation
+    game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt', use_expert=True)   # set up the simulation environment
+    game_state.frame_step((11)) # make a forward move in the simulation
     currFeatureExp = np.zeros(NUM_FEATURES)
     prevFeatureExp = np.zeros(NUM_FEATURES)
 
@@ -48,20 +48,23 @@ def play():
     while True:
         moveCount += 1
 
-        # get the actual move from keyboard
-        move = msvcrt.getch()
-        if move == b'H':   # UP key -- move forward
-            #action = 2
-            action = 14
-        elif move == b'K': # LEFT key -- turn left
-            #action = 1
-            action = 20
-        elif move == b'M': # RIGHT key -- turn right
-            #action = 0
-            action = 0
+        if (use_expert):
+            action = game_state.get_expert_action()
         else:
-            #action = 2
-            action = random.randrange(25)
+            # get the actual move from keyboard
+            move = msvcrt.getch()
+            if move == b'H':   # UP key -- move forward
+                #action = 2
+                action = 14
+            elif move == b'K': # LEFT key -- turn left
+                #action = 1
+                action = 20
+            elif move == b'M': # RIGHT key -- turn right
+                #action = 0
+                action = 0
+            else:
+                #action = 2
+                action = random.randrange(25)
             #print(action)
 
         '''
@@ -91,7 +94,7 @@ def play():
         print ("The change percentage in feature expectation is: ", changePercentage)
         prevFeatureExp = np.array(currFeatureExp)
 
-        if moveCount % 2000 == 0:
+        if moveCount % 20000 == 0:
             break
 
     return currFeatureExp
@@ -106,8 +109,8 @@ if __name__ == "__main__":
     screen.addstr("Play the game")
     curses.endwin()
     '''
-
-    featureExp = play()
+    use_expert = True
+    featureExp = play(use_expert)
     print('[', end='')
     for feature in featureExp:
         print("%.5f" % round(feature,5), end=', ')
