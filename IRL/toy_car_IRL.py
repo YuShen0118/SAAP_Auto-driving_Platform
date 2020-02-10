@@ -144,6 +144,7 @@ if __name__ == '__main__':
 
     # training parameters
     nn_param = [164, 150]
+    #nn_param = [64, 128, 128, 64]
     params = {
         "batch_size": 100,
         "buffer": 50000,
