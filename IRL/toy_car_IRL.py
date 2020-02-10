@@ -13,6 +13,7 @@ import os
 import timeit
 
 
+start_time = timeit.default_timer()
 class IRLAgent:
     def __init__(self, params, random_fe, expert_fe, epsilon, num_features, num_actions, train_frames, play_frames, behavior_type, results_folder):
         self.params = params
@@ -67,11 +68,10 @@ class IRLAgent:
         # store feature expecations of a newly learned policy and its difference to the expert policy	
         print("Updating Policy FE list starts......")
         
-        
-        start_time = timeit.default_timer()
+        #start_time = timeit.default_timer()
         model_name = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name)	
-        iter_time = timeit.default_timer() - start_time
-        print("Consumed time: ", iter_time)
+        
+        #print("Total consumed time: ", timeit.default_timer() - start_time, " s")
             
         # get the trained model
         print("The latest Q-learning model is: ", model_name)
@@ -98,7 +98,7 @@ class IRLAgent:
         f = open(self.results_folder + 'weights-'+self.behavior_type+'.txt', 'w')
         opt_count = 1
         while True:
-            print("IRL iteration number: ", opt_count)
+            print("================ IRL iteration number: ", opt_count, " ================")
             
             # Main Step 1: compute the new weights according to the list of policies and the expert policy
             weights_new = self.ComputeOptimalWeights() 
@@ -113,6 +113,8 @@ class IRLAgent:
             # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
             print("The stopping distance thresould is: ", epsilon)
             print("The latest policy to expert policy distance is: ", self.current_dis)
+            print("Total consumed time: ", timeit.default_timer() - start_time, " s")
+            print("===========================================================")
             print("\n")
             if self.current_dis <= self.epsilon: 
                 print("IRL finished!")

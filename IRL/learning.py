@@ -70,7 +70,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     print("In QLearning - the total number of training frames is: ", train_frames)
     while frame_idx < train_frames:
         
-        if frame_idx % 100 == 0:
+        if frame_idx % 1000 == 0:
             print("In QLearning - current training frame is: ", frame_idx)
         
         frame_idx += 1
