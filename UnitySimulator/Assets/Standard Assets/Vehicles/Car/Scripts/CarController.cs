@@ -61,6 +61,8 @@ namespace UnityStandardAssets.Vehicles.Car
         private float m_CurrentTorque;
         private Rigidbody m_Rigidbody;
         private const float k_ReversingThreshold = 0.01f;
+        //private const float UNIT_TRANSFER = 2.23693629f;
+        private const float UNIT_TRANSFER = 1.0f;
         private string m_saveLocation = "D:/data/DeepDrive/simple/input";
         private Queue<CarSample> carSamples;
         private int TotalSamples;
@@ -129,7 +131,9 @@ namespace UnityStandardAssets.Vehicles.Car
             set { m_SteerAngle = value; }
         }
 
-        public float CurrentSpeed{ get { return m_Rigidbody.velocity.magnitude * 2.23693629f; } }
+        public float CurrentSpeed{ get { return m_Rigidbody.velocity.magnitude * UNIT_TRANSFER; } }
+
+        public Vector3 CurrentVelocity { get { return m_Rigidbody.velocity * UNIT_TRANSFER; } }
 
         public float MaxSpeed{ get { return m_Topspeed; } }
         public float MaxSteerAngleInDegree { get { return m_MaximumSteerAngle; } }
@@ -263,9 +267,9 @@ namespace UnityStandardAssets.Vehicles.Car
             switch (m_SpeedType) {
             case SpeedType.MPH:
 
-                speed *= 2.23693629f;
+                speed *= UNIT_TRANSFER;
                 if (speed > m_Topspeed)
-                    m_Rigidbody.velocity = (m_Topspeed / 2.23693629f) * m_Rigidbody.velocity.normalized;
+                    m_Rigidbody.velocity = (m_Topspeed / UNIT_TRANSFER) * m_Rigidbody.velocity.normalized;
                 break;
 
             case SpeedType.KPH:

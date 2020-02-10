@@ -61,6 +61,7 @@ public class CommandServer : MonoBehaviour
         JSONObject jsonObject = obj.data;
         mainCar.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").str);
         mainCar.Acceleration = float.Parse(jsonObject.GetField("throttle").str);
+        mainCar.UpdatedFlag = true;
         //CarRemoteControl.AddInput = float.Parse(jsonObject.GetField("add_input").str);
         EmitTelemetry(obj);
     }
@@ -109,6 +110,15 @@ public class CommandServer : MonoBehaviour
                 data["steering_angle"] = _carController.CurrentSteerAngle.ToString("N4");
                 data["throttle"] = _carController.AccelInput.ToString("N4");
                 data["speed"] = _carController.CurrentSpeed.ToString("N4");
+
+                data["mainCar_position_x"] = mainCar.transform.position.x.ToString("N4");
+                data["mainCar_position_y"] = mainCar.transform.position.z.ToString("N4");
+
+                data["mainCar_velocity_x"] = _carController.CurrentVelocity.x.ToString("N4");
+                data["mainCar_velocity_y"] = _carController.CurrentVelocity.z.ToString("N4");
+                data["mainCar_direction"] = mainCar.transform.eulerAngles.y.ToString("N4");
+                //Debug.Log("direction " + mainCar.transform.eulerAngles.y);
+
                 data["image"] = Convert.ToBase64String(image);
                 //data["point_cloud"] = Convert.ToBase64String(pcByteArray);
                 //data["image"] = Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera));
