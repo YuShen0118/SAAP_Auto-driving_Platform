@@ -85,3 +85,16 @@ lint/tmp/
 # lint/reports/
 
 Data/
+IRL/__pycache__/
+*.sln
+*.h5
+*.csv
+*.json
+*.sqlite
+*.pyc
+*.csproj
+*.lock
+*.ide
+*.ide-shm
+*.ide-wal
+*.pyproj
