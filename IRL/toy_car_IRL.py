@@ -72,7 +72,6 @@ class IRLAgent:
         model_name = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name)	
         iter_time = timeit.default_timer() - start_time
         print("Consumed time: ", iter_time)
-        exit()
             
         # get the trained model
         print("The latest Q-learning model is: ", model_name)

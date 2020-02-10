@@ -204,7 +204,7 @@ class GameState:
         
     def collision_callback(self, arbiter, space, data):
         if arbiter.is_first_contact:
-            print('collision!!!')
+            #print('collision!!!')
             self.crashed = True
             return True
 
@@ -324,9 +324,9 @@ class GameState:
         goalVector = Vector2(current_goal[0] - position.x, current_goal[1] - position.y)
 
         norm = math.sqrt(goalVector.x*goalVector.x + goalVector.y*goalVector.y)
-        if (norm > self.preferred_speed * MULTI):
-            goalVector.x = goalVector.x / norm * self.preferred_speed * MULTI
-            goalVector.y = goalVector.y / norm * self.preferred_speed * MULTI
+        #if (norm > self.preferred_speed * MULTI):
+        goalVector.x = goalVector.x / norm * self.preferred_speed * MULTI
+        goalVector.y = goalVector.y / norm * self.preferred_speed * MULTI
 
         self.expert_lib.RVO_setAgentPrefVelocity(RVO_handler, agent_id, goalVector)
         
@@ -346,14 +346,18 @@ class GameState:
         while (delta_direction < -math.pi):
            delta_direction += math.pi * 2
            
-        steer_angle = delta_direction / self.simstep
+        steer_angle = delta_direction # / self.simstep
         
         #desired_velocity = Vector2(dx / self.simstep, dy / self.simstep)
         desired_velocity = Vector2(0, 0)
         self.expert_lib.RVO_getAgentVelocity(RVO_handler, agent_id, byref(desired_velocity))
         desired_speed = math.sqrt(desired_velocity.x*desired_velocity.x + desired_velocity.y*desired_velocity.y)
         current_speed = self.car_body.velocity.length
-        acceleration = (desired_speed - current_speed) / self.simstep
+
+        if current_speed >1:
+            steer_angle = steer_angle * current_speed
+
+        acceleration = (desired_speed - current_speed) # / self.simstep
 
         return [steer_angle, acceleration]
     
@@ -367,8 +371,16 @@ class GameState:
 
         return steer_action * self.acc_section_number + acc_action
 
+    def reset_car(self, carPos, carVelo, carAngle):
+        self.car_body.position = ((carPos[0] + offset) * MULTI), ((carPos[1] + offset) * MULTI)
+        
+        self.car_body.velocity = (carVelo[0] * MULTI), (carVelo[1] * MULTI)
 
-    def get_expert_action(self):
+        self.car_body.angle = carAngle
+
+    def get_expert_action_out(self, carPos, carVelo, carAngle):
+        self.reset_car(carPos, carVelo, carAngle)
+        
         RVO_handler = c_longlong(0)
         self.expert_lib.RVO_createEnvironment(byref(RVO_handler))
 
@@ -382,6 +394,30 @@ class GameState:
         self.expert_lib.RVO_deleteEnvironment(byref(RVO_handler))
         return action
 
+    def draw(self):
+        screen.fill(THECOLORS["black"])
+        self.space.debug_draw(self.draw_options)
+        pygame.display.update()
+        clock.tick()
+
+    def get_expert_action(self):
+        RVO_handler = c_longlong(0)
+        self.expert_lib.RVO_createEnvironment(byref(RVO_handler))
+        
+        self.setup_scenario(RVO_handler);
+        self.set_preferred_velocities(RVO_handler)
+
+        self.expert_lib.RVO_doStep(RVO_handler)
+        instruction = self.get_instruction_from_RVO(RVO_handler)
+        action = self.get_action_from_instruction(instruction)
+        
+        self.expert_lib.RVO_deleteEnvironment(byref(RVO_handler))
+        return action
+
+    def get_instruction_from_action_out(self, action):
+        [steer_angle, acceleration] = self.get_instruction_from_action(action)
+        return [steer_angle, acceleration / MULTI]
+
     def get_instruction_from_action(self, action):
         #return [action[0] * self.max_steer, action[1] * self.max_acceleration]
         steer_action = int(action / self.acc_section_number)
@@ -393,11 +429,12 @@ class GameState:
         return [steer_angle, acceleration]
 
 
-    def frame_step(self, action):
+    def frame_step(self, action, effect=True):
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
-        self.car_body.angle += steer_angle * self.simstep
+        if effect:
+            self.car_body.angle += steer_angle * self.simstep
 
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         v = self.car_body.velocity.length
@@ -414,7 +451,9 @@ class GameState:
             v = 100
         elif (v < 0):
             v = 0
-        self.car_body.velocity = v * driving_direction
+            
+        if effect:
+            self.car_body.velocity = v * driving_direction
         
         # quit the game
         for event in pygame.event.get():
@@ -465,7 +504,8 @@ class GameState:
         if self.car_is_crashed(readings):
             self.crashed = True
             readings.append(1)
-            self.recover_from_crash(driving_direction)
+            if effect:
+                self.recover_from_crash(driving_direction)
         else:
             readings.append(0)
                       
@@ -475,7 +515,7 @@ class GameState:
         self.num_steps += 1
 
         # Check whether the goal need to be updated
-        if current_goal_dist < 2 * MULTI:
+        if current_goal_dist < 3 * MULTI:
             #self.current_goal_id = self.current_goal_id + 1
             self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
