@@ -43,7 +43,7 @@ def play(model, weights, play_frames=10000, play_rounds=100):
         #print ("featureExp: ", featureExp)
 
         # Tell us something.
-        if car_move % play_frames == 0:
+        if play_frames > 0 and car_move % play_frames == 0:
             print("The car has moved %d frames" % car_move)
             break
 
@@ -53,7 +53,7 @@ def play(model, weights, play_frames=10000, play_rounds=100):
             total_score += score
             print("Aver Score in ", round_num, "rounds: ", total_score / round_num)
 
-        if round_num == play_rounds:
+        if play_rounds > 0 and round_num == play_rounds:
             break
         
         state = next_state
@@ -76,4 +76,4 @@ if __name__ == "__main__":
     weights = np.load(saved_weights)
     #weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
     model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
-    print (play(model, weights))
+    print (play(model, weights, play_frames=-1))
