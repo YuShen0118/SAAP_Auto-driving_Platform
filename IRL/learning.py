@@ -51,6 +51,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         os.makedirs(model_dir)
     filename = params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count)
     model_name = model_dir + filename + '.h5' 
+    weights_name = model_dir + filename + '_weights.npy'
 
     pretrained_model = ''
     if opt_count > 1:
@@ -142,6 +143,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         # save the current model 
         if frame_idx == train_frames:
             model.save_weights(model_name, overwrite=True)
+            np.save(weights_name, weights)
             print("Saving model: ", model_name)
 
     # log results after we're done with all training frames
