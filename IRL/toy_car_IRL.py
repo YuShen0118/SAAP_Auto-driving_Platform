@@ -96,6 +96,8 @@ class IRLAgent:
         
         # create a file to store weights after each iteration of learning
         f = open(self.results_folder + 'weights-'+self.behavior_type+'.txt', 'w')
+        nearest_dist = 9999999999
+        nearest_iter_no = -1
         opt_count = 1
         while True:
             print("================ IRL iteration number: ", opt_count, " ================")
@@ -113,7 +115,14 @@ class IRLAgent:
             # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
             print("The stopping distance thresould is: ", epsilon)
             print("The latest policy to expert policy distance is: ", self.current_dis)
+            
+            if nearest_dist > self.current_dis:
+                nearest_dist = self.current_dis
+                nearest_iter_no = opt_count
+            print("So far the nearest dist is: ", nearest_dist, ", in the", nearest_iter_no, "th iteration")
+
             print("Total consumed time: ", timeit.default_timer() - start_time, " s")
+            print("Total consumed time: ", (timeit.default_timer() - start_time)/3600.0, " h")
             print("===========================================================")
             print("\n")
             if self.current_dis <= self.epsilon: 

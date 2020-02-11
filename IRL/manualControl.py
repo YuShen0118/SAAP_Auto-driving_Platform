@@ -88,7 +88,7 @@ def play(use_expert = False):
 
         # take an action 
         # start recording feature expectations only after 100 frames
-        _, _, readings = game_state.frame_step(action)
+        _, _, readings, _ = game_state.frame_step(action)
 
         if moveCount > 100:
             currFeatureExp += (GAMMA**(moveCount-101))*np.array(readings)
@@ -96,8 +96,8 @@ def play(use_expert = False):
         # report the change percentage
         changePercentage = (np.linalg.norm(currFeatureExp - prevFeatureExp)*100.0)/np.linalg.norm(currFeatureExp)
 
-        print (moveCount)
-        print ("The change percentage in feature expectation is: ", changePercentage)
+        #print (moveCount)
+        #print ("The change percentage in feature expectation is: ", changePercentage)
         prevFeatureExp = np.array(currFeatureExp)
 
         if moveCount % 20000 == 0:

@@ -14,13 +14,15 @@ NUM_ACTIONS = 25 # number of actions
 GAMMA = 0.9
 
 
-def play(model, weights, play_frames=10000):
+def play(model, weights, play_frames=10000, play_rounds=100):
 
     # init
     car_move = 0
     game_state = carmunk.GameState(weights, scene_file_name = 'scenes/scene-city.txt')
-    _, state, __ = game_state.frame_step((2))
+    _, state, _, _ = game_state.frame_step((2))
     featureExp = np.zeros(NUM_FEATURES)
+    round_num = 0
+    total_score = 0
 
     # start to move
     while True:
@@ -31,7 +33,7 @@ def play(model, weights, play_frames=10000):
         action = (np.argmax(qval))  
 
         # take the action
-        reward , next_state, readings = game_state.frame_step(action)
+        reward , next_state, readings, score = game_state.frame_step(action)
         #print ("reward: ", reward)
         #print ("readings: ", readings)
 
@@ -43,6 +45,15 @@ def play(model, weights, play_frames=10000):
         # Tell us something.
         if car_move % play_frames == 0:
             print("The car has moved %d frames" % car_move)
+            break
+
+        if readings[-1]==1:
+            round_num += 1
+            print("Score in this round: ", score)
+            total_score += score
+            print("Aver Score in ", round_num, "rounds: ", total_score / round_num)
+
+        if round_num == play_rounds:
             break
         
         state = next_state

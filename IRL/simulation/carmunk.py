@@ -168,13 +168,13 @@ class GameState:
             #self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], segment_radius, "brown"))
             #self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], segment_radius, "brown"))
 
-            self.goals = [[50,44],[-47,46],[-52,-45],[-10,-66],[-3,42],[80,-60]]
+            self.goals = [[80,0], [50,44],[-47,46],[-52,-45],[-10,-66],[-3,42],[80,-60]]
             for goal in self.goals:
                 goal[0] = (goal[0] + offset) * MULTI 
                 goal[1] = (goal[1] + offset) * MULTI 
-            self.current_goal_id = 0
+            self.current_goal_id = 1
             
-            self.pre_goal_dist = (self.goals[0] - self.car_body.position).length
+            self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         else:
             #default scene
             self.obstacles.append(self.create_obstacle([100, 100], [100, 585] , 7, "yellow"))
@@ -447,10 +447,7 @@ class GameState:
             #self.car_reverse_driving = True
             v = 0
 
-        if (v > 100):
-            v = 100
-        elif (v < 0):
-            v = 0
+        v = np.clip(v, 0, 100)
             
         if effect:
             self.car_body.velocity = v * driving_direction
@@ -498,10 +495,14 @@ class GameState:
         current_goal_dist = (current_goal - self.car_body.position).length
         readings.append(self.pre_goal_dist - current_goal_dist)
         self.pre_goal_dist = current_goal_dist
-
         # Set the reward.
         # Car crashed when any reading == 1
+        score = 0
         if self.car_is_crashed(readings):
+            last_goal = self.goals[self.current_goal_id-1]
+            seg_dist = (Vec2d(current_goal[0], current_goal[1]) - Vec2d(last_goal[0], last_goal[1])).length
+            score = (self.current_goal_id - current_goal_dist / seg_dist)*100
+
             self.crashed = True
             readings.append(1)
             if effect:
@@ -516,10 +517,10 @@ class GameState:
 
         # Check whether the goal need to be updated
         if current_goal_dist < 3 * MULTI:
-            #self.current_goal_id = self.current_goal_id + 1
-            self.current_goal_id = random.randint(0, len(self.goals)-1)
+            self.current_goal_id = self.current_goal_id + 1
+            #self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
-                self.current_goal_id = 1
+                self.current_goal_id = 2
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         
         if draw_screen:
@@ -528,7 +529,7 @@ class GameState:
             pygame.display.update()
             clock.tick()
 
-        return reward, state, readings
+        return reward, state, readings, score
 
     def move_obstacles(self):
         # Randomly move obstacles around.
@@ -561,7 +562,7 @@ class GameState:
         self.car_body.angle = self.car_body.init_angle
         self.car_body.velocity = (0, 0)
         self.car_body.angular_velocity = 0
-        self.current_goal_id = 0
+        self.current_goal_id = 1
 
         '''
         while self.crashed:

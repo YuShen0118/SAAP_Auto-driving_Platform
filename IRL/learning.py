@@ -52,12 +52,16 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     filename = params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count)
     model_name = model_dir + filename + '.h5' 
 
+    pretrained_model = ''
+    if opt_count > 1:
+        pretrained_model = model_dir + params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count-1) + '.h5' 
+
     # init a neural network as an approximator for Q function
-    model = net1(num_features, num_actions, params['nn'])
+    model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model)
      
     # create a new game instance and get the initial state by moving forward
     game_state = carmunk.GameState(weights, scene_file_name)
-    _, state, _ = game_state.frame_step((2))
+    _, state, _, _ = game_state.frame_step((2))
     #_, state, _ = game_state.frame_step((0,1))
 
     # let's time it
@@ -88,7 +92,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             #action = model.predict(state, batch_size=1)
 
         # execute action, receive a reward and get the next state
-        reward, next_state, _ = game_state.frame_step(action)
+        reward, next_state, _, _ = game_state.frame_step(action)
 
         # store experiences
         replay.append((state, action, reward, next_state))

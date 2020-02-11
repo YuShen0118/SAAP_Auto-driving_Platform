@@ -19,7 +19,7 @@ class LossHistory(Callback):
         self.losses.append(logs.get('loss'))
 
 
-def net1(numInputs, numOutputs, params, weights=''):
+def net1(numInputs, numOutputs, params, weightsFile=''):
     netInputs = Input(shape=(numInputs,))
     x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(netInputs)
     x = Dropout(0.2)(x)
@@ -34,8 +34,8 @@ def net1(numInputs, numOutputs, params, weights=''):
 
     #model.summary()
 
-    if weights:
-        model.load_weights(weights)
+    if weightsFile:
+        model.load_weights(weightsFile)
 
     return model
 
