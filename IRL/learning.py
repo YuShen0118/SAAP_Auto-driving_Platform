@@ -37,7 +37,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     
     # init variables
     epsilon = 1 # the threshold for choosing a random action over the best action according to a Q value
-    observe_frames = 120  # we train our first model after observing certain frames
+    if continue_train:
+        epsilon = 0.5
+    d_epsilon = epsilon / train_frames
+    observe_frames = 100  # we train our first model after observing certain frames
     replay = []  # store tuples of (state, action, reward, next_state) for training 
     survive_data = [] # store how long the car survived until die
     loss_log = [] # store the train loss of each model
@@ -83,7 +86,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # choose an action.
         # before we reach the number of observing frame (for training) we just sample random actions
-        if (not continue_train) and (random.random() < epsilon or frame_idx < observe_frames):
+        if random.random() < epsilon or frame_idx < observe_frames:
             action = np.random.randint(0, 25)  # produce action 0, 1, or 2
             #action = np.random.random([2])*2-1
         else:
@@ -121,7 +124,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # decrease epsilon over time to reduce the chance taking a random action over the best action based on Q values
         if epsilon > 0.1 and frame_idx > observe_frames:
-            epsilon -= (1/train_frames)
+            epsilon -= d_epsilon
 
         # car died, update
         if state[0][7] == 1:
