@@ -28,7 +28,7 @@ def IRLHelper(weights, behavior_type, train_frames, opt_count):
 '''            
 
             
-def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name):
+def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, continue_train=False):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -54,7 +54,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     weights_name = model_dir + filename + '_weights.npy'
 
     pretrained_model = ''
-    if opt_count > 1:
+    if continue_train and (opt_count > 1):
         pretrained_model = model_dir + params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count-1) + '.h5' 
 
     # init a neural network as an approximator for Q function
@@ -83,7 +83,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # choose an action.
         # before we reach the number of observing frame (for training) we just sample random actions
-        if random.random() < epsilon or frame_idx < observe_frames:
+        if (not continue_train) and (random.random() < epsilon or frame_idx < observe_frames):
             action = np.random.randint(0, 25)  # produce action 0, 1, or 2
             #action = np.random.random([2])*2-1
         else:
