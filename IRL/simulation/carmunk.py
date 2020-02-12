@@ -39,7 +39,7 @@ class Vector2(Structure):
 
 
 class GameState:
-    def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=False):
+    def __init__(self, weights='', scene_file_name='', state_num=47, use_expert=False):
         if use_expert:
             # for windows
             self.expert_lib = ctypes.WinDLL ("./3thPartLib/RVO2/RVO_warper.dll")
@@ -428,6 +428,15 @@ class GameState:
 
         return [steer_angle, acceleration]
 
+    def get_reward(self, W, readings):
+        reward = np.dot(W, readings)
+        if (readings[-1] == 1):
+            # collision
+            reward -= 500
+        if (readings[-2] == 1):
+            # reach the goal
+            reward += 100
+        return reward
 
     def frame_step(self, action, effect=True):
         self.crashed = False
@@ -495,6 +504,12 @@ class GameState:
         current_goal_dist = (current_goal - self.car_body.position).length
         readings.append(self.pre_goal_dist - current_goal_dist)
         self.pre_goal_dist = current_goal_dist
+        
+        if current_goal_dist < 3 * MULTI:
+            readings.append(1)
+        else:
+            readings.append(0)
+
         # Set the reward.
         # Car crashed when any reading == 1
         score = 0
@@ -510,7 +525,7 @@ class GameState:
         else:
             readings.append(0)
                       
-        reward = np.dot(self.W, readings)
+        reward = self.get_reward(self.W, readings)
         state = np.array([readings])
 
         self.num_steps += 1
@@ -518,7 +533,7 @@ class GameState:
         # Check whether the goal need to be updated
         if current_goal_dist < 3 * MULTI:
             self.current_goal_id = self.current_goal_id + 1
-            #self.current_goal_id = random.randint(0, len(self.goals)-1)
+            #self.current_goal_id = random.randint(1, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
                 self.current_goal_id = 2
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length

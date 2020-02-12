@@ -9,7 +9,7 @@ from neuralNets import net1
 import sys
 import time
 
-NUM_FEATURES = 46 # number of features
+NUM_FEATURES = 47 # number of features
 NUM_ACTIONS = 25 # number of actions
 GAMMA = 0.9
 

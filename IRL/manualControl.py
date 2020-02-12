@@ -21,7 +21,7 @@ import math
 #import curses # for keypress, doesn't work for Windows
 
 
-NUM_FEATURES = 46
+NUM_FEATURES = 47
 GAMMA = 0.9 # the discount factor for RL algorithm
 
 def demo(screen):
