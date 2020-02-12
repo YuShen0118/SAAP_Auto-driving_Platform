@@ -51,6 +51,8 @@ def play(model, weights, play_frames=10000, play_rounds=100):
 
         if play_frames > 0 and car_move % play_frames == 0:
             print("The car has moved %d frames" % car_move)
+            if readings[-1] == 0:
+                round_num += 1
             print("Score in this round: ", score)
             total_score += score
             print("Aver Score in ", round_num, "rounds: ", total_score / round_num)
