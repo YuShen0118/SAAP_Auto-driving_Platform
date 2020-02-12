@@ -78,7 +78,7 @@ class IRLAgent:
         model = net1(self.num_features, self.num_actions, self.params['nn'], model_name)
         
         # get feature expectations by executing the learned model
-        temp_fe = play(model, weights, self.play_frames)
+        temp_fe, aver_score = play(model, weights, self.play_frames, play_rounds=10)
         
         # t = (weights.tanspose)*(expertFE-newPolicyFE)
         # hyperdistance = t
@@ -86,7 +86,7 @@ class IRLAgent:
         self.policy_fe_list[temp_hyper_dis] = temp_fe
         
         print("Updating Policy FE list finished!")
-        return temp_hyper_dis 
+        return temp_hyper_dis, aver_score
         
         
     def IRL(self, scene_file_name):
@@ -110,7 +110,11 @@ class IRLAgent:
             
             # Main Step 2: update the policy feature expectations list
             # and compute the distance between the lastest policy and expert feature expecations
-            self.current_dis = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name)
+            self.current_dis, score = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name)
+            f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
+            f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score))
+            f1.write('\n')
+            f1.close()
             
             # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
             print("The stopping distance thresould is: ", epsilon)

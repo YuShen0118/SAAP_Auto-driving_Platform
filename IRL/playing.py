@@ -23,6 +23,7 @@ def play(model, weights, play_frames=10000, play_rounds=100):
     featureExp = np.zeros(NUM_FEATURES)
     round_num = 0
     total_score = 0
+    aver_score = 0
 
     # start to move
     while True:
@@ -47,7 +48,8 @@ def play(model, weights, play_frames=10000, play_rounds=100):
             round_num += 1
             print("Score in this round: ", score)
             total_score += score
-            print("Aver Score in ", round_num, "rounds: ", total_score / round_num)
+            aver_score = total_score / round_num
+            print("Aver Score in ", round_num, "rounds: ", aver_score)
 
         if play_frames > 0 and car_move % play_frames == 0:
             print("The car has moved %d frames" % car_move)
@@ -55,18 +57,20 @@ def play(model, weights, play_frames=10000, play_rounds=100):
                 round_num += 1
             print("Score in this round: ", score)
             total_score += score
-            print("Aver Score in ", round_num, "rounds: ", total_score / round_num)
+            aver_score = total_score / round_num
+            print("Aver Score in ", round_num, "rounds: ", aver_score)
             break
 
         if play_rounds > 0 and round_num == play_rounds:
             print("Score in this round: ", score)
             total_score += score
-            print("Aver Score in ", round_num, "rounds: ", total_score / round_num)
+            aver_score = total_score / round_num
+            print("Aver Score in ", round_num, "rounds: ", aver_score)
             break
         
         state = next_state
 
-    return featureExp
+    return featureExp, aver_score
 
 if __name__ == "__main__": 
     #BEHAVIOR = sys.argv[1]
