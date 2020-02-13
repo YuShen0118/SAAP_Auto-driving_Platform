@@ -98,3 +98,5 @@ IRL/__pycache__/
 *.ide-shm
 *.ide-wal
 *.pyproj
+IRL/results/
+*.suo
