@@ -39,10 +39,12 @@ class Vector2(Structure):
 
 
 class GameState:
-    def __init__(self, weights='', scene_file_name='', state_num=47, use_expert=False):
+    def __init__(self, weights='', scene_file_name='', state_num=47, use_expert=True):
         if use_expert:
             # for windows
             self.expert_lib = ctypes.WinDLL ("./3thPartLib/RVO2/RVO_warper.dll")
+        self.driving_history = []
+        self.max_history_num = 50
 
         # Global-ish.
         self.crashed = False
@@ -438,12 +440,13 @@ class GameState:
             reward += 100
         return reward
 
-    def frame_step(self, action, effect=True):
+    def frame_step(self, action, effect=True, hitting_reaction_mode = 0):
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
         if effect:
             self.car_body.angle += steer_angle * self.simstep
+        self.car_body.angular_velocity = 0
 
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         v = self.car_body.velocity.length
@@ -475,6 +478,10 @@ class GameState:
 
         if draw_screen:
             pygame.display.flip()
+
+        self.driving_history.append([self.car_body.position, self.car_body.angle, self.car_body.velocity, self.current_goal_id])
+        if (len(self.driving_history) > self.max_history_num):
+            self.driving_history.pop(0)
 
         # Get the current location and the readings there.
         x, y = self.car_body.position
@@ -521,7 +528,15 @@ class GameState:
             self.crashed = True
             readings.append(1)
             if effect:
-                self.recover_from_crash(driving_direction)
+                if hitting_reaction_mode > 0:
+                    if (self.driving_history[0][0] - self.driving_history[-1][0]).length > 1 * MULTI:
+                        self.recover_from_crash(self.driving_history[0])
+                    else:
+                        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+                    self.driving_history.clear()
+
+                else:
+                    self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
         else:
             readings.append(0)
                       
@@ -535,7 +550,7 @@ class GameState:
             self.current_goal_id = self.current_goal_id + 1
             #self.current_goal_id = random.randint(1, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
-                self.current_goal_id = 2
+                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 2])
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         
         if draw_screen:
@@ -568,16 +583,16 @@ class GameState:
             return False
         '''
 
-    def recover_from_crash(self, driving_direction):
+    def recover_from_crash(self, states):
         """
         We hit something, so recover.
         """
+        [position, angle, velocity, goal_id] = states
+        self.car_body.position = position
+        self.car_body.angle = angle
+        self.car_body.velocity = velocity
+        self.current_goal_id = goal_id
 
-        self.car_body.position = self.car_body.init_position
-        self.car_body.angle = self.car_body.init_angle
-        self.car_body.velocity = (0, 0)
-        self.car_body.angular_velocity = 0
-        self.current_goal_id = 1
 
         '''
         while self.crashed:

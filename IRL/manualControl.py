@@ -55,6 +55,7 @@ def play(use_expert = False):
 
         if (use_expert):
             action = game_state.get_expert_action()
+            #action = random.randrange(25)
             #action = game_state.get_expert_action_out(carPos, carVelo, carAngle)
         else:
             # get the actual move from keyboard

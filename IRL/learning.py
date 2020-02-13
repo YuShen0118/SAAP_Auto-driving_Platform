@@ -28,7 +28,8 @@ def IRLHelper(weights, behavior_type, train_frames, opt_count):
 '''            
 
             
-def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, continue_train=False):
+def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
+              continue_train=True, hitting_reaction_mode=2):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -71,6 +72,8 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     # let's time it
     start_time = timeit.default_timer()
 
+    expert_count = 0
+
     # run the frames
     frame_idx = 0
     car_move_count = 0     # track the number of moves the car is making
@@ -86,7 +89,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # choose an action.
         # before we reach the number of observing frame (for training) we just sample random actions
-        if random.random() < epsilon or frame_idx < observe_frames:
+        if expert_count > 0:
+            action = game_state.get_expert_action()
+            expert_count -= 1
+        elif random.random() < epsilon or frame_idx < observe_frames:
             action = np.random.randint(0, 25)  # produce action 0, 1, or 2
             #action = np.random.random([2])*2-1
         else:
@@ -96,7 +102,13 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             #action = model.predict(state, batch_size=1)
 
         # execute action, receive a reward and get the next state
-        reward, next_state, _, _ = game_state.frame_step(action)
+        reward, next_state, _, _ = game_state.frame_step(action, hitting_reaction_mode = hitting_reaction_mode)
+        if hitting_reaction_mode == 2: # use expert when hitting
+            if next_state[0][-1] == 1: # hitting
+                if expert_count == 0:
+                    expert_count = game_state.max_history_num
+                else:
+                    expert_count = 0
 
         # store experiences
         replay.append((state, action, reward, next_state))
