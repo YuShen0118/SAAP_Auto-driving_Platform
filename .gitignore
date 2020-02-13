@@ -100,3 +100,5 @@ IRL/__pycache__/
 *.pyproj
 IRL/results/
 *.suo
+UnitySimulator/obj/Debug/
+IRL/scene1.txt

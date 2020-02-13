@@ -170,7 +170,7 @@ class GameState:
             #self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], segment_radius, "brown"))
             #self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], segment_radius, "brown"))
 
-            self.goals = [[80,0], [50,44],[-47,46],[-52,-45],[-10,-66],[-3,42],[80,-60]]
+            self.goals = [[80,0], [50,44],[-45,46],[-52,-45],[-10,-66],[-3,42],[80,-60]]
             for goal in self.goals:
                 goal[0] = (goal[0] + offset) * MULTI 
                 goal[1] = (goal[1] + offset) * MULTI 
