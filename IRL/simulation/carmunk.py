@@ -495,7 +495,8 @@ class GameState:
         current_goal = self.goals[self.current_goal_id]
         angle_unit = angle_range /unit_range
         goal_direction = self.get_direction(self.car_body.position, self.car_body.angle, current_goal, angle_unit)
-        readings.append(abs(goal_direction))
+        readings.append(np.clip(abs(goal_direction) / unit_range,-1,1))
+
         section_number = unit_range*2 + 1
 
         # Whether there's obstacle in the goal direction, 1 channel
@@ -509,7 +510,10 @@ class GameState:
 
         # The difference between the distance to the goal of current frame and last frame, 1 channel
         current_goal_dist = (current_goal - self.car_body.position).length
-        readings.append(self.pre_goal_dist - current_goal_dist)
+        last_goal = self.goals[self.current_goal_id-1]
+        seg_dist = (Vec2d(current_goal[0], current_goal[1]) - Vec2d(last_goal[0], last_goal[1])).length
+
+        readings.append(np.clip((self.pre_goal_dist - current_goal_dist) / seg_dist, -1, 1))
         self.pre_goal_dist = current_goal_dist
         
         if current_goal_dist < 3 * MULTI:
@@ -521,8 +525,6 @@ class GameState:
         # Car crashed when any reading == 1
         score = 0
         if self.car_is_crashed(readings):
-            last_goal = self.goals[self.current_goal_id-1]
-            seg_dist = (Vec2d(current_goal[0], current_goal[1]) - Vec2d(last_goal[0], last_goal[1])).length
             score = (self.current_goal_id - current_goal_dist / seg_dist)*100
 
             self.crashed = True
@@ -639,17 +641,17 @@ class GameState:
         in a sonar "arm" is non-zero, then that arm returns a distance of 5.
         """
         # Make our arms.
-        one_arm = self.make_sonar_arm(x, y)
+        one_arm, max_dist = self.make_sonar_arm(x, y)
         
         obstacle_types = []
         angle_unit = angle_range /unit_range
         for i in range(-unit_range, unit_range+1):
             one_ray = self.get_arm_distance(one_arm, x, y, angle, i*angle_unit)
             obstacle_types.append(one_ray[1])
-            readings.append(one_ray[0])
+            readings.append(np.clip(one_ray[0] / max_dist, -1, 1))
             
         for obs_type in obstacle_types:
-            readings.append(obs_type / 2) #normalize to 1
+            readings.append(np.clip(obs_type / 2, -1, 1)) #normalize to 1
 
         #readings = readings[0:7]
         '''
@@ -722,7 +724,8 @@ class GameState:
         for i in range(point_num):
             arm_points.append((distance + x + (spread * i), y))
 
-        return arm_points
+        max_dist = distance + spread * (point_num-1)
+        return arm_points, max_dist
 
     def get_rotated_point(self, x_1, y_1, x_2, y_2, radians):
         # Rotate x_2, y_2 around x_1, y_1 by angle.
