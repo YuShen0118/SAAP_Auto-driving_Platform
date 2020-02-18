@@ -431,13 +431,21 @@ class GameState:
         return [steer_angle, acceleration]
 
     def get_reward(self, W, readings):
-        reward = np.dot(W, readings)
-        if (readings[-1] == 1):
-            # collision
-            reward -= 500
+        #reward = np.dot(W, readings)
+        reward = 0
+        
         if (readings[-2] == 1):
             # reach the goal
-            reward += 100
+            reward += 0.5
+        if (readings[-3] > 0):
+            # get closer to the goal
+            reward += 0.01
+        if (readings[-1] == 1):
+            # collision
+            reward -= 1
+
+        reward = np.clip(reward, -1, 1)
+        
         return reward
 
     def frame_step(self, action, effect=True, hitting_reaction_mode = 0):
