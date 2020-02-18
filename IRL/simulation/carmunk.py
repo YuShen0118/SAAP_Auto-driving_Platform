@@ -715,7 +715,7 @@ class GameState:
         # Return the distance for the arm.
         return [i, 0] #sensor did not hit anything return 0 for black space
 
-    def make_sonar_arm(self, x, y, distance=12, spread=4, point_num=100):
+    def make_sonar_arm(self, x, y, distance=12, spread=5, point_num=100):
         #spread: Spread between two adjacent points.
         #distance: Gap before first sensor.
         arm_points = []
@@ -724,7 +724,7 @@ class GameState:
         for i in range(point_num):
             arm_points.append((distance + x + (spread * i), y))
 
-        max_dist = distance + spread * (point_num-1)
+        max_dist = point_num #distance + spread * (point_num-1)
         return arm_points, max_dist
 
     def get_rotated_point(self, x_1, y_1, x_2, y_2, radians):

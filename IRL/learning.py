@@ -27,6 +27,14 @@ def IRLHelper(weights, behavior_type, train_frames, opt_count):
     train_net(model, params, weights, behavior_type, train_frames, opt_count)
 '''            
 
+def outPutW(weights, border=4):
+    for w in weights:
+        if len(w.shape) == 1:
+            print(w[1:border])
+        if len(w.shape) == 2:
+            print(w[1:border, 1:border])
+        if len(w.shape) == 3:
+            print(w[1:border, 1:border, 1:border])
             
 def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
               continue_train=True, hitting_reaction_mode=2):

@@ -58,7 +58,7 @@ class IRLAgent:
         sol = solvers.qp(P,q,G,h)
 
         weights = np.squeeze(np.asarray(sol['x']))
-        norm = np.linalg.norm(weights)
+        norm = np.linalg.norm(weights, ord=1)
         weights = weights/norm
         print("Computing optimal weights finished!")
         return weights # return the normalized weights
@@ -158,8 +158,8 @@ if __name__ == '__main__':
     expert_city_fe = [170.65782, 190.90100, 218.28805, 253.84296, 302.35227, 334.81273, 374.84139, 424.95082, 462.06879, 501.20787, 196.24086, 147.47648, 111.49499, 89.36053, 72.28600, 56.71287, 45.34124, 36.20385, 34.40675, 32.21060, 31.20924, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 9.94075, 0.00000, 7.43905, 0.00000, 0.00000]
 
     # training parameters
-    nn_param = [164, 150]
-    #nn_param = [64, 128, 128, 64]
+    #nn_param = [164, 150]
+    nn_param = [64, 128, 256, 128, 64]
     params = {
         "batch_size": 100,
         "buffer": 50000,
