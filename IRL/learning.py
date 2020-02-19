@@ -142,7 +142,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             model.fit(X_train, y_train, batch_size=my_batch_size, epochs=1, verbose=0, callbacks=[history])
             loss_log.append(history.losses)
             # diverges, early stop
-            if history.losses[0] > 0.0001:
+            if history.losses[0] > 100:
                 model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model)
                 model.save_weights(model_name, overwrite=True)
                 np.save(weights_name, weights)
