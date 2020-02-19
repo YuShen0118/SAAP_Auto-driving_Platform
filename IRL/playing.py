@@ -83,9 +83,9 @@ if __name__ == "__main__":
     
     modelType = BEHAVIOR
     model_dir = 'results/models-'+ modelType +'/'
-    saved_model = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
-    saved_weights = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'_weights.npy'
+    saved_model = model_dir+'64-128-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
+    saved_weights = model_dir+'64-128-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'_weights.npy'
     weights = np.load(saved_weights)
     #weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
-    model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
+    model = net1(NUM_FEATURES, NUM_ACTIONS, [64, 128, 256, 128, 64], saved_model)
     print (play(model, weights, play_frames=-1))

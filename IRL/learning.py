@@ -212,7 +212,7 @@ def process_minibatch(minibatch, model, num_features, num_actions):
         y[:] = currentQ[:]
         
         # check for terminal state
-        if next_state_m[0][7] == 1:  # the terminal state
+        if next_state_m[0][-1] == 1:  # the terminal state
             update = reward_m
         else:  # non-terminal state
             update = (reward_m + (GAMMA * maxQ))
