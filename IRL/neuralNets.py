@@ -20,7 +20,7 @@ class LossHistory(Callback):
         self.losses.append(logs.get('loss'))
 
 
-def net1(numInputs, numOutputs, params, weightsFile=''):
+def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1):
     netInputs = Input(shape=(numInputs,))
     x = BatchNormalization()(netInputs)
     x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(x)
@@ -34,7 +34,8 @@ def net1(numInputs, numOutputs, params, weightsFile=''):
 
     model = Model(inputs = netInputs, outputs = netOutputs)
     
-    optimizer = Adam(lr=0.001, amsgrad=False)
+    lr = 0.001 / 2**(epochCount-1)
+    optimizer = Adam(lr=lr, amsgrad=False)
     model.compile(optimizer=optimizer, loss='mse')
 
     #model.summary()

@@ -70,7 +70,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         pretrained_model = model_dir + params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count-1) + '.h5' 
 
     # init a neural network as an approximator for Q function
-    model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model)
+    epochCount = 1
+    if continue_train:
+        epochCount = opt_count
+    model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model, epochCount=epochCount)
      
     # create a new game instance and get the initial state by moving forward
     game_state = carmunk.GameState(weights, scene_file_name)
@@ -138,6 +141,14 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             history = LossHistory()
             model.fit(X_train, y_train, batch_size=my_batch_size, epochs=1, verbose=0, callbacks=[history])
             loss_log.append(history.losses)
+            # diverges, early stop
+            if history.losses[0] > 0.0001:
+                model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model)
+                model.save_weights(model_name, overwrite=True)
+                np.save(weights_name, weights)
+                print("Diverges, early stop, loss=", history.losses[0])
+                print("Saving model: ", model_name)
+                break
 
         # update the state
         state = next_state
@@ -147,7 +158,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             epsilon -= d_epsilon
 
         # car died, update
-        if state[0][7] == 1:
+        if state[0][-1] == 1:
             # log the car's distance at this frame index 
             survive_data.append([frame_idx, car_move_count])
 
