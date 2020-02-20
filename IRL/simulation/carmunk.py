@@ -439,10 +439,10 @@ class GameState:
             reward += 0.5
         if (readings[-3] > 0):
             # get closer to the goal
-            reward += 0.01
+            reward += 0.001
         if (readings[-1] == 1):
             # collision
-            reward -= 1
+            reward -= 0.9
 
         reward = np.clip(reward, -1, 1)
         

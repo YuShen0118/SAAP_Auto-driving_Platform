@@ -22,15 +22,15 @@ class LossHistory(Callback):
 
 def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1):
     netInputs = Input(shape=(numInputs,))
-    x = BatchNormalization()(netInputs)
-    x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(x)
+    #x = BatchNormalization()(netInputs)
+    x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(netInputs)
     x = Dropout(0.2)(x)
 
     for i in range(1, len(params)):
-        x = BatchNormalization()(x)
+        #x = BatchNormalization()(x)
         x = Dense(params[i], kernel_initializer='lecun_uniform', activation='relu')(x)
         x = Dropout(0.2)(x)
-    netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='linear')(x)
+    netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='tanh')(x)
 
     model = Model(inputs = netInputs, outputs = netOutputs)
     
