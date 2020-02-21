@@ -144,7 +144,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             model.fit(X_train, y_train, batch_size=my_batch_size, epochs=1, verbose=0, callbacks=[history])
             loss_log.append(history.losses)
             # diverges, early stop
-            if history.losses[0] > 100:
+            if history.losses[0] > 1000:
                 model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model)
                 model.save_weights(model_name, overwrite=True)
                 np.save(weights_name, weights)
@@ -153,6 +153,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
                 stop_status = -1
                 break
 
+            '''
             #converges, early stop
             if history.losses[0] < 1e-6:
                 model.save_weights(model_name, overwrite=True)
@@ -161,6 +162,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
                 print("Saving model: ", model_name)
                 stop_status = 1
                 break
+            '''
 
         # update the state
         state = next_state
@@ -238,10 +240,10 @@ def process_minibatch(minibatch, model, num_features, num_actions):
         if next_state_m[0][-1] == 1:  # the terminal state
             update = reward_m
         else:  # non-terminal state
-            update = (reward_m + (GAMMA * maxQ*100))
+            update = (reward_m + (GAMMA * maxQ))
         
         # update the Q value for the action we take on the current state (i.e., state_m)
-        y[0][action_m] = update / 100
+        y[0][action_m] = update
         X_train.append(state_m.reshape(num_features,))
         y_train.append(y.reshape(num_actions,)) 
 

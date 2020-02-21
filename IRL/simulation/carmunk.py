@@ -444,7 +444,7 @@ class GameState:
 
         reward = np.clip(reward, -1, 1)
         
-        return reward * 100
+        return reward
 
     def frame_step(self, action, effect=True, hitting_reaction_mode = 0):
         self.crashed = False

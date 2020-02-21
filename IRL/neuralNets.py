@@ -30,15 +30,11 @@ def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1, enlarge_lr
         #x = BatchNormalization()(x)
         x = Dense(params[i], kernel_initializer='lecun_uniform', activation='relu')(x)
         x = Dropout(0.2)(x)
-    netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='tanh')(x)
+    netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='linear')(x)
 
     model = Model(inputs = netInputs, outputs = netOutputs)
     
-    lr = 0.001 / 2**(epochCount-1)
-    for i in range(enlarge_lr):
-        lr *= 10
-    optimizer = Adam(lr=lr, amsgrad=False)
-    model.compile(optimizer=optimizer, loss='mse')
+    model.compile(optimizer='rmsprop', loss='mse')
 
     #model.summary()
 
