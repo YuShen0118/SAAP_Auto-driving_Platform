@@ -68,12 +68,12 @@ class GameState:
         self.simstep = 0.02 # 50 FPS 
         #self.simstep = 0.0625 # 16 FPS 
         
-        self.steer_section_number = 25
-        self.steer_zero_section_no = 12
-        self.steer_per_section = math.pi / 20
+        self.steer_section_number = 5
+        self.steer_zero_section_no = 2
+        self.steer_per_section = math.pi / 4
 
-        self.acc_section_number = 1
-        self.acc_zero_section_no = 0
+        self.acc_section_number = 5
+        self.acc_zero_section_no = 1
         self.acc_per_section = 5
 
         self.preferred_speed = 10.0
@@ -432,7 +432,9 @@ class GameState:
         return [steer_angle, acceleration]
 
     def get_reward(self, W, readings):
-        #reward = np.dot(W, readings)
+        reward = np.dot(W, readings)
+
+        '''
         reward = 0.4*readings[-3] # get closer to the goal
         
         if (readings[-2] == 1):
@@ -443,6 +445,7 @@ class GameState:
             reward -= 0.9
 
         reward = np.clip(reward, -1, 1)
+        '''
         
         return reward
 
@@ -450,7 +453,7 @@ class GameState:
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
-        acceleration = 100
+        #acceleration = 100
 
         if effect:
             self.car_body.angle += steer_angle * self.simstep
@@ -503,7 +506,8 @@ class GameState:
         current_goal = self.goals[self.current_goal_id]
         angle_unit = angle_range /unit_range
         goal_direction = self.get_direction(self.car_body.position, self.car_body.angle, current_goal, angle_unit)
-        readings.append(np.clip(abs(goal_direction) / unit_range,-1,1))
+        #readings.append(np.clip(abs(goal_direction) / unit_range,-1,1))
+        readings.append(abs(goal_direction))
 
         section_number = unit_range*2 + 1
 
@@ -520,8 +524,9 @@ class GameState:
         current_goal_dist = (current_goal - self.car_body.position).length
         last_goal = self.goals[self.current_goal_id-1]
         seg_dist = (Vec2d(current_goal[0], current_goal[1]) - Vec2d(last_goal[0], last_goal[1])).length
-
-        readings.append(np.clip((self.pre_goal_dist - current_goal_dist) / seg_dist, -1, 1))
+        
+        #readings.append(np.clip((self.pre_goal_dist - current_goal_dist) / seg_dist, -1, 1))
+        readings.append((self.pre_goal_dist - current_goal_dist))
         self.pre_goal_dist = current_goal_dist
         
         if current_goal_dist < 3 * MULTI:
@@ -560,7 +565,7 @@ class GameState:
             self.current_goal_id = self.current_goal_id + 1
             #self.current_goal_id = random.randint(1, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
-                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 2])
+                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         
         if draw_screen:
@@ -656,10 +661,11 @@ class GameState:
         for i in range(-unit_range, unit_range+1):
             one_ray = self.get_arm_distance(one_arm, x, y, angle, i*angle_unit)
             obstacle_types.append(one_ray[1])
-            readings.append(np.clip(one_ray[0] / max_dist, -1, 1))
+            #readings.append(np.clip(one_ray[0] / max_dist, -1, 1))
+            readings.append(one_ray[0])
             
         for obs_type in obstacle_types:
-            readings.append(np.clip(obs_type / 2, -1, 1)) #normalize to 1
+            readings.append(obs_type / 2) #normalize to 1
 
         #readings = readings[0:7]
         '''
