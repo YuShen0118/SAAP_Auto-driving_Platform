@@ -110,6 +110,8 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             history = LossHistory()
             model.fit(X_train, y_train, batch_size=my_batch_size, epochs=1, verbose=0, callbacks=[history])
             loss_log.append(history.losses)
+            if frame_idx % 100 == 0:
+                print("history.losses ", history.losses)
 
         # update the state
         state = next_state
@@ -119,7 +121,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             epsilon -= (1/train_frames)
 
         # car died, update
-        if state[0][7] == 1:
+        if state[0][-1] == 1:
             # log the car's distance at this frame index 
             survive_data.append([frame_idx, car_move_count])
 
@@ -183,7 +185,7 @@ def process_minibatch(minibatch, model, num_features, num_actions):
         y[:] = currentQ[:]
         
         # check for terminal state
-        if next_state_m[0][7] == 1:  # the terminal state
+        if next_state_m[0][-1] == 1:  # the terminal state
             update = reward_m
         else:  # non-terminal state
             update = (reward_m + (GAMMA * maxQ))

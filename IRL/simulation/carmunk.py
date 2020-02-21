@@ -476,8 +476,8 @@ class GameState:
 
         # Check whether the goal need to be updated
         if current_goal_dist < 2 * MULTI:
-            #self.current_goal_id = self.current_goal_id + 1
-            self.current_goal_id = random.randint(0, len(self.goals)-1)
+            self.current_goal_id = self.current_goal_id + 1
+            #self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
                 self.current_goal_id = 1
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
