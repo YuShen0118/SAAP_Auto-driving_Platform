@@ -31,6 +31,7 @@ draw_screen = flag
 MULTI = 5 # enlarge the size of simulation scenario
 multiVec = pymunk.Vec2d(MULTI, MULTI)
 offset = 70
+carInitAngle = math.pi / 2
 
 
 class Vector2(Structure):
@@ -278,7 +279,7 @@ class GameState:
         self.car_body.init_position = self.car_body.position
         self.car_shape.color = THECOLORS["green"]
         self.car_shape.elasticity = 1.0
-        self.car_body.angle = math.pi / 2
+        self.car_body.angle = carInitAngle
         self.car_body.init_angle = self.car_body.angle
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         self.car_body.apply_impulse_at_local_point(driving_direction)
@@ -432,21 +433,18 @@ class GameState:
 
     def get_reward(self, W, readings):
         #reward = np.dot(W, readings)
-        reward = 0
+        reward = 0.4*readings[-3] # get closer to the goal
         
         if (readings[-2] == 1):
             # reach the goal
             reward += 0.5
-        if (readings[-3] > 0):
-            # get closer to the goal
-            reward += 0.001
         if (readings[-1] == 1):
             # collision
             reward -= 0.9
 
         reward = np.clip(reward, -1, 1)
         
-        return reward
+        return reward * 100
 
     def frame_step(self, action, effect=True, hitting_reaction_mode = 0):
         self.crashed = False

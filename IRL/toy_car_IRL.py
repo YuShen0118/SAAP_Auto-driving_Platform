@@ -64,12 +64,12 @@ class IRLAgent:
         return weights # return the normalized weights
 
 
-    def UpdatePolicyFEList(self, weights, opt_count, scene_file_name):  
+    def UpdatePolicyFEList(self, weights, opt_count, scene_file_name, enlarge_lr):  
         # store feature expecations of a newly learned policy and its difference to the expert policy	
         print("Updating Policy FE list starts......")
         
         #start_time = timeit.default_timer()
-        model_name = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name)	
+        model_name, stop_status = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name, enlarge_lr=enlarge_lr)	
         
         #print("Total consumed time: ", timeit.default_timer() - start_time, " s")
             
@@ -86,7 +86,7 @@ class IRLAgent:
         self.policy_fe_list[temp_hyper_dis] = temp_fe
         
         print("Updating Policy FE list finished!")
-        return temp_hyper_dis, aver_score
+        return temp_hyper_dis, aver_score, stop_status
         
         
     def IRL(self, scene_file_name):
@@ -99,6 +99,7 @@ class IRLAgent:
         nearest_dist = 9999999999
         nearest_iter_no = -1
         opt_count = 1
+        enlarge_lr = 0
         while True:
             print("================ IRL iteration number: ", opt_count, " ================")
             
@@ -110,7 +111,9 @@ class IRLAgent:
             
             # Main Step 2: update the policy feature expectations list
             # and compute the distance between the lastest policy and expert feature expecations
-            self.current_dis, score = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name)
+            self.current_dis, score, stop_status = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name, enlarge_lr)
+            if stop_status == 1:
+                enlarge_lr += 1
             f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
             f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score))
             f1.write('\n')

@@ -37,7 +37,7 @@ def outPutW(weights, border=4):
             print(w[1:border, 1:border, 1:border])
             
 def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
-              continue_train=True, hitting_reaction_mode=0):
+              continue_train=False, hitting_reaction_mode=0, enlarge_lr=0):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -73,7 +73,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     epochCount = 1
     if continue_train:
         epochCount = opt_count
-    model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model, epochCount=epochCount)
+    model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model, epochCount=epochCount, enlarge_lr=enlarge_lr)
      
     # create a new game instance and get the initial state by moving forward
     game_state = carmunk.GameState(weights, scene_file_name)
@@ -84,6 +84,8 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     start_time = timeit.default_timer()
 
     expert_count = 0
+
+    stop_status = 0
 
     # run the frames
     frame_idx = 0
@@ -148,6 +150,16 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
                 np.save(weights_name, weights)
                 print("Diverges, early stop, loss=", history.losses[0])
                 print("Saving model: ", model_name)
+                stop_status = -1
+                break
+
+            #converges, early stop
+            if history.losses[0] < 1e-6:
+                model.save_weights(model_name, overwrite=True)
+                np.save(weights_name, weights)
+                print("Converges, early stop, loss=", history.losses[0])
+                print("Saving model: ", model_name)
+                stop_status = 1
                 break
 
         # update the state
@@ -183,7 +195,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     # log results after we're done with all training frames
     log_results(results_folder, filename, survive_data, loss_log)
     print("Q learning finished!")
-    return model_name
+    return model_name, stop_status
     
 
 def log_results(results_folder, filename, survive_data, loss_log):
@@ -226,10 +238,10 @@ def process_minibatch(minibatch, model, num_features, num_actions):
         if next_state_m[0][-1] == 1:  # the terminal state
             update = reward_m
         else:  # non-terminal state
-            update = (reward_m + (GAMMA * maxQ))
+            update = (reward_m + (GAMMA * maxQ*100))
         
         # update the Q value for the action we take on the current state (i.e., state_m)
-        y[0][action_m] = update
+        y[0][action_m] = update / 100
         X_train.append(state_m.reshape(num_features,))
         y_train.append(y.reshape(num_actions,)) 
 
