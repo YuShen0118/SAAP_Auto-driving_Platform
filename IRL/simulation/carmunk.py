@@ -539,7 +539,7 @@ class GameState:
             self.current_goal_id = self.current_goal_id + 1
             #self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
-                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 2])
+                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         
         if draw_screen:

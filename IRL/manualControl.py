@@ -17,6 +17,7 @@ from random import randint
 import numpy as np
 from neuralNets import net1
 import msvcrt
+import math
 #import curses # for keypress, doesn't work for Windows
 
 
@@ -45,11 +46,17 @@ def play(use_expert = False):
     prevFeatureExp = np.zeros(NUM_FEATURES)
 
     moveCount = 0
+    carPos = [80, 0]
+    carVelo = [0,0]
+    carAngle = math.pi / 2
     while True:
         moveCount += 1
+        carPos[1] += 0.1
 
         if (use_expert):
             action = game_state.get_expert_action()
+            #action = random.randrange(25)
+            #action = game_state.get_expert_action_out(carPos, carVelo, carAngle)
         else:
             # get the actual move from keyboard
             move = msvcrt.getch()
@@ -82,7 +89,7 @@ def play(use_expert = False):
 
         # take an action 
         # start recording feature expectations only after 100 frames
-        _, _, readings = game_state.frame_step(action)
+        _, _, readings, _ = game_state.frame_step(action)
 
         if moveCount > 100:
             currFeatureExp += (GAMMA**(moveCount-101))*np.array(readings)
@@ -90,8 +97,8 @@ def play(use_expert = False):
         # report the change percentage
         changePercentage = (np.linalg.norm(currFeatureExp - prevFeatureExp)*100.0)/np.linalg.norm(currFeatureExp)
 
-        print (moveCount)
-        print ("The change percentage in feature expectation is: ", changePercentage)
+        #print (moveCount)
+        #print ("The change percentage in feature expectation is: ", changePercentage)
         prevFeatureExp = np.array(currFeatureExp)
 
         if moveCount % 20000 == 0:
