@@ -11,7 +11,7 @@
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId>CondaEnv|CondaEnv|irl</InterpreterId>
+    <InterpreterId>CondaEnv|CondaEnv|irl2</InterpreterId>
     <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -34,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="results\weights-red.txt" />
+    <Content Include="scenes\scene-city.txt" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="results" />
@@ -41,7 +42,7 @@
     <Folder Include="simulation" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="CondaEnv|CondaEnv|irl" />
+    <InterpreterReference Include="CondaEnv|CondaEnv|irl2" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

@@ -59,8 +59,18 @@ class GameState:
         self.space = pymunk.Space()
         self.space.gravity = pymunk.Vec2d(0., 0.)
 
-        c_handler = self.space.add_collision_handler(1, 2)
+        c_handler = self.space.add_wildcard_collision_handler(2)
         c_handler.begin = self.collision_callback
+        
+        #TODO, fix number of other vehicles
+        c_handler3 = self.space.add_collision_handler(1, 3)
+        c_handler3.begin = self.collision_callback3
+        c_handler4 = self.space.add_collision_handler(1, 4)
+        c_handler4.begin = self.collision_callback4
+        c_handler5 = self.space.add_collision_handler(1, 5)
+        c_handler5.begin = self.collision_callback5
+        c_handler6 = self.space.add_collision_handler(1, 6)
+        c_handler6.begin = self.collision_callback6
         
         self.simstep = 0.02 # 50 FPS 
         #self.simstep = 0.0625 # 16 FPS 
@@ -76,7 +86,7 @@ class GameState:
         self.preferred_speed = 10.0
 
         # Create the car.
-        self.create_car((80+offset)*MULTI, (0+offset)*MULTI, 15)
+        self.create_main_car((80+offset)*MULTI, (0+offset)*MULTI, 15)
 
         # Record steps.
         self.num_steps = 0
@@ -113,6 +123,8 @@ class GameState:
         #self.obstacles.append(self.create_obstacle(780, 330, 70, "brown"))
         #self.obstacles.append(self.create_obstacle(530, 500, 70, "brown"))
 
+        self.obstacles_car = []
+
         obstacle_color = "brown"
         minx = 99999999999
         maxx = 0
@@ -148,6 +160,18 @@ class GameState:
                     
                     #screen.fill(THECOLORS["black"])
                     #self.space.debug_draw(self.draw_options)
+                    
+                f.readline()
+                obs_car_num = int(f.readline())
+                for i in range(obs_car_num):
+                    line = f.readline()
+                    info = []
+                    for s in line.split(' '):
+                        info.append(s)
+                    self.obstacles_car.append(self.create_obstacle_car(MULTI*(float(info[0])+offset), 
+                                                 MULTI*(float(info[1])+offset), 
+                                                 float(info[2])/180*math.pi, float(info[3]), i+3))
+                    
 
             segment_radius = 5
             poly_tmp = self.create_poly_from_vertical_segment([minx, miny], [minx, maxy], segment_radius)
@@ -206,6 +230,26 @@ class GameState:
         if arbiter.is_first_contact:
             print('collision!!!')
             self.crashed = True
+            return False
+
+    def collision_callback3(self, arbiter, space, data):
+        if arbiter.is_first_contact:
+            self.obstacles_car[0].velocity = -self.obstacles_car[0].velocity
+            return True
+        
+    def collision_callback4(self, arbiter, space, data):
+        if arbiter.is_first_contact:
+            self.obstacles_car[1].velocity = -self.obstacles_car[1].velocity
+            return True
+        
+    def collision_callback5(self, arbiter, space, data):
+        if arbiter.is_first_contact:
+            self.obstacles_car[2].velocity = -self.obstacles_car[2].velocity
+            return True
+        
+    def collision_callback6(self, arbiter, space, data):
+        if arbiter.is_first_contact:
+            self.obstacles_car[3].velocity = -self.obstacles_car[3].velocity
             return True
 
     def create_obstacle(self, xy1, xy2, r, color):
@@ -260,7 +304,7 @@ class GameState:
         direction = Vec2d(1, 0).rotated(self.cat_body.angle)
         self.space.add(self.cat_body, self.cat_shape)
 
-    def create_car(self, x, y, r):
+    def create_main_car(self, x, y, r):
         
         carMass = 1
         carSize = multiVec * (4.5, 2.5)
@@ -285,6 +329,29 @@ class GameState:
 
         self.car_body.angular_velocity = 0
         self.car_body.velocity = (0,0)
+        
+    def create_obstacle_car(self, x, y, angle, v, collision_type):
+        
+        carMass = 1
+        carSize = multiVec * (4.5, 2.5)
+        car_body = pymunk.Body(carMass, pymunk.moment_for_box(carMass, carSize))
+        car_shape = pymunk.Poly.create_box(car_body, carSize)
+        car_shape.collision_type = collision_type
+
+        car_body.position = x, y
+        car_shape.color = THECOLORS["yellow"]
+        car_shape.elasticity = 1.0
+        car_body.angle = angle
+        driving_direction = Vec2d(1, 0).rotated(car_body.angle)
+        car_body.apply_impulse_at_local_point(driving_direction)
+        car_body.angular_velocity = 0
+        car_body.velocity = v * driving_direction
+        
+        self.space.add(car_body, car_shape)
+
+        car_reverse_driving = False
+
+        return car_body
         
     def getVecter2List(self, poly):
         vertices=(Vector2*len(poly))()
@@ -311,6 +378,23 @@ class GameState:
             vertexNum = len(obstacle)
             vertices = self.getVecter2List(obstacle)
             self.expert_lib.RVO_addObstacle(RVO_handler, vertexNum, byref(vertices[0]))
+            
+        id = 0
+        for obstacle_car in self.obstacles_car:
+            id+=1
+            for shape in obstacle_car.shapes:
+                poly = []
+                for v in shape.get_vertices():
+                    poly.append( v.rotated(shape.body.angle) + shape.body.position)
+                vertices = self.getVecter2List(poly)
+                vertexNum = len(shape.get_vertices())
+
+                #for vertex in vertices:
+                #    print(id, vertex.x, vertex.y)
+                
+                self.expert_lib.RVO_addObstacle(RVO_handler, vertexNum, byref(vertices[0]))
+
+
         self.expert_lib.RVO_processObstacles(RVO_handler)
             
     def set_preferred_velocities(self, RVO_handler):
