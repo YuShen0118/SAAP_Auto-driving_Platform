@@ -13,6 +13,8 @@ import os
 import timeit
 
 
+start_time = timeit.default_timer()
+
 class IRLAgent:
     def __init__(self, params, random_fe, expert_fe, epsilon, num_features, num_actions, train_frames, play_frames, behavior_type, results_folder):
         self.params = params
