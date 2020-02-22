@@ -27,8 +27,18 @@ def IRLHelper(weights, behavior_type, train_frames, opt_count):
     train_net(model, params, weights, behavior_type, train_frames, opt_count)
 '''            
 
+def outPutW(weights, border=4):
+    for w in weights:
+        if len(w.shape) == 1:
+            print(w[1:border])
+        if len(w.shape) == 2:
+            print(w[1:border, 1:border])
+        if len(w.shape) == 3:
+            print(w[1:border, 1:border, 1:border])
             
-def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name):
+            
+def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
+              continue_train=False, hitting_reaction_mode=0, enlarge_lr=0):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -37,7 +47,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     
     # init variables
     epsilon = 1 # the threshold for choosing a random action over the best action according to a Q value
-    observe_frames = 120  # we train our first model after observing certain frames
+    if continue_train:
+        epsilon = 0.5
+    d_epsilon = epsilon / train_frames
+    observe_frames = 100  # we train our first model after observing certain frames
     replay = []  # store tuples of (state, action, reward, next_state) for training 
     survive_data = [] # store how long the car survived until die
     loss_log = [] # store the train loss of each model
@@ -51,17 +64,29 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         os.makedirs(model_dir)
     filename = params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count)
     model_name = model_dir + filename + '.h5' 
+    weights_name = model_dir + filename + '_weights.npy'
+
+    pretrained_model = ''
+    if continue_train and (opt_count > 1):
+        pretrained_model = model_dir + params_to_filename(params) + '-' + str(train_frames) + '-' + str(opt_count-1) + '.h5' 
 
     # init a neural network as an approximator for Q function
-    model = net1(num_features, num_actions, params['nn'])
+    epochCount = 1
+    if continue_train:
+        epochCount = opt_count
+    model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model, epochCount=epochCount, enlarge_lr=enlarge_lr)
      
     # create a new game instance and get the initial state by moving forward
     game_state = carmunk.GameState(weights, scene_file_name)
-    _, state, _ = game_state.frame_step((2))
+    _, state, _, _ = game_state.frame_step((2))
     #_, state, _ = game_state.frame_step((0,1))
 
     # let's time it
     start_time = timeit.default_timer()
+
+    expert_count = 0
+
+    stop_status = 0
 
     # run the frames
     frame_idx = 0
@@ -70,7 +95,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     print("In QLearning - the total number of training frames is: ", train_frames)
     while frame_idx < train_frames:
         
-        if frame_idx % 100 == 0:
+        if frame_idx % 1000 == 0:
             print("In QLearning - current training frame is: ", frame_idx)
         
         frame_idx += 1
@@ -78,7 +103,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # choose an action.
         # before we reach the number of observing frame (for training) we just sample random actions
-        if random.random() < epsilon or frame_idx < observe_frames:
+        if expert_count > 0:
+            action = game_state.get_expert_action()
+            expert_count -= 1
+        elif random.random() < epsilon or frame_idx < observe_frames:
             action = np.random.randint(0, 25)  # produce action 0, 1, or 2
             #action = np.random.random([2])*2-1
         else:
@@ -88,7 +116,13 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             #action = model.predict(state, batch_size=1)
 
         # execute action, receive a reward and get the next state
-        reward, next_state, _ = game_state.frame_step(action)
+        reward, next_state, _, _ = game_state.frame_step(action, hitting_reaction_mode = hitting_reaction_mode)
+        if hitting_reaction_mode == 2: # use expert when hitting
+            if next_state[0][-1] == 1: # hitting
+                if expert_count == 0:
+                    expert_count = game_state.max_history_num
+                else:
+                    expert_count = 0
 
         # store experiences
         replay.append((state, action, reward, next_state))
@@ -113,12 +147,33 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             if frame_idx % 100 == 0:
                 print("history.losses ", history.losses)
 
+            # diverges, early stop
+            '''
+            if history.losses[0] > 1000:
+                model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model)
+                model.save_weights(model_name, overwrite=True)
+                np.save(weights_name, weights)
+                print("Diverges, early stop, loss=", history.losses[0])
+                print("Saving model: ", model_name)
+                stop_status = -1
+                break
+
+            #converges, early stop
+            if history.losses[0] < 1e-6:
+                model.save_weights(model_name, overwrite=True)
+                np.save(weights_name, weights)
+                print("Converges, early stop, loss=", history.losses[0])
+                print("Saving model: ", model_name)
+                stop_status = 1
+                break
+            '''
+
         # update the state
         state = next_state
 
         # decrease epsilon over time to reduce the chance taking a random action over the best action based on Q values
         if epsilon > 0.1 and frame_idx > observe_frames:
-            epsilon -= (1/train_frames)
+            epsilon -= d_epsilon
 
         # car died, update
         if state[0][-1] == 1:
@@ -140,12 +195,14 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
         # save the current model 
         if frame_idx == train_frames:
             model.save_weights(model_name, overwrite=True)
+            np.save(weights_name, weights)
             print("Saving model: ", model_name)
 
     # log results after we're done with all training frames
     log_results(results_folder, filename, survive_data, loss_log)
     print("Q learning finished!")
-    return model_name
+    return model_name, stop_status
+    
     
 
 def log_results(results_folder, filename, survive_data, loss_log):

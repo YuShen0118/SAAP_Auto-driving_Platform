@@ -62,24 +62,22 @@ class IRLAgent:
         print("Computing optimal weights finished!")
         return weights # return the normalized weights
 
-
-    def UpdatePolicyFEList(self, weights, opt_count, scene_file_name):  
+    
+    def UpdatePolicyFEList(self, weights, opt_count, scene_file_name, enlarge_lr):  
         # store feature expecations of a newly learned policy and its difference to the expert policy	
         print("Updating Policy FE list starts......")
         
+        #start_time = timeit.default_timer()
+        model_name, stop_status = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name, enlarge_lr=enlarge_lr)	
         
-        start_time = timeit.default_timer()
-        model_name = QLearning(num_features, num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name)	
-        iter_time = timeit.default_timer() - start_time
-        print("Consumed time: ", iter_time)
-        #exit()
+        #print("Total consumed time: ", timeit.default_timer() - start_time, " s")
             
         # get the trained model
         print("The latest Q-learning model is: ", model_name)
         model = net1(self.num_features, self.num_actions, self.params['nn'], model_name)
         
         # get feature expectations by executing the learned model
-        temp_fe = play(model, weights, self.play_frames)
+        temp_fe, aver_score = play(model, weights, self.play_frames, play_rounds=10)
         
         # t = (weights.tanspose)*(expertFE-newPolicyFE)
         # hyperdistance = t
@@ -87,7 +85,8 @@ class IRLAgent:
         self.policy_fe_list[temp_hyper_dis] = temp_fe
         
         print("Updating Policy FE list finished!")
-        return temp_hyper_dis 
+        return temp_hyper_dis, aver_score, stop_status
+        
         
         
     def IRL(self, scene_file_name):
@@ -97,9 +96,12 @@ class IRLAgent:
         
         # create a file to store weights after each iteration of learning
         f = open(self.results_folder + 'weights-'+self.behavior_type+'.txt', 'w')
+        nearest_dist = 9999999999
+        nearest_iter_no = -1
         opt_count = 1
+        enlarge_lr = 0
         while True:
-            print("IRL iteration number: ", opt_count)
+            print("================ IRL iteration number: ", opt_count, " ================")
             
             # Main Step 1: compute the new weights according to the list of policies and the expert policy
             weights_new = self.ComputeOptimalWeights() 
@@ -109,11 +111,26 @@ class IRLAgent:
             
             # Main Step 2: update the policy feature expectations list
             # and compute the distance between the lastest policy and expert feature expecations
-            self.current_dis = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name)
+            self.current_dis, score, stop_status = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name, enlarge_lr)
+            if stop_status == 1:
+                enlarge_lr += 1
+            f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
+            f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score))
+            f1.write('\n')
+            f1.close()
             
             # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
             print("The stopping distance thresould is: ", epsilon)
             print("The latest policy to expert policy distance is: ", self.current_dis)
+            
+            if nearest_dist > self.current_dis:
+                nearest_dist = self.current_dis
+                nearest_iter_no = opt_count
+            print("So far the nearest dist is: ", nearest_dist, ", in the", nearest_iter_no, "th iteration")
+
+            print("Total consumed time: ", timeit.default_timer() - start_time, " s")
+            print("Total consumed time: ", (timeit.default_timer() - start_time)/3600.0, " h")
+            print("===========================================================")
             print("\n")
             if self.current_dis <= self.epsilon: 
                 print("IRL finished!")

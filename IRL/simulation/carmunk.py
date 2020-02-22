@@ -168,7 +168,7 @@ class GameState:
             #self.obstacles.append(self.create_obstacle([maxx, maxy], [maxx, miny], segment_radius, "brown"))
             #self.obstacles.append(self.create_obstacle([maxx, miny], [minx, miny], segment_radius, "brown"))
 
-            self.goals = [[50,44],[-47,46],[-52,-45],[-10,-66],[-3,42],[80,-60]]
+            self.goals = [[80,0], [50,44],[-45,46],[-52,-45],[-10,-66],[-3,40]] #,[80,-60]
             for goal in self.goals:
                 goal[0] = (goal[0] + offset) * MULTI 
                 goal[1] = (goal[1] + offset) * MULTI 
@@ -366,7 +366,29 @@ class GameState:
         acc_action = np.clip(acc_action, 0, self.acc_section_number - 1)
 
         return steer_action * self.acc_section_number + acc_action
+    
+    def reset_car(self, carPos, carVelo, carAngle):
+        self.car_body.position = ((carPos[0] + offset) * MULTI), ((carPos[1] + offset) * MULTI)
+        
+        self.car_body.velocity = (carVelo[0] * MULTI), (carVelo[1] * MULTI)
 
+        self.car_body.angle = carAngle
+
+    def get_expert_action_out(self, carPos, carVelo, carAngle):
+        self.reset_car(carPos, carVelo, carAngle)
+        
+        RVO_handler = c_longlong(0)
+        self.expert_lib.RVO_createEnvironment(byref(RVO_handler))
+
+        self.setup_scenario(RVO_handler);
+        self.set_preferred_velocities(RVO_handler)
+
+        self.expert_lib.RVO_doStep(RVO_handler)
+        instruction = self.get_instruction_from_RVO(RVO_handler)
+        action = self.get_action_from_instruction(instruction)
+        
+        self.expert_lib.RVO_deleteEnvironment(byref(RVO_handler))
+        return action
 
     def get_expert_action(self):
         RVO_handler = c_longlong(0)
@@ -381,6 +403,10 @@ class GameState:
         
         self.expert_lib.RVO_deleteEnvironment(byref(RVO_handler))
         return action
+    
+    def get_instruction_from_action_out(self, action):
+        [steer_angle, acceleration] = self.get_instruction_from_action(action)
+        return [steer_angle, acceleration / MULTI]
 
     def get_instruction_from_action(self, action):
         #return [action[0] * self.max_steer, action[1] * self.max_acceleration]
@@ -391,13 +417,33 @@ class GameState:
         acceleration = (acc_action - self.acc_zero_section_no) * self.acc_per_section * MULTI
 
         return [steer_angle, acceleration]
+    
+    def get_reward(self, W, readings):
+        reward = np.dot(W, readings)
 
+        '''
+        reward = 0.4*readings[-3] # get closer to the goal
+        
+        if (readings[-2] == 1):
+            # reach the goal
+            reward += 0.5
+        if (readings[-1] == 1):
+            # collision
+            reward -= 0.9
 
-    def frame_step(self, action):
+        reward = np.clip(reward, -1, 1)
+        '''
+        
+        return reward
+    
+    def frame_step(self, action, effect=True, hitting_reaction_mode = 0):
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
-        self.car_body.angle += steer_angle * self.simstep
+        if effect:
+            self.car_body.angle += steer_angle * self.simstep
+        self.car_body.angular_velocity = 0
+
 
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
         v = self.car_body.velocity.length
@@ -409,12 +455,10 @@ class GameState:
         else:
             #self.car_reverse_driving = True
             v = 0
-
-        if (v > 100):
-            v = 100
-        elif (v < 0):
-            v = 0
-        self.car_body.velocity = v * driving_direction
+            
+        v = np.clip(v, 0, 100)
+        if effect:
+            self.car_body.velocity = v * driving_direction
         
         # quit the game
         for event in pygame.event.get():
@@ -454,32 +498,48 @@ class GameState:
                 readings.append(0)
         else:
             readings.append(0)
-
+            
         # The difference between the distance to the goal of current frame and last frame, 1 channel
         current_goal_dist = (current_goal - self.car_body.position).length
+        last_goal = self.goals[self.current_goal_id-1]
+        seg_dist = (Vec2d(current_goal[0], current_goal[1]) - Vec2d(last_goal[0], last_goal[1])).length
+
         readings.append(self.pre_goal_dist - current_goal_dist)
         self.pre_goal_dist = current_goal_dist
 
+
         # Set the reward.
         # Car crashed when any reading == 1
+        score = 0
         if self.car_is_crashed(readings):
+            score = (self.current_goal_id - current_goal_dist / seg_dist)*100
+
             self.crashed = True
             readings.append(1)
-            self.recover_from_crash(driving_direction)
+            if effect:
+                if hitting_reaction_mode > 0:
+                    if (self.driving_history[0][0] - self.driving_history[-1][0]).length > 1 * MULTI:
+                        self.recover_from_crash(self.driving_history[0])
+                    else:
+                        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+                    self.driving_history.clear()
+
+                else:
+                    self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
         else:
             readings.append(0)
                       
-        reward = np.dot(self.W, readings)
+        reward = self.get_reward(self.W, readings)
         state = np.array([readings])
 
         self.num_steps += 1
 
         # Check whether the goal need to be updated
-        if current_goal_dist < 2 * MULTI:
+        if current_goal_dist < 3 * MULTI:
             self.current_goal_id = self.current_goal_id + 1
             #self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
-                self.current_goal_id = 1
+                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 2])
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         
         if draw_screen:
@@ -487,8 +547,8 @@ class GameState:
             pygame.draw.circle(screen, (0, 0, 255), (current_goal[0], height - current_goal[1]), 4)
             pygame.display.update()
             clock.tick()
-
-        return reward, state, readings
+            
+        return reward, state, readings, score
 
     def move_obstacles(self):
         # Randomly move obstacles around.
@@ -511,17 +571,17 @@ class GameState:
         else:
             return False
         '''
-
-    def recover_from_crash(self, driving_direction):
+        
+    def recover_from_crash(self, states):
         """
         We hit something, so recover.
         """
-
-        self.car_body.position = self.car_body.init_position
-        self.car_body.angle = self.car_body.init_angle
-        self.car_body.velocity = (0, 0)
-        self.car_body.angular_velocity = 0
-        self.current_goal_id = 0
+        
+        [position, angle, velocity, goal_id] = states
+        self.car_body.position = position
+        self.car_body.angle = angle
+        self.car_body.velocity = velocity
+        self.current_goal_id = goal_id
 
         '''
         while self.crashed:
