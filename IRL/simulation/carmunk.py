@@ -67,12 +67,8 @@ class GameState:
         #TODO, fix number of other vehicles
         c_handler3 = self.space.add_wildcard_collision_handler(3)
         c_handler3.begin = self.collision_callback3
-        c_handler4 = self.space.add_wildcard_collision_handler(4)
-        c_handler4.begin = self.collision_callback4
-        c_handler5 = self.space.add_wildcard_collision_handler(5)
-        c_handler5.begin = self.collision_callback5
-        c_handler6 = self.space.add_wildcard_collision_handler(6)
-        c_handler6.begin = self.collision_callback6
+        c_handler33 = self.space.add_collision_handler(3, 3)
+        c_handler33.begin = self.collision_callback33
         
         self.simstep = 0.02 # 50 FPS 
         #self.simstep = 0.0625 # 16 FPS 
@@ -132,7 +128,34 @@ class GameState:
         maxx = 0
         miny = 99999999999
         maxy = 0
-        if scene_file_name!='':
+        
+        if scene_file_name == 'scenes/scene-ground-car.txt':
+
+            self.goals = [[80,0], [50,44],[-45,46],[-52,-45],[-10,-66],[-3,40]] #,[80,-60]
+            for goal in self.goals:
+                goal[0] = (goal[0] + offset) * MULTI 
+                goal[1] = (goal[1] + offset) * MULTI 
+            self.current_goal_id = 0
+            
+            self.pre_goal_dist = (self.goals[0] - self.car_body.position).length
+
+            grid = 5
+            border = 20
+            for j in range(grid):
+                for k in range(grid):
+                    lowx = 0 + width/grid*j + border
+                    highx = lowx + width/grid - border
+                    lowy = 0 + height/grid*k + border
+                    highy = lowy + height/grid - border
+
+                    #lowx = minx + (maxx-minx)/grid*j + border
+                    #highx = lowx + (maxx-minx)/grid - border
+                    #lowy = miny + (maxy-miny)/grid*j + border
+                    #highy = lowy + (maxy-miny)/grid - border
+                    self.obstacles_car.append(self.create_obstacle_car(
+                        np.random.randint(lowx, highx), np.random.randint(lowy, highy), 
+                        np.random.random()*math.pi, np.random.random()*20, 3))
+        elif scene_file_name!='':
             #load scene
             with open(scene_file_name) as f:
                 obj_num = int(f.readline())
@@ -171,9 +194,8 @@ class GameState:
                     for s in line.split(' '):
                         info.append(s)
                     self.obstacles_car.append(self.create_obstacle_car(MULTI*(float(info[0])+offset), 
-                                                 MULTI*(float(info[1])+offset), 
-                                                 float(info[2])/180*math.pi, float(info[3]), i+3))
-                    
+                                                    MULTI*(float(info[1])+offset), 
+                                                    float(info[2])/180*math.pi, float(info[3]), 3))
 
             segment_radius = 5
             poly_tmp = self.create_poly_from_vertical_segment([minx, miny], [minx, maxy], segment_radius)
@@ -236,24 +258,16 @@ class GameState:
 
     def collision_callback3(self, arbiter, space, data):
         if arbiter.is_first_contact:
-            self.obstacles_car[0].velocity = -self.obstacles_car[0].velocity
-            return False
-        
-    def collision_callback4(self, arbiter, space, data):
-        if arbiter.is_first_contact:
-            self.obstacles_car[1].velocity = -self.obstacles_car[1].velocity
-            return False
-        
-    def collision_callback5(self, arbiter, space, data):
-        if arbiter.is_first_contact:
-            self.obstacles_car[2].velocity = -self.obstacles_car[2].velocity
-            return False
-        
-    def collision_callback6(self, arbiter, space, data):
-        if arbiter.is_first_contact:
-            self.obstacles_car[3].velocity = -self.obstacles_car[3].velocity
+            arbiter.shapes[0].body.velocity = -arbiter.shapes[0].body.velocity
+            arbiter.shapes[1].body.velocity = -arbiter.shapes[1].body.velocity
             return False
 
+    def collision_callback33(self, arbiter, space, data):
+        if arbiter.is_first_contact:
+            arbiter.shapes[0].body.velocity = -arbiter.shapes[0].body.velocity
+            arbiter.shapes[1].body.velocity = -arbiter.shapes[1].body.velocity
+            return False
+        
     def create_obstacle(self, xy1, xy2, r, color):
         c_body = pymunk.Body(pymunk.inf, pymunk.inf, pymunk.Body.KINEMATIC)
         #c_shape = pymunk.Circle(c_body, r)

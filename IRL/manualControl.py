@@ -40,7 +40,9 @@ def play(use_expert = False):
     The goal is to get feature expectations of a policy. Note that feature expectations are independent from weights.
     '''
     
-    game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt', use_expert=True)   # set up the simulation environment
+    game_state = carmunk.GameState(scene_file_name = 'scenes/scene-ground-car.txt', use_expert=True)   # set up the simulation environment
+    #game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city-car.txt', use_expert=True)   # set up the simulation environment
+    #game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt', use_expert=True)   # set up the simulation environment
     game_state.frame_step((11)) # make a forward move in the simulation
     currFeatureExp = np.zeros(NUM_FEATURES)
     prevFeatureExp = np.zeros(NUM_FEATURES)
