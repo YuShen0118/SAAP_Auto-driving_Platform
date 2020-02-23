@@ -63,13 +63,13 @@ class GameState:
         c_handler.begin = self.collision_callback
         
         #TODO, fix number of other vehicles
-        c_handler3 = self.space.add_collision_handler(1, 3)
+        c_handler3 = self.space.add_wildcard_collision_handler(3)
         c_handler3.begin = self.collision_callback3
-        c_handler4 = self.space.add_collision_handler(1, 4)
+        c_handler4 = self.space.add_wildcard_collision_handler(4)
         c_handler4.begin = self.collision_callback4
-        c_handler5 = self.space.add_collision_handler(1, 5)
+        c_handler5 = self.space.add_wildcard_collision_handler(5)
         c_handler5.begin = self.collision_callback5
-        c_handler6 = self.space.add_collision_handler(1, 6)
+        c_handler6 = self.space.add_wildcard_collision_handler(6)
         c_handler6.begin = self.collision_callback6
         
         self.simstep = 0.02 # 50 FPS 
@@ -235,22 +235,22 @@ class GameState:
     def collision_callback3(self, arbiter, space, data):
         if arbiter.is_first_contact:
             self.obstacles_car[0].velocity = -self.obstacles_car[0].velocity
-            return True
+            return False
         
     def collision_callback4(self, arbiter, space, data):
         if arbiter.is_first_contact:
             self.obstacles_car[1].velocity = -self.obstacles_car[1].velocity
-            return True
+            return False
         
     def collision_callback5(self, arbiter, space, data):
         if arbiter.is_first_contact:
             self.obstacles_car[2].velocity = -self.obstacles_car[2].velocity
-            return True
+            return False
         
     def collision_callback6(self, arbiter, space, data):
         if arbiter.is_first_contact:
             self.obstacles_car[3].velocity = -self.obstacles_car[3].velocity
-            return True
+            return False
 
     def create_obstacle(self, xy1, xy2, r, color):
         c_body = pymunk.Body(pymunk.inf, pymunk.inf, pymunk.Body.KINEMATIC)
