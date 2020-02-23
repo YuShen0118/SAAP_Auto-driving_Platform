@@ -79,7 +79,7 @@ class IRLAgent:
         model = net1(self.num_features, self.num_actions, self.params['nn'], model_name)
         
         # get feature expectations by executing the learned model
-        temp_fe, aver_score = play(model, weights, self.play_frames, play_rounds=10)
+        temp_fe, aver_score = play(model, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
         
         # t = (weights.tanspose)*(expertFE-newPolicyFE)
         # hyperdistance = t

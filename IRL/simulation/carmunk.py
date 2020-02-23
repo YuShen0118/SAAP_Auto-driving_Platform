@@ -253,6 +253,8 @@ class GameState:
     def collision_callback(self, arbiter, space, data):
         if arbiter.is_first_contact:
             #print('collision!!!')
+            arbiter.shapes[0].body.velocity = -arbiter.shapes[0].body.velocity
+            arbiter.shapes[1].body.velocity = -arbiter.shapes[1].body.velocity
             self.crashed = True
             return False
 
@@ -765,6 +767,8 @@ class GameState:
                 readings.append(one_ray[0])
 
         max_obs_type = np.max(obstacle_types)
+        if max_obs_type == 0:
+            max_obs_type = 1
         for obs_type in obstacle_types:
             readings.append(obs_type / max_obs_type) #normalize to 1
 
