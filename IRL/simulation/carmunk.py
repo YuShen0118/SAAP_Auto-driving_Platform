@@ -39,10 +39,12 @@ class Vector2(Structure):
 
 
 class GameState:
-    def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=False):
+    def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=True):
         if use_expert:
             # for windows
             self.expert_lib = ctypes.WinDLL ("./3thPartLib/RVO2/RVO_warper.dll")
+        self.driving_history = []
+        self.max_history_num = 50
 
         # Global-ish.
         self.crashed = False
@@ -558,6 +560,10 @@ class GameState:
 
         if draw_screen:
             pygame.display.flip()
+            
+        self.driving_history.append([self.car_body.position, self.car_body.angle, self.car_body.velocity, self.current_goal_id])
+        if (len(self.driving_history) > self.max_history_num):
+            self.driving_history.pop(0)
 
         # Get the current location and the readings there.
         x, y = self.car_body.position
