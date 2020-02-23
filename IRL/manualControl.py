@@ -103,8 +103,8 @@ def play(use_expert = False):
         #print ("The change percentage in feature expectation is: ", changePercentage)
         prevFeatureExp = np.array(currFeatureExp)
 
-        if moveCount % 20000 == 0:
-            break
+        if moveCount % 4000 == 0:
+            break 
 
     return currFeatureExp
 
