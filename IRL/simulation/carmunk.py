@@ -252,7 +252,7 @@ class GameState:
         
     def collision_callback(self, arbiter, space, data):
         if arbiter.is_first_contact:
-            print('collision!!!')
+            #print('collision!!!')
             self.crashed = True
             return False
 
@@ -518,25 +518,42 @@ class GameState:
 
         return [steer_angle, acceleration]
     
-    def get_reward(self, W, readings):
-        reward = np.dot(W, readings)
-
-        '''
-        reward = 0.4*readings[-3] # get closer to the goal
+    def get_reward(self, W, readings, normalize_reading=False, reward_type=1):
+        if reward_type == 0:
+            reward = 0.4*readings[-3] # get closer to the goal
         
-        if (readings[-2] == 1):
-            # reach the goal
-            reward += 0.5
-        if (readings[-1] == 1):
-            # collision
-            reward -= 0.9
+            if (readings[-2] == 1):
+                # reach the goal
+                reward += 0.5
+            if (readings[-1] == 1):
+                # collision
+                reward -= 0.9
 
-        reward = np.clip(reward, -1, 1)
-        '''
+            reward = np.clip(reward, -1, 1)
+            if normalize_reading == False:
+                reward *= 100
+        elif reward_type == 1:
+            reward = np.dot(W, readings)
+        elif reward_type == 2:
+            reward = 0.4*readings[-3] # get closer to the goal
+            if (readings[-2] == 1):
+                # reach the goal
+                reward += 0.5
+            if (readings[-1] == 1):
+                # collision
+                reward -= 0.9
+            if normalize_reading == False:
+                reward *= 100
+                
+            reward += np.dot(W, readings)
+            
+            if normalize_reading:
+                reward = np.clip(reward, -1, 1)
         
+
         return reward
     
-    def frame_step(self, action, effect=True, hitting_reaction_mode = 0):
+    def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = True):
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
@@ -583,7 +600,7 @@ class GameState:
         x, y = self.car_body.position
         unit_range = 10
         angle_range = math.pi / 3
-        readings = self.get_sonar_readings(x, y, self.car_body.angle, unit_range, angle_range)
+        readings = self.get_sonar_readings(x, y, self.car_body.angle, unit_range, angle_range, normalize_reading)
         
 
         # Goal related features
@@ -591,7 +608,10 @@ class GameState:
         current_goal = self.goals[self.current_goal_id]
         angle_unit = angle_range /unit_range
         goal_direction = self.get_direction(self.car_body.position, self.car_body.angle, current_goal, angle_unit)
-        readings.append(abs(goal_direction))
+        if normalize_reading:
+            readings.append(np.clip(abs(goal_direction) / unit_range,-1,1))
+        else:
+            readings.append(abs(goal_direction))
         section_number = unit_range*2 + 1
 
         # Whether there's obstacle in the goal direction, 1 channel
@@ -608,7 +628,7 @@ class GameState:
         last_goal = self.goals[self.current_goal_id-1]
         seg_dist = (Vec2d(current_goal[0], current_goal[1]) - Vec2d(last_goal[0], last_goal[1])).length
 
-        readings.append(self.pre_goal_dist - current_goal_dist)
+        readings.append((self.pre_goal_dist - current_goal_dist)/seg_dist)
         self.pre_goal_dist = current_goal_dist
 
 
@@ -633,7 +653,7 @@ class GameState:
         else:
             readings.append(0)
                       
-        reward = self.get_reward(self.W, readings)
+        reward = self.get_reward(self.W, readings, normalize_reading, reward_type=2)
         state = np.array([readings])
 
         self.num_steps += 1
@@ -722,7 +742,7 @@ class GameState:
         section_id = round(relative_angle / angle_unit)
         return section_id
 
-    def get_sonar_readings(self, x, y, angle, unit_range = 10, angle_range = math.pi / 3):
+    def get_sonar_readings(self, x, y, angle, unit_range = 10, angle_range = math.pi / 3, normalize_reading = False):
         readings = []
         """
         Instead of using a grid of boolean(ish) sensors, sonar readings
@@ -732,17 +752,21 @@ class GameState:
         in a sonar "arm" is non-zero, then that arm returns a distance of 5.
         """
         # Make our arms.
-        one_arm = self.make_sonar_arm(x, y)
+        one_arm, max_dist = self.make_sonar_arm(x, y)
         
         obstacle_types = []
         angle_unit = angle_range /unit_range
         for i in range(-unit_range, unit_range+1):
             one_ray = self.get_arm_distance(one_arm, x, y, angle, i*angle_unit)
             obstacle_types.append(one_ray[1])
-            readings.append(one_ray[0])
-            
+            if normalize_reading:
+                readings.append(np.clip(one_ray[0] / max_dist, -1, 1))
+            else:
+                readings.append(one_ray[0])
+
+        max_obs_type = np.max(obstacle_types)
         for obs_type in obstacle_types:
-            readings.append(obs_type / 2) #normalize to 1
+            readings.append(obs_type / max_obs_type) #normalize to 1
 
         #readings = readings[0:7]
         '''
@@ -814,8 +838,9 @@ class GameState:
         # center later.
         for i in range(point_num):
             arm_points.append((distance + x + (spread * i), y))
-
-        return arm_points
+            
+        max_dist = point_num #distance + spread * (point_num-1)
+        return arm_points, max_dist
 
     def get_rotated_point(self, x_1, y_1, x_2, y_2, radians):
         # Rotate x_2, y_2 around x_1, y_1 by angle.
