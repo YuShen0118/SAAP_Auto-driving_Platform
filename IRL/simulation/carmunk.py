@@ -81,7 +81,8 @@ class GameState:
         self.acc_zero_section_no = 1
         self.acc_per_section = 5
 
-        self.preferred_speed = 10.0
+        self.preferred_speed = 10.0       # in meter, TODO
+        self.max_speed = 20.0 * MULTI
 
         # Create the car.
         self.create_main_car((80+offset)*MULTI, (0+offset)*MULTI, 15)
@@ -575,7 +576,7 @@ class GameState:
             #self.car_reverse_driving = True
             v = 0
             
-        v = np.clip(v, 0, 100)
+        v = np.clip(v, 0, self.max_speed)
         if effect:
             self.car_body.velocity = v * driving_direction
         
@@ -674,7 +675,7 @@ class GameState:
             pygame.display.update()
             clock.tick()
             
-        return reward, state, readings, score, v*self.simstep
+        return reward, state, readings, score, v*self.simstep / MULTI
 
     def move_obstacles(self):
         # Randomly move obstacles around.
@@ -705,7 +706,7 @@ class GameState:
         
         [position, angle, velocity, goal_id] = states
         self.car_body.position = position
-        self.car_body.angle = angle
+        self.car_body.angle = angle + (np.random.random()*2-1) * math.pi / 8
         self.car_body.velocity = velocity
         self.current_goal_id = goal_id
 
