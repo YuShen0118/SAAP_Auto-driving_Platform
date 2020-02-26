@@ -109,9 +109,9 @@ if __name__ == "__main__":
         weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
         model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
         
-        scene_file_name = 'scenes/scene-city.txt'
-        scene_file_name = 'scenes/scene-ground-car.txt'
         scene_file_name = 'scenes/scene-city-car.txt'
+        scene_file_name = 'scenes/scene-ground-car.txt'
+        scene_file_name = 'scenes/scene-city.txt'
         featureExp, score, dist = play(model, weights, play_rounds=10, scene_file_name = scene_file_name)
         score_list.append(score)
         dist_list.append(dist)

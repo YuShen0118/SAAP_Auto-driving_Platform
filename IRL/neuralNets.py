@@ -9,6 +9,7 @@ from keras.models import Model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.recurrent import LSTM
 from keras.callbacks import Callback
+import keras
 
 
 class LossHistory(Callback):
