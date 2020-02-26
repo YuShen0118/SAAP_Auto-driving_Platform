@@ -699,6 +699,9 @@ class GameState:
             return False
         '''
         
+    def reinit_car(self):
+        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+
     def recover_from_crash(self, states):
         """
         We hit something, so recover.
