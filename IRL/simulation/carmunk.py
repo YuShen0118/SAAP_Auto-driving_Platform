@@ -643,9 +643,8 @@ class GameState:
 
         # Set the reward.
         # Car crashed when any reading == 1
-        score = 0
+        score = (self.current_goal_id - current_goal_dist / seg_dist)*100
         if self.car_is_crashed(readings):
-            score = (self.current_goal_id - current_goal_dist / seg_dist)*100
 
             self.crashed = True
             readings.append(1)
