@@ -88,7 +88,7 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
     print("min dist=", np.min(dist_list))
     print("max dist=", np.max(dist_list))
     print("aver dist=", np.average(dist_list))
-    print("standard deviation score=", np.std(dist_list))
+    print("standard deviation dist=", np.std(dist_list))
     return featureExp, aver_score
 
 if __name__ == "__main__": 
