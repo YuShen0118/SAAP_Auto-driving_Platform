@@ -79,7 +79,7 @@ class IRLAgent:
         model = net1(self.num_features, self.num_actions, self.params['nn'], model_name)
         
         # get feature expectations by executing the learned model
-        temp_fe, aver_score = play(model, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
+        temp_fe, aver_score, aver_dist = play(model, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
         
         # t = (weights.tanspose)*(expertFE-newPolicyFE)
         # hyperdistance = t
@@ -87,7 +87,7 @@ class IRLAgent:
         self.policy_fe_list[temp_hyper_dis] = temp_fe
         
         print("Updating Policy FE list finished!")
-        return temp_hyper_dis, aver_score, stop_status
+        return temp_hyper_dis, aver_score, aver_dist, stop_status
         
         
         
@@ -113,11 +113,11 @@ class IRLAgent:
             
             # Main Step 2: update the policy feature expectations list
             # and compute the distance between the lastest policy and expert feature expecations
-            self.current_dis, score, stop_status = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name, enlarge_lr)
+            self.current_dis, score, car_dist, stop_status = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name, enlarge_lr)
             if stop_status == 1:
                 enlarge_lr += 1
             f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
-            f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score))
+            f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score) + "  trajectory length " + str(car_dist))
             f1.write('\n')
             f1.close()
             

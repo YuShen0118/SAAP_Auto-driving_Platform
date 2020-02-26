@@ -22,8 +22,6 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
     _, state, _, _, _ = game_state.frame_step((11))
     featureExp = np.zeros(NUM_FEATURES)
     round_num = 0
-    total_score = 0
-    aver_score = 0
     score_list = []
     dist_list = []
     dist_1round = 0
@@ -89,7 +87,7 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
     print("max dist=", np.max(dist_list))
     print("aver dist=", np.average(dist_list))
     print("standard deviation dist=", np.std(dist_list))
-    return featureExp, aver_score
+    return featureExp, np.average(score_list), np.average(dist_list)
 
 if __name__ == "__main__": 
     #BEHAVIOR = sys.argv[1]
