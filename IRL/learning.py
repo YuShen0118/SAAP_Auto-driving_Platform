@@ -78,7 +78,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
      
     # create a new game instance and get the initial state by moving forward
     game_state = carmunk.GameState(weights, scene_file_name)
-    _, state, _, _ = game_state.frame_step((2))
+    _, state, _, _, _ = game_state.frame_step((11))
     #_, state, _ = game_state.frame_step((0,1))
 
     # let's time it
@@ -116,7 +116,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             #action = model.predict(state, batch_size=1)
 
         # execute action, receive a reward and get the next state
-        reward, next_state, _, _ = game_state.frame_step(action, hitting_reaction_mode = hitting_reaction_mode)
+        reward, next_state, _, _, _ = game_state.frame_step(action, hitting_reaction_mode = hitting_reaction_mode)
         if hitting_reaction_mode == 2: # use expert when hitting
             if next_state[0][-1] == 1: # hitting
                 if expert_count == 0:

@@ -674,7 +674,7 @@ class GameState:
             pygame.display.update()
             clock.tick()
             
-        return reward, state, readings, score
+        return reward, state, readings, score, v*self.simstep
 
     def move_obstacles(self):
         # Randomly move obstacles around.

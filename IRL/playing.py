@@ -14,16 +14,19 @@ NUM_ACTIONS = 25 # number of actions
 GAMMA = 0.9
 
 
-def play(model, weights, play_frames=10000, play_rounds=100, scene_file_name='scenes/scene-city.txt'):
+def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='scenes/scene-city.txt'):
 
     # init
     car_move = 0
     game_state = carmunk.GameState(weights, scene_file_name = scene_file_name)
-    _, state, _, _ = game_state.frame_step((2))
+    _, state, _, _, _ = game_state.frame_step((11))
     featureExp = np.zeros(NUM_FEATURES)
     round_num = 0
     total_score = 0
     aver_score = 0
+    score_list = []
+    dist_list = []
+    dist_1round = 0
 
     # start to move
     while True:
@@ -34,7 +37,8 @@ def play(model, weights, play_frames=10000, play_rounds=100, scene_file_name='sc
         action = (np.argmax(qval))  
 
         # take the action
-        reward , next_state, readings, score = game_state.frame_step(action)
+        reward , next_state, readings, score, dist_1step = game_state.frame_step(action)
+        dist_1round += dist_1step
         #print ("reward: ", reward)
         #print ("readings: ", readings)
 
@@ -46,30 +50,40 @@ def play(model, weights, play_frames=10000, play_rounds=100, scene_file_name='sc
         # Tell us something.
         if readings[-1]==1:
             round_num += 1
+            score_list.append(score)
+            dist_list.append(dist_1round)
             print("Score in this round: ", score)
-            total_score += score
-            aver_score = total_score / round_num
-            print("Aver Score in ", round_num, "rounds: ", aver_score)
+            print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
+            print("Score in this round: ", dist_1round)
+            print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
+            dist_1round = 0
 
         if play_frames > 0 and car_move % play_frames == 0:
             print("The car has moved %d frames" % car_move)
             if readings[-1] == 0:
                 round_num += 1
             print("Score in this round: ", score)
-            total_score += score
-            aver_score = total_score / round_num
-            print("Aver Score in ", round_num, "rounds: ", aver_score)
+            print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
+            print("Score in this round: ", dist_1round)
+            print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
             break
 
         if play_rounds > 0 and round_num == play_rounds:
             print("Score in this round: ", score)
-            total_score += score
-            aver_score = total_score / round_num
-            print("Aver Score in ", round_num, "rounds: ", aver_score)
+            print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
+            print("Score in this round: ", dist_1round)
+            print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
             break
         
         state = next_state
-
+    print("min score=", np.min(score_list))
+    print("max score=", np.max(score_list))
+    print("aver score=", np.average(score_list))
+    print("standard deviation score=", np.std(score_list))
+    print("min dist=", np.min(dist_list))
+    print("max dist=", np.max(dist_list))
+    print("aver dist=", np.average(dist_list))
+    print("standard deviation score=", np.std(dist_list))
     return featureExp, aver_score
 
 if __name__ == "__main__": 
