@@ -97,14 +97,27 @@ if __name__ == "__main__":
     BEHAVIOR = "city"
     ITERATION = 20000
     FRAME = 1
+    score_list = []
+    dist_list = []
     
-    modelType = BEHAVIOR
-    model_dir = 'results/models-'+ modelType +'/'
-    saved_model = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
-    weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
-    model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
-    
-    scene_file_name = 'scenes/scene-city.txt'
-    scene_file_name = 'scenes/scene-city-car.txt'
-    scene_file_name = 'scenes/scene-ground-car.txt'
-    print (play(model, weights, scene_file_name = scene_file_name))
+    for FRAME in range(1,10):
+        print('***************************************************************************************************')
+        print('FRAME ', FRAME)
+        modelType = BEHAVIOR
+        model_dir = 'results/models-'+ modelType +'/'
+        saved_model = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
+        weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
+        model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
+        
+        scene_file_name = 'scenes/scene-city.txt'
+        scene_file_name = 'scenes/scene-ground-car.txt'
+        scene_file_name = 'scenes/scene-city-car.txt'
+        featureExp, score, dist = play(model, weights, play_rounds=10, scene_file_name = scene_file_name)
+        score_list.append(score)
+        dist_list.append(dist)
+
+    print('***************************************************************************************************')
+    for i in range(len(score_list)):
+        print(i, 'score', score_list[i], 'dist', dist_list[i])
+
+
