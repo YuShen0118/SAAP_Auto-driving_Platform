@@ -618,6 +618,7 @@ class GameState:
         section_number = unit_range*2 + 1
 
         # Whether there's obstacle in the goal direction, 1 channel
+        '''
         if (goal_direction <= unit_range and goal_direction >= -unit_range):
             if (readings[section_number + goal_direction + unit_range] == 0):
                 readings.append(1)
@@ -625,6 +626,7 @@ class GameState:
                 readings.append(0)
         else:
             readings.append(0)
+        '''
             
         # The difference between the distance to the goal of current frame and last frame, 1 channel
         current_goal_dist = (current_goal - self.car_body.position).length
@@ -633,7 +635,11 @@ class GameState:
 
         readings.append((self.pre_goal_dist - current_goal_dist)/seg_dist)
         self.pre_goal_dist = current_goal_dist
-
+        
+        if current_goal_dist < 3 * MULTI:
+            readings.append(1)
+        else:
+            readings.append(0)
 
         # Set the reward.
         # Car crashed when any reading == 1
