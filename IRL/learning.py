@@ -38,7 +38,7 @@ def outPutW(weights, border=4):
             
             
 def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
-              continue_train=True, hitting_reaction_mode=2, enlarge_lr=0):
+              continue_train=False, hitting_reaction_mode=0, enlarge_lr=0):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)

@@ -118,6 +118,6 @@ if __name__ == "__main__":
 
     print('***************************************************************************************************')
     for i in range(len(score_list)):
-        print(i, 'score', score_list[i], 'dist', dist_list[i])
+        print(i+1, 'score', score_list[i], 'dist', dist_list[i])
 
 

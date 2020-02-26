@@ -193,11 +193,11 @@ if __name__ == '__main__':
     behavior_type = 'city' # yellow/brown/red/bumping
     results_folder = 'results/'
     
+    scene_file_name = 'scenes/scene-city-car.txt'
     scene_file_name = 'scenes/scene-ground-car.txt'
     scene_file_name = 'scenes/scene-city.txt'
-    scene_file_name = 'scenes/scene-city-car.txt'
 
-    irl_learner = IRLAgent(params, random_scene3_no_norm_fe, expert_scene3_no_norm_fe, epsilon, \
+    irl_learner = IRLAgent(params, random_scene2_no_norm_fe, expert_scene2_no_norm_fe, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
     irl_learner.IRL(scene_file_name)
