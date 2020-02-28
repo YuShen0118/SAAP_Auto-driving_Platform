@@ -197,7 +197,7 @@ if __name__ == '__main__':
     scene_file_name = 'scenes/scene-ground-car.txt'
     scene_file_name = 'scenes/scene-city.txt'
 
-    irl_learner = IRLAgent(params, random_scene2_no_norm_fe, expert_scene2_no_norm_fe, epsilon, \
+    irl_learner = IRLAgent(params, random_scene2_norm_fe, expert_scene2_norm_fe, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
     irl_learner.IRL(scene_file_name)

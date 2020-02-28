@@ -563,7 +563,7 @@ class GameState:
 
         return reward
     
-    def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = False):
+    def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = True):
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
@@ -668,7 +668,7 @@ class GameState:
         else:
             readings.append(0)
                       
-        reward = self.get_reward(self.W, readings, normalize_reading, reward_type=0)
+        reward = self.get_reward(self.W, readings, normalize_reading, reward_type=1)
         state = np.array([readings])
 
         self.num_steps += 1

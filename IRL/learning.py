@@ -6,6 +6,7 @@ from neuralNets import net1, LossHistory
 import os
 import os.path
 import timeit
+from playing import play
 
 GAMMA = 0.9  # discount factor
 TUNING = False  # If False, just use arbitrary, pre-selected params
@@ -54,6 +55,8 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     replay = []  # store tuples of (state, action, reward, next_state) for training 
     survive_data = [] # store how long the car survived until die
     loss_log = [] # store the train loss of each model
+    score_log = [] # store the train loss of each model
+    dist_log = [] # store the train loss of each model
     my_batch_size = params['batch_size']
     buffer = params['buffer'] 
     assert (observe_frames >= my_batch_size), "Error: The number of observed frames is less than the batch size!"
@@ -146,6 +149,12 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             loss_log.append(history.losses)
             if frame_idx % 100 == 0:
                 print("history.losses ", history.losses)
+                
+            if frame_idx % 100 == 0:
+                temp_fe, aver_score, aver_dist = play(model, weights, play_rounds=10, scene_file_name=scene_file_name)
+                score_log.append([aver_score])
+                dist_log.append([aver_dist])
+        
 
             # diverges, early stop
             '''
@@ -199,14 +208,14 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             print("Saving model: ", model_name)
 
     # log results after we're done with all training frames
-    log_results(results_folder, filename, survive_data, loss_log)
+    log_results(results_folder, filename, survive_data, loss_log, score_log, dist_log)
     print("Q learning finished!")
     return model_name, stop_status
     
     
 
-def log_results(results_folder, filename, survive_data, loss_log):
-    log_dir = results_folder + 'logs/'
+def log_results(results_folder, filename, survive_data, loss_log, score_log, dist_log):
+    log_dir = results_folder + 'models-city/logs/'
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
         
@@ -219,6 +228,16 @@ def log_results(results_folder, filename, survive_data, loss_log):
         wr = csv.writer(lf, lineterminator = '\n')
         for loss_item in loss_log:
             wr.writerow(loss_item)
+            
+    with open(log_dir + 'training_score-' + filename + '.csv', 'w') as lf:
+        wr = csv.writer(lf, lineterminator = '\n')
+        for item in score_log:
+            wr.writerow(item)
+            
+    with open(log_dir + 'training_trajectory_length-' + filename + '.csv', 'w') as lf:
+        wr = csv.writer(lf, lineterminator = '\n')
+        for item in dist_log:
+            wr.writerow(item)
 
 
 def process_minibatch(minibatch, model, num_features, num_actions):  

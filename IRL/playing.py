@@ -54,28 +54,28 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
             round_num += 1
             score_list.append(score)
             dist_list.append(dist_1round)
-            print("Score in this round: ", score)
-            print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
-            print("Dist in this round: ", dist_1round)
-            print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
+            #print("Score in this round: ", score)
+            #print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
+            #print("Dist in this round: ", dist_1round)
+            #print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
             dist_1round = 0
             game_state.reinit_car()
 
         if play_frames > 0 and car_move % play_frames == 0:
-            print("The car has moved %d frames" % car_move)
+            #print("The car has moved %d frames" % car_move)
             if readings[-1] == 0:
                 round_num += 1
-            print("Score in this round: ", score)
-            print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
-            print("Dist in this round: ", dist_1round)
-            print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
+            #print("Score in this round: ", score)
+            #print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
+            #print("Dist in this round: ", dist_1round)
+            #print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
             break
 
         if play_rounds > 0 and round_num == play_rounds:
-            print("Score in this round: ", score)
-            print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
-            print("Dist in this round: ", dist_1round)
-            print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
+            #print("Score in this round: ", score)
+            #print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
+            #print("Dist in this round: ", dist_1round)
+            #print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
             break
         
         state = next_state

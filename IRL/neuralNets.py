@@ -32,7 +32,7 @@ def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1, enlarge_lr
     
     #optimizer = keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
     #optimizer = keras.optimizers.RMSprop(learning_rate=0.001, rho=0.9)
-    optimizer = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    optimizer = keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.9, beta_2=0.999, amsgrad=False)
     #optimizer = keras.optimizers.Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999)
     #optimizer = keras.optimizers.Nadam(learning_rate=0.002, beta_1=0.9, beta_2=0.999)
     model.compile(optimizer=optimizer, loss='mse')
