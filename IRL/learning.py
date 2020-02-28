@@ -157,6 +157,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
                 
             if frame_idx % 100 == 0:
                 temp_fe, aver_score, aver_dist = play(model, weights, play_rounds=10, scene_file_name=scene_file_name)
+                if len(score_log) == 0 or (len(score_log) > 0 and aver_score >= np.max(score_log) and aver_dist >= np.max(dist_log)):
+                    model.save_weights(model_name, overwrite=True)
+                    np.save(weights_name, weights)
+                    print("Saving model inner: ", model_name)
                 score_log.append([aver_score])
                 dist_log.append([aver_dist])
                 
@@ -220,8 +224,8 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # save the current model 
         if frame_idx == train_frames:
-            model.save_weights(model_name, overwrite=True)
-            np.save(weights_name, weights)
+            #model.save_weights(model_name, overwrite=True)
+            #np.save(weights_name, weights)
             print("Saving model: ", model_name)
 
     # log results after we're done with all training frames
