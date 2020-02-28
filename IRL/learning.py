@@ -7,6 +7,8 @@ import os
 import os.path
 import timeit
 from playing import play
+from keras import backend as K
+import keras
 
 GAMMA = 0.9  # discount factor
 TUNING = False  # If False, just use arbitrary, pre-selected params
@@ -146,6 +148,9 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             # train a model on this batch
             history = LossHistory()
             model.fit(X_train, y_train, batch_size=my_batch_size, epochs=1, verbose=0, callbacks=[history])
+
+            #outPutW(model.get_weights())
+
             loss_log.append(history.losses)
             if frame_idx % 100 == 0:
                 print("history.losses ", history.losses)
@@ -154,7 +159,19 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
                 temp_fe, aver_score, aver_dist = play(model, weights, play_rounds=10, scene_file_name=scene_file_name)
                 score_log.append([aver_score])
                 dist_log.append([aver_dist])
-        
+                
+            '''
+            if frame_idx % 4000 == 0:
+                lr = 0.001 / 2**(frame_idx/4000)
+                print('===============lr===============', lr)
+
+                #optimizer = keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
+                #optimizer = keras.optimizers.RMSprop(learning_rate=0.001, rho=0.9)
+                optimizer = keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, amsgrad=False)
+                #optimizer = keras.optimizers.Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999)
+                #optimizer = keras.optimizers.Nadam(learning_rate=0.002, beta_1=0.9, beta_2=0.999)
+                model.compile(optimizer=optimizer, loss='mse')
+            '''
 
             # diverges, early stop
             '''

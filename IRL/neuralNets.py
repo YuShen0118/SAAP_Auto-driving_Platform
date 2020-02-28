@@ -9,6 +9,7 @@ from keras.models import Model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.recurrent import LSTM
 from keras.callbacks import Callback
+from keras import backend as K
 import keras
 
 
@@ -19,7 +20,6 @@ class LossHistory(Callback):
     def on_batch_end(self, batch, logs={}):
         self.losses.append(logs.get('loss'))
 
-        
 def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1, enlarge_lr=0):
     netInputs = Input(shape=(numInputs,))
     x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(netInputs)
@@ -30,6 +30,9 @@ def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1, enlarge_lr
 
     model = Model(inputs = netInputs, outputs = netOutputs)
     
+    #lr = 0.001 / 2**(epochCount-1)
+    #print('===============lr===============', lr)
+
     #optimizer = keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
     #optimizer = keras.optimizers.RMSprop(learning_rate=0.001, rho=0.9)
     optimizer = keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.9, beta_2=0.999, amsgrad=False)

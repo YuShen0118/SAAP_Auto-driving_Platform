@@ -83,6 +83,7 @@ class GameState:
 
         self.preferred_speed = 10.0       # in meter, TODO
         self.max_speed = 20.0 * MULTI
+        self.init_velocity = (0,30)
 
         # Create the car.
         self.create_main_car((80+offset)*MULTI, (0+offset)*MULTI, 15)
@@ -347,7 +348,7 @@ class GameState:
         self.car_reverse_driving = False
 
         self.car_body.angular_velocity = 0
-        self.car_body.velocity = (0,0)
+        self.car_body.velocity = self.init_velocity
         
     def create_obstacle_car(self, x, y, angle, v, collision_type):
         
@@ -660,11 +661,11 @@ class GameState:
                     if (self.driving_history[0][0] - self.driving_history[-1][0]).length > 1 * MULTI:
                         self.recover_from_crash(self.driving_history[0])
                     else:
-                        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+                        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, self.init_velocity, 1])
                     self.driving_history.clear()
 
                 else:
-                    self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+                    self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, self.init_velocity, 1])
         else:
             readings.append(0)
                       
@@ -678,7 +679,7 @@ class GameState:
             self.current_goal_id = self.current_goal_id + 1
             #self.current_goal_id = random.randint(0, len(self.goals)-1)
             if self.current_goal_id >= len(self.goals):
-                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+                self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, self.init_velocity, 1])
             self.pre_goal_dist = (self.goals[self.current_goal_id] - self.car_body.position).length
         
         if draw_screen:
@@ -712,7 +713,7 @@ class GameState:
         '''
         
     def reinit_car(self):
-        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, (0, 0), 1])
+        self.recover_from_crash([self.car_body.init_position, self.car_body.init_angle, self.init_velocity, 1])
 
     def recover_from_crash(self, states):
         """
