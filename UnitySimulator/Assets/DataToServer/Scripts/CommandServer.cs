@@ -61,6 +61,19 @@ public class CommandServer : MonoBehaviour
         JSONObject jsonObject = obj.data;
         mainCar.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").str);
         mainCar.Acceleration = float.Parse(jsonObject.GetField("throttle").str);
+        mainCar.UpdatedFlag = true;
+
+//         float position_x = float.Parse(jsonObject.GetField("mainCar_position_x").str);
+//         float position_z = float.Parse(jsonObject.GetField("mainCar_position_y").str);
+//         mainCar.transform.position = new Vector3(position_x, 0, position_z);
+// 
+//         float velocity_x = float.Parse(jsonObject.GetField("mainCar_velocity_x").str);
+//         float velocity_z = float.Parse(jsonObject.GetField("mainCar_velocity_y").str);
+//         mainCar.curVelocity = new Vector3(position_x, 0, position_z);
+// 
+//         float mainCar_direction = float.Parse(jsonObject.GetField("mainCar_direction").str);
+//         mainCar.transform.eulerAngles = new Vector3(mainCar.transform.eulerAngles.x, mainCar_direction, mainCar.transform.eulerAngles.z);
+        
         //CarRemoteControl.AddInput = float.Parse(jsonObject.GetField("add_input").str);
         EmitTelemetry(obj);
     }
@@ -109,6 +122,18 @@ public class CommandServer : MonoBehaviour
                 data["steering_angle"] = _carController.CurrentSteerAngle.ToString("N4");
                 data["throttle"] = _carController.AccelInput.ToString("N4");
                 data["speed"] = _carController.CurrentSpeed.ToString("N4");
+
+                data["mainCar_position_x"] = mainCar.transform.position.x.ToString("N4");
+                data["mainCar_position_y"] = mainCar.transform.position.z.ToString("N4");
+
+//                 data["mainCar_velocity_x"] = _carController.CurrentVelocity.x.ToString("N4");
+//                 data["mainCar_velocity_y"] = _carController.CurrentVelocity.z.ToString("N4");
+                data["mainCar_velocity_x"] = mainCar.curVelocity.x.ToString("N4");
+                data["mainCar_velocity_y"] = mainCar.curVelocity.z.ToString("N4");
+                
+                data["mainCar_direction"] = mainCar.transform.eulerAngles.y.ToString("N4");
+                //Debug.Log("direction " + mainCar.transform.eulerAngles.y);
+
                 data["image"] = Convert.ToBase64String(image);
                 //data["point_cloud"] = Convert.ToBase64String(pcByteArray);
                 //data["image"] = Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera));

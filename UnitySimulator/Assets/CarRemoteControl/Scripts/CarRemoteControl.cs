@@ -19,21 +19,38 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public float SteeringAngle { get; set; }
         public float Acceleration { get; set; }
+        public bool UpdatedFlag {get; set;}
         private Steering s;
 
+        // adjust acc
+        float preAcc = 0;
+        float preSpeed = 0;
+        float adjuster = 1.0f;
+
+        public Vector3 curVelocity = new Vector3(0,0,0);
 
         //float RVO_scale = 1.0f;
         int frameIdx = 0;
         GameObject mainCar;
         IList<Vector2> goals;
-        float preferred_speed = 20.0f;
+        float preferred_speed = 10.0f;
+
+        //statistics
+        float totDist = 0;
+        float score = 0;
+        Vector3 prePosition = new Vector3(80, 0, 0);
+
 
         List<IList<Vector2>> obstacles = new List<IList<Vector2>>();
 
+        int current_checkpoint_id = 1;
         List<Vector3> checkpoints = new List<Vector3>();
         List<GameObject> checkpointObjs = new List<GameObject>();
         /** Random number generator. */
         Random random;
+
+        //tmp
+        //double pre_direction = 0;
 
 
         private void Awake()
@@ -48,7 +65,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
         void initPlanningStates()
         {
-            mainCar = GameObject.Find("MainCar");
+            UpdatedFlag = false;
+            mainCar = gameObject;
             float y = 5;
             //original one
             //             checkpoints.Add(new Vector3(72.0f, y, 10.0f));
@@ -58,6 +76,7 @@ namespace UnityStandardAssets.Vehicles.Car
             //             checkpoints.Add(new Vector3(50.0f, y, 43.0f));
             //             checkpoints.Add(new Vector3(0.0f, y, 45.0f));
 
+            checkpoints.Add(new Vector3(80.0f, y, 0.0f));
             checkpoints.Add(new Vector3(50.0f, y, 44.0f));
             checkpoints.Add(new Vector3(-47.0f, y, 46.0f));
             checkpoints.Add(new Vector3(-52.0f, y, -45.0f));
@@ -135,7 +154,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         bool reachGoal(double reachRange = 2)
         {
-            Vector3 projection = new Vector3(checkpoints[0].x, mainCar.transform.position.y, checkpoints[0].z);
+            Vector3 projection = new Vector3(checkpoints[current_checkpoint_id].x, mainCar.transform.position.y, checkpoints[current_checkpoint_id].z);
             if ((projection - mainCar.transform.position).magnitude < reachRange)
             {
                 return true;
@@ -148,10 +167,26 @@ namespace UnityStandardAssets.Vehicles.Car
         {
             if (checkpoints.Count > 1 && reachGoal())
             {
-                checkpointObjs[0].transform.position = new Vector3(checkpoints[0].x, checkpoints[0].y - 10, checkpoints[0].z);
-                checkpointObjs.RemoveAt(0);
-                checkpoints.RemoveAt(0);
+                current_checkpoint_id += 1;
+                if (current_checkpoint_id >= checkpoints.Count)
+                    current_checkpoint_id = 1;
+//                 checkpointObjs[0].transform.position = new Vector3(checkpoints[0].x, checkpoints[0].y - 10, checkpoints[0].z);
+//                 checkpointObjs.RemoveAt(0);
+//                 checkpoints.RemoveAt(0);
             }
+        }
+
+        void statistics()
+        {
+            Vector3 offset0 = new Vector3(0, 5, 0);
+            float current_goal_dist = (mainCar.transform.position + offset0 - checkpoints[current_checkpoint_id]).magnitude;
+            float seg_dist = (checkpoints[current_checkpoint_id] - checkpoints[current_checkpoint_id - 1]).magnitude;
+            score = (current_checkpoint_id - current_goal_dist / seg_dist) * 100;
+            totDist += (mainCar.transform.position - prePosition).magnitude;
+            prePosition = mainCar.transform.position;
+
+
+            Debug.Log("score " + score.ToString() + " dist " + totDist.ToString());
         }
 
         void drive()
@@ -194,27 +229,35 @@ namespace UnityStandardAssets.Vehicles.Car
 
             SteeringAngle = (float)(delta_direction / Math.PI * 180.0 / m_Car.MaxSteerAngleInDegree);
 
+//             double dt_direction = car_direction - pre_direction;
+//             pre_direction = car_direction;
+//             Debug.Log("dt_direction " + (dt_direction * 50 / Math.PI * 180.0).ToString());
+//             Debug.Log("delta_direction " + delta_direction.ToString());
+//             Debug.Log("SteeringAngle " + (SteeringAngle * m_Car.MaxSteerAngleInDegree).ToString());
+            SteeringAngle = Mathf.Clamp(SteeringAngle, -1, 1);
+
             float current_speed = m_Car.CurrentSpeed;
             var desired_velocity = Simulator.Instance.getAgentVelocity(0);
             Vector3 des_v = new Vector3(desired_velocity.x(), 0, desired_velocity.y());
             float desired_speed = des_v.magnitude;
 
-            Debug.Log("pos_new " + pos_new.ToString());
-            Debug.Log("current_speed " + current_speed.ToString());
-            Debug.Log("desired_speed " + desired_speed.ToString());
-
-            double zz = Math.Sqrt( dx * dx + dz * dz) * 50;
-            //Debug.Log("zz " + zz.ToString());
-
+            //             Debug.Log("pos_new " + pos_new.ToString());
+            //             Debug.Log("current_speed " + current_speed.ToString());
+            //             Debug.Log("desired_speed " + desired_speed.ToString());
+            // 
+            //             double zz = Math.Sqrt( dx * dx + dz * dz) * 50;
+            //             Debug.Log("zz " + zz.ToString());
+            
             Acceleration = (desired_speed - current_speed) / 0.02f;
             if (Acceleration > 1) Acceleration = 1;
             if (Acceleration < 0)
             {
                 if (desired_speed - current_speed > -1) Acceleration = 0;
             }
+            //Debug.Log("frameIdx " + frameIdx.ToString() + " Acceleration " + Acceleration.ToString());
+
             frameIdx++;
             //if (frameIdx > 100) Acceleration = 0;
-            Debug.Log("frameIdx " + frameIdx.ToString() + " Acceleration " + Acceleration.ToString());
 
         }
 
@@ -272,7 +315,7 @@ namespace UnityStandardAssets.Vehicles.Car
             
             var position = mainCar.transform.position;
             Simulator.Instance.addAgent(new Vector2(position.x, position.z));
-            goals.Add(new Vector2(checkpoints[0].x, checkpoints[0].z));
+            goals.Add(new Vector2(checkpoints[current_checkpoint_id].x, checkpoints[current_checkpoint_id].z));
 
             for (int i=0; i<obstacles.Count; i++)//obstacles.Count
             {
@@ -330,9 +373,42 @@ namespace UnityStandardAssets.Vehicles.Car
             return b;
         }
 
-        private void FixedUpdate()
+        private bool accEffect()
         {
-            Bounds bbx = GetMaxBounds(mainCar);
+//             Debug.Log("m_Car.CurrentSpeed " + m_Car.CurrentSpeed.ToString());
+//             Debug.Log("preSpeed " + preSpeed.ToString());
+//             Debug.Log("preAcc * 0.002 " + (preAcc * 0.002).ToString());
+            if (m_Car.CurrentSpeed - preSpeed < preAcc * 0.002)
+                return false;
+            return true;
+        }
+
+        private void adjustAcceleration()
+        {
+            if (accEffect())
+            {
+                adjuster *= 2;
+                if (adjuster > 1) adjuster = 1;
+            }
+            else
+            {
+                adjuster /= 2;
+//                 Debug.Log("adjuster " + adjuster.ToString());
+//                 Acceleration = Acceleration * adjuster;
+//                 Debug.Log("SteeringAngle " + SteeringAngle.ToString());
+//                 SteeringAngle = SteeringAngle * adjuster;
+//                 Debug.Log("SteeringAngle " + SteeringAngle.ToString());
+            }
+
+            preSpeed = m_Car.CurrentSpeed;
+            preAcc = Acceleration;
+        }
+
+        private void Update()
+        {
+            statistics();
+            updateCheckpoints();
+            //Bounds bbx = GetMaxBounds(mainCar);
 
             if (useExpert)
             {
@@ -349,7 +425,16 @@ namespace UnityStandardAssets.Vehicles.Car
             }
             else
             {
-                m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+//                 Debug.Log("m_Car.CurrentSpeed " + m_Car.CurrentSpeed.ToString());
+//                 Debug.Log("Acceleration " + Acceleration.ToString());
+//                 Debug.Log("SteeringAngle " + SteeringAngle.ToString());
+//                 adjustAcceleration();
+//                 Debug.Log("SteeringAngle " + SteeringAngle.ToString());
+                if (UpdatedFlag || useExpert)
+                {
+                    UpdatedFlag = false;
+                    m_Car.Move(SteeringAngle, Acceleration, Acceleration, 0f);
+                }
             }
         }
     }
