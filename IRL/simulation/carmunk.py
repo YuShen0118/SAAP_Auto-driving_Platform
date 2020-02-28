@@ -471,11 +471,18 @@ class GameState:
         return steer_action * self.acc_section_number + acc_action
     
     def reset_car(self, carPos, carVelo, carAngle):
+        # change coordinate
         self.car_body.position = ((carPos[0] + offset) * MULTI), ((carPos[1] + offset) * MULTI)
-        
         self.car_body.velocity = (carVelo[0] * MULTI), (carVelo[1] * MULTI)
-
+        carAngle = math.pi / 2 - carAngle / 180 * math.pi
         self.car_body.angle = carAngle
+
+    def get_car_info(self):
+        carPos = [self.car_body.position.x / MULTI - offest, self.car_body.position.y / MULTI - offest]
+        carVelo = [self.car_body.velocity.x / MULTI, self.car_body.velocity.y / MULTI]
+        carAngle = (math.pi / 2 - self.car_body.angle) / math.pi * 180
+
+        return carPos, carVelo, carAngle
 
     def get_expert_action_out(self, carPos, carVelo, carAngle):
         self.reset_car(carPos, carVelo, carAngle)
