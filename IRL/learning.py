@@ -157,7 +157,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
                 
             if frame_idx % 100 == 0:
                 temp_fe, aver_score, aver_dist = 0,0,0#play(model, weights, play_rounds=10, scene_file_name=scene_file_name)
-                if len(score_log) == 0 or (len(score_log) > 0 and aver_score >= np.max(score_log) and aver_dist >= np.max(dist_log)):
+                if len(score_log) == 0 or (len(score_log) > 0 and aver_score > np.max(score_log) and aver_dist > np.max(dist_log)):
                     model.save_weights(model_name, overwrite=True)
                     np.save(weights_name, weights)
                     print("Saving model inner: ", model_name)
