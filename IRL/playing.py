@@ -26,7 +26,7 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
     dist_list = []
     dist_1round = 0
     step_1round = 0
-    max_step_1round = 2000
+    max_step_1round = 1000
 
     # start to move
     while True:
