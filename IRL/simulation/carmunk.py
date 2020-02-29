@@ -14,8 +14,14 @@ from pymunk.vec2d import Vec2d
 import pymunk.pygame_util
 
 # PyGame init
-width = 1000
-height = 700
+MULTI = 5 # enlarge the size of simulation scenario
+multiVec = pymunk.Vec2d(MULTI, MULTI)
+offsetX = 57
+offsetY = 71
+
+BORDER = 2
+width = (84+56 + BORDER)*MULTI
+height = (60+70 + BORDER)*MULTI
 pygame.init()
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
@@ -28,9 +34,11 @@ flag = True
 show_sensors = flag
 draw_screen = flag
 
-MULTI = 5 # enlarge the size of simulation scenario
-multiVec = pymunk.Vec2d(MULTI, MULTI)
-offset = 70
+
+main_car_color = 'green'
+obstacle_car_color = 'gold'
+obstacle_color = 'grey'
+goal_color = 'yellow'
 
 
 class Vector2(Structure):
@@ -86,7 +94,12 @@ class GameState:
         self.init_velocity = (0,30)
 
         # Create the car.
-        self.create_main_car((80+offset)*MULTI, (0+offset)*MULTI, 15)
+        if scene_file_name == 'scenes/scene-ground-car.txt':
+            self.create_main_car((15+offsetX)*MULTI, (-4+offsetY)*MULTI, 15)
+            self.draw_goal = False
+        else:
+            self.create_main_car((80+offsetX)*MULTI, (0+offsetY)*MULTI, 15)
+            self.draw_goal = True
 
         # Record steps.
         self.num_steps = 0
@@ -125,18 +138,16 @@ class GameState:
 
         self.obstacles_car = []
 
-        obstacle_color = "brown"
         minx = 99999999999
         maxx = 0
         miny = 99999999999
         maxy = 0
         
         if scene_file_name == 'scenes/scene-ground-car.txt':
-
             self.goals = [[80,0], [50,44],[-45,46],[-52,-45],[-10,-66],[-3,40]] #,[80,-60]
             for goal in self.goals:
-                goal[0] = (goal[0] + offset) * MULTI 
-                goal[1] = (goal[1] + offset) * MULTI 
+                goal[0] = (goal[0] + offsetX) * MULTI 
+                goal[1] = (goal[1] + offsetY) * MULTI 
             self.current_goal_id = 0
             
             self.pre_goal_dist = (self.goals[0] - self.car_body.position).length
@@ -167,8 +178,14 @@ class GameState:
                     for j in range(pt_num):
                         line = f.readline()
                         pt = []
+                        id=0
                         for s in line.split(' '):
+                            if id==0:
+                                offset=offsetX
+                            else:
+                                offset=offsetY
                             pt.append(MULTI*(float(s)+offset))
+                            id+=1
                             #pt.append((float(s)+0))
                         #poly.append((pt[0],pt[1]))
                         poly.append(pt)
@@ -195,8 +212,8 @@ class GameState:
                     info = []
                     for s in line.split(' '):
                         info.append(s)
-                    self.obstacles_car.append(self.create_obstacle_car(MULTI*(float(info[0])+offset), 
-                                                    MULTI*(float(info[1])+offset), 
+                    self.obstacles_car.append(self.create_obstacle_car(MULTI*(float(info[0])+offsetX), 
+                                                    MULTI*(float(info[1])+offsetY), 
                                                     float(info[2])/180*math.pi, float(info[3]), 3))
 
             segment_radius = 5
@@ -220,8 +237,8 @@ class GameState:
 
             self.goals = [[80,0], [50,44],[-45,46],[-52,-45],[-10,-66],[-3,40]] #,[80,-60]
             for goal in self.goals:
-                goal[0] = (goal[0] + offset) * MULTI 
-                goal[1] = (goal[1] + offset) * MULTI 
+                goal[0] = (goal[0] + offsetX) * MULTI 
+                goal[1] = (goal[1] + offsetY) * MULTI 
             self.current_goal_id = 0
             
             self.pre_goal_dist = (self.goals[0] - self.car_body.position).length
@@ -338,7 +355,7 @@ class GameState:
 
         self.car_body.position = x, y
         self.car_body.init_position = self.car_body.position
-        self.car_shape.color = THECOLORS["green"]
+        self.car_shape.color = THECOLORS[main_car_color]
         self.car_shape.elasticity = 1.0
         self.car_body.angle = math.pi / 2
         self.car_body.init_angle = self.car_body.angle
@@ -359,7 +376,7 @@ class GameState:
         car_shape.collision_type = collision_type
 
         car_body.position = x, y
-        car_shape.color = THECOLORS["yellow"]
+        car_shape.color = THECOLORS[obstacle_car_color]
         car_shape.elasticity = 1.0
         car_body.angle = angle
         driving_direction = Vec2d(1, 0).rotated(car_body.angle)
@@ -473,7 +490,7 @@ class GameState:
     
     def reset_car(self, carPos, carVelo, carAngle):
         # change coordinate
-        self.car_body.position = ((carPos[0] + offset) * MULTI), ((carPos[1] + offset) * MULTI)
+        self.car_body.position = ((carPos[0] + offsetX) * MULTI), ((carPos[1] + offsetY) * MULTI)
         self.car_body.velocity = (carVelo[0] * MULTI), (carVelo[1] * MULTI)
         carAngle = math.pi / 2 - carAngle / 180 * math.pi
         self.car_body.angle = carAngle
@@ -600,8 +617,8 @@ class GameState:
         self.space.debug_draw(self.draw_options)
         self.space.step(self.simstep)
 
-        if draw_screen:
-            pygame.display.flip()
+        #if draw_screen:
+            #pygame.display.flip()
             
         self.driving_history.append([self.car_body.position, self.car_body.angle, self.car_body.velocity, self.current_goal_id])
         if (len(self.driving_history) > self.max_history_num):
@@ -684,9 +701,10 @@ class GameState:
         
         if draw_screen:
             #draw current goal
-            pygame.draw.circle(screen, (0, 0, 255), (current_goal[0], height - current_goal[1]), 4)
+            if self.draw_goal:
+                pygame.draw.circle(screen, THECOLORS[goal_color], (current_goal[0], height - current_goal[1]), 4)
             pygame.display.update()
-            clock.tick()
+        
             
         return reward, state, readings, score, v*self.simstep / MULTI
 
@@ -813,8 +831,8 @@ class GameState:
         
         '''
 
-        if show_sensors:
-            pygame.display.update()
+        #if show_sensors:
+        #    pygame.display.update()
         
         return readings
 
@@ -880,9 +898,9 @@ class GameState:
     #         return 1
 
     def get_track_or_not(self, reading): # basically differentiate b/w the objects the car views.
-        if reading == THECOLORS['yellow']:
+        if reading == THECOLORS[obstacle_car_color]:
             return 2  # Sensor is on a yellow obstacle
-        elif reading == THECOLORS['brown']:
+        elif reading == THECOLORS[obstacle_color]:
             return 1  # Sensor is on brown obstacle
         else:
             return 0 #for black
