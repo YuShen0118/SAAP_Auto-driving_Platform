@@ -39,6 +39,7 @@ main_car_color = 'green'
 obstacle_car_color = 'gold'
 obstacle_color = 'grey'
 goal_color = 'yellow'
+path_color = 'red'
 
 
 class Vector2(Structure):
@@ -53,6 +54,8 @@ class GameState:
             self.expert_lib = ctypes.WinDLL ("./3thPartLib/RVO2/RVO_warper.dll")
         self.driving_history = []
         self.max_history_num = 50
+        
+        self.driving_history_for_draw = []
 
         # Global-ish.
         self.crashed = False
@@ -100,6 +103,7 @@ class GameState:
         else:
             self.create_main_car((80+offsetX)*MULTI, (0+offsetY)*MULTI, 15)
             self.draw_goal = True
+        self.draw_path = True
 
         # Record steps.
         self.num_steps = 0
@@ -496,7 +500,7 @@ class GameState:
         self.car_body.angle = carAngle
 
     def get_car_info(self):
-        carPos = [self.car_body.position.x / MULTI - offest, self.car_body.position.y / MULTI - offest]
+        carPos = [self.car_body.position.x / MULTI - offsetX, self.car_body.position.y / MULTI - offsetY]
         carVelo = [self.car_body.velocity.x / MULTI, self.car_body.velocity.y / MULTI]
         carAngle = (math.pi / 2 - self.car_body.angle) / math.pi * 180
 
@@ -581,7 +585,7 @@ class GameState:
 
         return reward
     
-    def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = True):
+    def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = False):
         self.crashed = False
         [steer_angle, acceleration] = self.get_instruction_from_action(action)
 
@@ -623,6 +627,8 @@ class GameState:
         self.driving_history.append([self.car_body.position, self.car_body.angle, self.car_body.velocity, self.current_goal_id])
         if (len(self.driving_history) > self.max_history_num):
             self.driving_history.pop(0)
+
+        self.driving_history_for_draw.append((self.car_body.position[0],height - self.car_body.position[1]))
 
         # Get the current location and the readings there.
         x, y = self.car_body.position
@@ -703,6 +709,11 @@ class GameState:
             #draw current goal
             if self.draw_goal:
                 pygame.draw.circle(screen, THECOLORS[goal_color], (current_goal[0], height - current_goal[1]), 4)
+            if self.draw_path:
+                length = len(self.driving_history_for_draw)
+                if length > 1:
+                    for i in range(length-1):
+                        pygame.draw.line(screen, THECOLORS[path_color], self.driving_history_for_draw[i], self.driving_history_for_draw[i+1])
             pygame.display.update()
         
             
@@ -743,6 +754,7 @@ class GameState:
         self.car_body.angle = angle + (np.random.random()*2-1) * math.pi / 8
         self.car_body.velocity = velocity
         self.current_goal_id = goal_id
+        self.driving_history_for_draw = []
 
         '''
         while self.crashed:

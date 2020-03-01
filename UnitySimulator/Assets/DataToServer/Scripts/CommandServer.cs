@@ -15,6 +15,7 @@ public class CommandServer : MonoBehaviour
 {
     public CarRemoteControl mainCar;
     public Camera mainCamera;
+    public bool useIRL = true;
     //public bool saveData = false;
     private SocketIOComponent _socket;
     private CarController _carController;
@@ -59,21 +60,28 @@ public class CommandServer : MonoBehaviour
     void OnSteer(SocketIOEvent obj)
     {
         JSONObject jsonObject = obj.data;
-        mainCar.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").str);
-        mainCar.Acceleration = float.Parse(jsonObject.GetField("throttle").str);
+
+        if (useIRL)
+        {
+            float position_x = float.Parse(jsonObject.GetField("mainCar_position_x").str);
+            float position_z = float.Parse(jsonObject.GetField("mainCar_position_y").str);
+            mainCar.transform.position = new Vector3(position_x, 0, position_z);
+
+            float velocity_x = float.Parse(jsonObject.GetField("mainCar_velocity_x").str);
+            float velocity_z = float.Parse(jsonObject.GetField("mainCar_velocity_y").str);
+            mainCar.curVelocity = new Vector3(position_x, 0, position_z);
+
+            float mainCar_direction = float.Parse(jsonObject.GetField("mainCar_direction").str);
+            mainCar.transform.eulerAngles = new Vector3(mainCar.transform.eulerAngles.x, mainCar_direction, mainCar.transform.eulerAngles.z);
+        }
+        else
+        {
+            mainCar.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").str);
+            mainCar.Acceleration = float.Parse(jsonObject.GetField("throttle").str);
+        }
+
         mainCar.UpdatedFlag = true;
 
-//         float position_x = float.Parse(jsonObject.GetField("mainCar_position_x").str);
-//         float position_z = float.Parse(jsonObject.GetField("mainCar_position_y").str);
-//         mainCar.transform.position = new Vector3(position_x, 0, position_z);
-// 
-//         float velocity_x = float.Parse(jsonObject.GetField("mainCar_velocity_x").str);
-//         float velocity_z = float.Parse(jsonObject.GetField("mainCar_velocity_y").str);
-//         mainCar.curVelocity = new Vector3(position_x, 0, position_z);
-// 
-//         float mainCar_direction = float.Parse(jsonObject.GetField("mainCar_direction").str);
-//         mainCar.transform.eulerAngles = new Vector3(mainCar.transform.eulerAngles.x, mainCar_direction, mainCar.transform.eulerAngles.z);
-        
         //CarRemoteControl.AddInput = float.Parse(jsonObject.GetField("add_input").str);
         EmitTelemetry(obj);
     }

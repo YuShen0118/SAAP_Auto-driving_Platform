@@ -17,6 +17,7 @@ from io import BytesIO
 from datetime import datetime
 from flask import Flask
 from simulation import carmunk
+from neuralNets import net1
 import math
 
 import sys
@@ -26,9 +27,18 @@ sio = socketio.Server()
 app = Flask(__name__)
 
 
-game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt', use_expert=True)
+#game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt', use_expert=True)
 
 frameIdx = 0
+
+NUM_FEATURES = 46 # number of features
+NUM_ACTIONS = 25 # number of actions
+saved_model = 'results/finals/164-150-100-50000-20000-3.h5'
+model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
+
+game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt')
+#game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city-car.txt')
+_, state, _, _, _ = game_state.frame_step((11))
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -36,11 +46,14 @@ def telemetry(sid, data):
     global curSampleLSTM
     global nFramesLSTM
     global frameIdx
+    global model
+    global game_state
+    global state
+        
     if data:
         frameIdx += 1
         print("------------------frameIdx ", frameIdx, "-----------------------")
         ## get data from Unity
-        print('data')
         angleUnity = data["steering_angle"]
         throttleUnity = data["throttle"]
         speedUnity = data["speed"]
@@ -49,23 +62,27 @@ def telemetry(sid, data):
         carAngle = float(data["mainCar_direction"])
 
         
-        action = game_state.get_expert_action_out(carPos, carVelo, carAngle)
+        #action = game_state.get_expert_action_out(carPos, carVelo, carAngle)
+        qval = model.predict(state, batch_size=1)
+        action = (np.argmax(qval))  
+
         [steer_angle, acceleration] = game_state.get_instruction_from_action_out(action)
 
-        game_state.frame_step(action)
+        reward , next_state, readings, score, dist_1step = game_state.frame_step(action)
 
         [carPosOut, carVeloOut, carAngleOut] = game_state.get_car_info()
 
+        goal_position = [16, -63]
+        delta = np.array(goal_position) - np.array(carPosOut)
+        if (np.linalg.norm(delta) < 2):
+            exit()
+
         maxAngle = math.pi / 2
         steer_angle = -steer_angle / maxAngle
-        print("steer_angle ", steer_angle)
 
-        #game_state.draw()
-        game_state.frame_step(action, effect=False)
-
-        print("acceleration ", acceleration)
         send_control(steer_angle, acceleration, carPosOut, carVeloOut, carAngleOut)
         
+        state = next_state
     else:
         sio.emit('manual', data={}, skip_sid=True)
 
@@ -73,7 +90,8 @@ def telemetry(sid, data):
 @sio.on('connect')
 def connect(sid, environ):
     print("connect ", sid)
-    send_control(0, 0)
+    [carPosOut, carVeloOut, carAngleOut] = game_state.get_car_info()
+    send_control(0, 0, carPosOut, carVeloOut, carAngleOut)
 
 
 def send_control(steering_angle, throttle, carPosOut, carVeloOut, carAngleOut):
