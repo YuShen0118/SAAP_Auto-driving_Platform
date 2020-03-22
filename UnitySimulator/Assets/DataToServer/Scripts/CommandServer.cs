@@ -25,6 +25,11 @@ public class CommandServer : MonoBehaviour
     int imgWidth = 1242;
     int imgHeight = 375;
 
+    float preDirection = 0;
+
+    GameObject otherCar1;
+    GameObject otherCar2;
+
     Shader rgbShader;
     Shader depthShader;
     float[] pointCloud;
@@ -46,6 +51,9 @@ public class CommandServer : MonoBehaviour
         depthShader = Shader.Find("Custom/DepthGrayscale");
         
         pointCloud = new float[imgHeight * imgWidth * 4];
+
+        otherCar1 = GameObject.Find("Sedan_3A");
+        otherCar2 = GameObject.Find("Interceptor_2A");
     }
 
     // Update is called once per frame according to FPS
@@ -72,7 +80,17 @@ public class CommandServer : MonoBehaviour
             mainCar.curVelocity = new Vector3(position_x, 0, position_z);
 
             float mainCar_direction = float.Parse(jsonObject.GetField("mainCar_direction").str);
-            mainCar.transform.eulerAngles = new Vector3(mainCar.transform.eulerAngles.x, mainCar_direction, mainCar.transform.eulerAngles.z);
+            float filtered_direction = (preDirection + mainCar_direction) / 2;
+            preDirection = mainCar_direction;
+            mainCar.transform.eulerAngles = new Vector3(mainCar.transform.eulerAngles.x, filtered_direction, mainCar.transform.eulerAngles.z);
+
+            float otherCar1_x = float.Parse(jsonObject.GetField("otherCar1_position_x").str);
+            float otherCar1_z = float.Parse(jsonObject.GetField("otherCar1_position_y").str);
+            float otherCar2_x = float.Parse(jsonObject.GetField("otherCar2_position_x").str);
+            float otherCar2_z = float.Parse(jsonObject.GetField("otherCar2_position_y").str);
+
+            otherCar1.transform.position = new Vector3(otherCar1_x, 0, otherCar1_z);
+            otherCar2.transform.position = new Vector3(otherCar2_x, 0, otherCar2_z);
         }
         else
         {

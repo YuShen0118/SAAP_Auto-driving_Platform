@@ -8,13 +8,14 @@ import numpy as np
 from neuralNets import net1
 import sys
 import time
+import timeit
 
 NUM_FEATURES = 46 # number of features
 NUM_ACTIONS = 25 # number of actions
 GAMMA = 0.9
 
 
-def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='scenes/scene-city.txt'):
+def play(model, weights, play_frames=10000, play_rounds=10000, scene_file_name='scenes/scene-city.txt'):
 
     # init
     car_move = 0
@@ -26,10 +27,13 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
     dist_list = []
     dist_1round = 0
     step_1round = 0
-    max_step_1round = 1000
+    max_step_1round = 3000
+
+    time_list = []
 
     # start to move
     while True:
+        start_time = timeit.default_timer()
         car_move += 1
         step_1round += 1
 
@@ -79,6 +83,10 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
             break
         
         state = next_state
+        time_list.append(timeit.default_timer() - start_time)
+        
+        print("fps: ", 1 / np.average(time_list), " ")
+
     print("min score=", np.min(score_list))
     print("max score=", np.max(score_list))
     print("aver score=", np.average(score_list))
@@ -87,6 +95,7 @@ def play(model, weights, play_frames=1000000, play_rounds=100, scene_file_name='
     print("max dist=", np.max(dist_list))
     print("aver dist=", np.average(dist_list))
     print("standard deviation dist=", np.std(dist_list))
+
     return featureExp, np.average(score_list), np.average(dist_list)
 
 if __name__ == "__main__": 
@@ -104,15 +113,16 @@ if __name__ == "__main__":
         print('***************************************************************************************************')
         print('FRAME ', FRAME)
         modelType = BEHAVIOR
-        model_dir = 'results/models-'+ modelType +'/'
+        #model_dir = 'results/models-'+ modelType +'/'
+        model_dir = 'results/finals/'
         saved_model = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
         weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
         model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
         
-        scene_file_name = 'scenes/scene-city-car.txt'
         scene_file_name = 'scenes/scene-ground-car.txt'
         scene_file_name = 'scenes/scene-city.txt'
-        featureExp, score, dist = play(model, weights, play_rounds=10, scene_file_name = scene_file_name)
+        scene_file_name = 'scenes/scene-city-car.txt'
+        featureExp, score, dist = play(model, weights, play_rounds=100, scene_file_name = scene_file_name)
         score_list.append(score)
         dist_list.append(dist)
 

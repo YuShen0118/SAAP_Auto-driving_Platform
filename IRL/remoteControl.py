@@ -36,8 +36,8 @@ NUM_ACTIONS = 25 # number of actions
 saved_model = 'results/finals/164-150-100-50000-20000-3.h5'
 model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
 
-game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt')
-#game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city-car.txt')
+#game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city.txt')
+game_state = carmunk.GameState(scene_file_name = 'scenes/scene-city-car.txt')
 _, state, _, _, _ = game_state.frame_step((11))
 
 @sio.on('telemetry')
@@ -69,10 +69,13 @@ def telemetry(sid, data):
         [steer_angle, acceleration] = game_state.get_instruction_from_action_out(action)
 
         reward , next_state, readings, score, dist_1step = game_state.frame_step(action)
-
+        
         [carPosOut, carVeloOut, carAngleOut] = game_state.get_car_info()
 
-        goal_position = [16, -63]
+        [car1_pos, car2_pos] = game_state.get_other_car_info()
+        
+        #goal_position = [16, -63]
+        goal_position = [-3.5, 38]
         delta = np.array(goal_position) - np.array(carPosOut)
         if (np.linalg.norm(delta) < 2):
             exit()
@@ -80,7 +83,7 @@ def telemetry(sid, data):
         maxAngle = math.pi / 2
         steer_angle = -steer_angle / maxAngle
 
-        send_control(steer_angle, acceleration, carPosOut, carVeloOut, carAngleOut)
+        send_control(steer_angle, acceleration, carPosOut, carVeloOut, carAngleOut, car1_pos, car2_pos)
         
         state = next_state
     else:
@@ -91,10 +94,11 @@ def telemetry(sid, data):
 def connect(sid, environ):
     print("connect ", sid)
     [carPosOut, carVeloOut, carAngleOut] = game_state.get_car_info()
-    send_control(0, 0, carPosOut, carVeloOut, carAngleOut)
+    [car1_pos, car2_pos] = game_state.get_other_car_info()
+    send_control(0, 0, carPosOut, carVeloOut, carAngleOut, car1_pos, car2_pos)
 
 
-def send_control(steering_angle, throttle, carPosOut, carVeloOut, carAngleOut):
+def send_control(steering_angle, throttle, carPosOut, carVeloOut, carAngleOut, car1_pos, car2_pos):
     sio.emit(
         "steer",
         data={
@@ -104,7 +108,12 @@ def send_control(steering_angle, throttle, carPosOut, carVeloOut, carAngleOut):
             'mainCar_position_y': carPosOut[1].__str__(),
             'mainCar_velocity_x': carVeloOut[0].__str__(),
             'mainCar_velocity_y': carVeloOut[1].__str__(),
-            'mainCar_direction': carAngleOut.__str__()
+            'mainCar_direction': carAngleOut.__str__(),
+            
+            'otherCar1_position_x': car1_pos[0].__str__(),
+            'otherCar1_position_y': car1_pos[1].__str__(),
+            'otherCar2_position_x': car2_pos[0].__str__(),
+            'otherCar2_position_y': car2_pos[1].__str__(),
         },
         skip_sid=True)
 

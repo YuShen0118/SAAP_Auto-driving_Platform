@@ -103,7 +103,7 @@ class GameState:
         else:
             self.create_main_car((80+offsetX)*MULTI, (0+offsetY)*MULTI, 15)
             self.draw_goal = True
-        self.draw_path = True
+        self.draw_path = False
 
         # Record steps.
         self.num_steps = 0
@@ -505,6 +505,12 @@ class GameState:
         carAngle = (math.pi / 2 - self.car_body.angle) / math.pi * 180
 
         return carPos, carVelo, carAngle
+    
+    def get_other_car_info(self):
+        carPos1 = [self.obstacles_car[0].position.x / MULTI - offsetX, self.obstacles_car[0].position.y / MULTI - offsetY]
+        carPos2 = [self.obstacles_car[1].position.x / MULTI - offsetX, self.obstacles_car[1].position.y / MULTI - offsetY]
+
+        return [carPos1, carPos2]
 
     def get_expert_action_out(self, carPos, carVelo, carAngle):
         self.reset_car(carPos, carVelo, carAngle)
@@ -692,7 +698,7 @@ class GameState:
         else:
             readings.append(0)
                       
-        reward = self.get_reward(self.W, readings, normalize_reading, reward_type=1)
+        reward = self.get_reward(self.W, readings, normalize_reading, reward_type=2)
         state = np.array([readings])
 
         self.num_steps += 1
