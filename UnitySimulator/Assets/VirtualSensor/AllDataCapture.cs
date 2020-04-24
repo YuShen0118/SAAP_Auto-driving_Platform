@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class AllDataCapture : MonoBehaviour
 {
-    public string outputPath = "D:/projects/gitProjects/SAAP_Auto-driving_Platform/Data/training_simu_1/";
+    public string outputPath = "C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/training_simu_1";
 
     public Camera mainCam; //待截图的目标摄像机
 
@@ -16,6 +16,7 @@ public class AllDataCapture : MonoBehaviour
     public bool capturePointCloud = true;
     public bool copyCameraCalibration = true;
     public bool saveEnd2EndLabel = true;
+    public bool saveBoundingBoxLabel = true;
 
     public bool speedupCapture = true;
 
@@ -29,10 +30,15 @@ public class AllDataCapture : MonoBehaviour
     int imgHeight = 375;
     int num = 0;  //截图计数
 
+    // Added by Laura for bounding box labels
+    GameObject[] cars;
+    GameObject[] trams;
+    GameObject[] vans;
+    float f = 699.7595f;
+
     Shader rgbShader;
     Shader depthShader;
     Renderer rend;
-
     GameObject[] obj; //开头定义GameObject数组
 
     // Use this for initialization
@@ -46,6 +52,13 @@ public class AllDataCapture : MonoBehaviour
         else
         {
             init(GetComponent<Renderer>(), mainCam);
+        }
+
+        if (saveBoundingBoxLabel)
+        {
+            cars = GameObject.FindGameObjectsWithTag("Car");
+            trams = GameObject.FindGameObjectsWithTag("Tram");
+            vans = GameObject.FindGameObjectsWithTag("Van");
         }
     }
 
@@ -158,7 +171,7 @@ public class AllDataCapture : MonoBehaviour
         string imgC = centerImageName;
         string imgL = "";
         string imgR = "";
-        string rowStr = string.Format("{0},{1},{2},{3}\n", imgC, imgL, imgR, label);
+        string rowStr = string.Format("{0},{1},{2},{3}" + System.Environment.NewLine, imgC, imgL, imgR, label);
         File.AppendAllText(fileName, rowStr);
     }
 
@@ -183,7 +196,7 @@ public class AllDataCapture : MonoBehaviour
                     {
                         //changeShader(rgbShader);
                         byte[] image = getRenderResult();
-                        File.WriteAllBytes(outputPath + "//image_2//" + imageName, image);
+                        File.WriteAllBytes(outputPath + "//images//" + imageName, image);
                     }
 
                     if (captureDepthMap || capturePointCloud)
@@ -231,7 +244,7 @@ public class AllDataCapture : MonoBehaviour
                         changeShader(rgbShader);
                         isImageMode = true;
                         byte[] image = getRenderResult();
-                        File.WriteAllBytes(outputPath + "//image_2//" + imageName, image);
+                        File.WriteAllBytes(outputPath + "//images//" + imageName, image);
                     }
                 }
             }
@@ -245,7 +258,7 @@ public class AllDataCapture : MonoBehaviour
                     //changeShader(rgbShader);
                     //isImageMode = true;
                     byte[] image = getRenderResult();
-                    File.WriteAllBytes(outputPath + "//image_2//" + imageName, image);
+                    File.WriteAllBytes(outputPath + "//images//" + imageName, image);
                 }
 
                 if (captureDepthMap || capturePointCloud)
@@ -285,12 +298,20 @@ public class AllDataCapture : MonoBehaviour
 
             if (saveEnd2EndLabel)
             {
-                string fileName = outputPath + "end2endLabels.csv";
+                string fileName = outputPath + "//end2endLabels.csv";
                 UnityStandardAssets.Vehicles.Car.CarController carController =
                     GameObject.Find("MainCar").GetComponent<UnityStandardAssets.Vehicles.Car.CarController>();
                 WriteTrainData(fileName, imageName, carController.CurrentSteerAngle);
             }
 
+            if (saveBoundingBoxLabel)
+            {
+                String contents = getBoundingBox2D(cars, "Car") + getBoundingBox2D(vans, "Van") + getBoundingBox2D(trams, "Tram");
+                string fileName = outputPath + "//labels//" + num1.ToString().PadLeft(6, '0') + ".txt";
+                StreamWriter writer = new StreamWriter(fileName);
+                writer.WriteLine(contents);
+                writer.Close();
+            }
 
             //changeShader(rgbShader);
             RenderTexture.active = null;
@@ -299,5 +320,182 @@ public class AllDataCapture : MonoBehaviour
 
         num++;
 
+    }
+
+    Bounds GetMaxBounds(GameObject g)
+    {
+        var b = new Bounds(g.transform.position, Vector3.zero);
+        foreach (Renderer r in g.GetComponentsInChildren<Renderer>())
+        {
+            b.Encapsulate(r.bounds);
+        }
+        return b;
+    }
+
+    bool isInCamera(GameObject obj)
+    {
+        Transform cameraTransform = mainCam.transform;
+        Transform objTransform = obj.transform;
+        Vector3 objcenter = new Vector3(0, 0, 0);
+        Vector3 objcenterInCamera = cameraTransform.InverseTransformPoint(objTransform.TransformPoint(objcenter));
+        //objcenterInCamera.x = -objcenterInCamera.x;
+        objcenterInCamera.y = -objcenterInCamera.y;
+
+        if (objcenterInCamera.z < 0 || objcenterInCamera.z > 80)
+            return false;
+
+        int u = (int)(objcenterInCamera.x * f / objcenterInCamera.z + imgWidth / 2);
+        int v = (int)(objcenterInCamera.y * f / objcenterInCamera.z + imgHeight / 2);
+
+        if (u < 0 || u >= imgWidth || v < 0 || v >= imgHeight)
+        {
+            return false;
+        }
+
+        //Debug.Log("center position in camera frame: " + objcenterInCamera.x.ToString() + " " + objcenterInCamera.y.ToString() + " " + objcenterInCamera.z.ToString());
+        //Debug.Log("center position in image: " + u.ToString() + " " + v.ToString());
+
+        return true;
+    }
+
+    Vector3 getCameraPoint3D(Transform objTransform, Vector3 objPoint)
+    {
+        Vector3 objPtInCamera = mainCam.transform.InverseTransformPoint(objTransform.TransformPoint(objPoint));
+        //objPtInCamera.x = -objPtInCamera.x;
+        objPtInCamera.y = -objPtInCamera.y;
+
+        return objPtInCamera;
+    }
+
+    Vector2 getImagePoint(Vector3 objPtInCamera)
+    {
+        Vector2 ans;
+        ans.x = objPtInCamera.x * f / objPtInCamera.z + imgWidth / 2;
+        ans.y = objPtInCamera.y * f / objPtInCamera.z + imgHeight / 2;
+
+        return ans;
+    }
+
+    // gets bounding box of specified object list, and label name of that list
+    // e.g. cars, "Cars"
+    // returns string bounding box label
+    String getBoundingBox2D(GameObject[] objList, String labelName)
+    {
+        GameObject anotherCar;
+        String bbox_label = "";
+        String contents;
+
+        for (int i = 0; i < objList.Length; i++)
+        {
+            anotherCar = objList[i];
+
+            // if this object is not in the camera view, go on to the next vehicle in list
+            if (isInCamera(anotherCar) == false)
+            {
+                Debug.Log(anotherCar.name + " is not in the camera view.");
+                continue;
+            }
+
+            Vector3 euler = anotherCar.transform.eulerAngles;
+            anotherCar.transform.Rotate(-euler);
+            Bounds bbx = GetMaxBounds(anotherCar);
+            anotherCar.transform.Rotate(euler);
+
+            Vector3 bbox_2 = new Vector3(bbx.extents.x / anotherCar.transform.localScale.x,
+                bbx.extents.y / anotherCar.transform.localScale.y,
+                bbx.extents.z / anotherCar.transform.localScale.z);
+
+            // calculate the 3d bounding box coordinates
+            List<Vector3> corners3D = new List<Vector3>();
+            corners3D.Add(new Vector3(-bbox_2.x, -bbox_2.y + bbox_2.y, -bbox_2.z));
+            corners3D.Add(new Vector3(-bbox_2.x, -bbox_2.y + bbox_2.y, bbox_2.z));
+            corners3D.Add(new Vector3(-bbox_2.x, bbox_2.y + bbox_2.y, -bbox_2.z));
+            corners3D.Add(new Vector3(-bbox_2.x, bbox_2.y + bbox_2.y, bbox_2.z));
+            corners3D.Add(new Vector3(bbox_2.x, -bbox_2.y + bbox_2.y, -bbox_2.z));
+            corners3D.Add(new Vector3(bbox_2.x, -bbox_2.y + bbox_2.y, bbox_2.z));
+            corners3D.Add(new Vector3(bbox_2.x, bbox_2.y + bbox_2.y, -bbox_2.z));
+            corners3D.Add(new Vector3(bbox_2.x, bbox_2.y + bbox_2.y, bbox_2.z));
+
+            List<Vector2> corners2D = new List<Vector2>();
+            for (int j = 0; j < 8; j++)
+            {
+                corners3D[j] = getCameraPoint3D(anotherCar.transform, corners3D[j]);
+                corners2D.Add(getImagePoint(corners3D[j]));
+            }
+
+            float minu = 1e9f;
+            float minv = 1e9f;
+            float maxu = -1e9f;
+            float maxv = -1e9f;
+
+            for (int j = 0; j < 8; j++)
+            {
+                if (minu > corners2D[j].x) minu = corners2D[j].x;
+                if (minv > corners2D[j].y) minv = corners2D[j].y;
+                if (maxu < corners2D[j].x) maxu = corners2D[j].x;
+                if (maxv < corners2D[j].y) maxv = corners2D[j].y;
+            }
+
+            // 2d bounding box safety check; should not 0 or imgWidth because of earlier check
+            float minuInImg = minu;
+            if (minuInImg < 0) minuInImg = 0;
+            if (minuInImg > imgWidth - 1) minuInImg = imgWidth - 1;
+
+            float minvInImg = minv;
+            if (minvInImg < 0) minvInImg = 0;
+            if (minvInImg > imgHeight - 1) minvInImg = imgHeight - 1;
+
+            float maxuInImg = maxu;
+            if (maxuInImg < 0) maxuInImg = 0;
+            if (maxuInImg > imgWidth - 1) maxuInImg = imgWidth - 1;
+
+            float maxvInImg = maxv;
+            if (maxvInImg < 0) maxvInImg = 0;
+            if (maxvInImg > imgHeight - 1) maxvInImg = imgHeight - 1;
+
+            float truncatedRate = (maxuInImg - minuInImg) * (maxvInImg - minvInImg) / (maxu - minu) / (maxv - minv);
+            Vector3 objcenter = new Vector3(0, 0, 0);
+            Vector3 objcenterInCamera = getCameraPoint3D(anotherCar.transform, objcenter);
+
+            float deltaY = anotherCar.transform.eulerAngles.y - mainCam.transform.eulerAngles.y - 90;
+            int rd = (int)(deltaY / 360);
+            float remain = deltaY - rd * 360;
+            while (remain > 180) remain -= 360;
+            while (remain < -180) remain += 360;
+            double rotate_y = remain / 180.0 * Math.PI;
+
+            double dry = Math.Atan2(-objcenterInCamera.x, objcenterInCamera.z);
+            Matrix4x4 obj2cam = mainCam.transform.worldToLocalMatrix * anotherCar.transform.localToWorldMatrix;
+
+            // label name, e.g. Car, Tram, Van
+            contents = labelName + " ";
+
+            //Float from 0(non - truncated) to 1(truncated), where truncated refers to the object leaving image boundaries
+            contents += truncatedRate.ToString() + " ";
+
+            //Integer (0,1,2,3) indicating occlusion state: 0 = fully visible, 1 = partly occluded 2 = largely occluded, 3 = unknown
+            contents += "3 ";
+
+            //Observation angle of object, ranging [-pi..pi]
+            contents += (rotate_y + dry).ToString() + " ";
+
+            // Bounding box -- left, top, right, bottom 
+            contents += minuInImg.ToString() + " " + minvInImg.ToString() + " " + maxuInImg.ToString() + " " + maxvInImg.ToString() + " ";
+
+
+            //Vector2 ctImg = getImagePoint(getCameraPoint3D(anotherCar.transform, new Vector3(0, 0, 0)));
+            //contents += ctImg.x.ToString() + " " + ctImg.y.ToString() + " ";
+            
+
+            contents += bbx.size.y.ToString() + " " + bbx.size.x.ToString() + " " + bbx.size.z.ToString() + " ";
+
+            contents += obj2cam.m03.ToString() + " " + (-obj2cam.m13 + anotherCar.transform.position.y).ToString() + " " + obj2cam.m23.ToString();
+
+            contents += " " + rotate_y.ToString();
+
+            bbox_label += contents + System.Environment.NewLine;
+        }
+
+        return bbox_label;
     }
 }

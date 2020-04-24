@@ -1,996 +1,1017 @@
-000001
-000002
-000004
-000005
-000006
-000008
-000015
-000019
-000020
-000021
-000023
-000024
-000025
-000027
-000028
-000031
-000033
-000035
-000037
-000039
-000040
-000042
-000047
-000048
-000050
-000052
-000053
-000058
-000059
-000061
-000062
-000063
-000065
-000066
-000076
-000077
-000078
-000081
-000089
-000090
-000093
-000094
-000098
-000102
-000104
-000106
-000107
-000108
-000116
-000117
-000118
-000122
-000124
-000126
-000128
-000132
-000134
-000135
-000137
-000139
-000140
-000143
-000147
-000151
-000152
-000153
-000156
-000159
-000161
-000167
-000168
-000169
-000170
-000173
-000174
-000175
-000181
-000182
-000183
-000186
-000187
-000188
-000190
-000191
-000192
-000194
-000195
-000196
-000197
-000199
-000201
-000203
-000204
-000207
-000211
-000212
-000213
-000216
-000218
-000223
-000224
-000226
-000229
-000230
-000231
-000234
-000235
-000236
-000237
-000239
-000242
-000246
-000247
-000248
-000249
-000250
-000251
-000252
-000260
-000262
-000263
-000265
-000266
-000268
-000269
-000270
-000272
-000273
-000278
-000279
-000281
-000283
-000284
-000289
-000290
-000291
-000293
-000297
-000301
-000302
-000305
-000307
-000308
-000309
-000311
-000312
-000314
-000315
-000319
-000320
-000321
-000323
-000324
-000327
-000328
-000329
-000332
-000333
-000335
-000336
-000340
-000341
-000343
-000345
-000346
-000347
-000350
-000351
-000352
-000354
-000355
-000356
-000357
-000359
-000360
-000361
-000362
-000365
-000366
-000369
-000370
-000372
-000373
-000376
-000377
-000378
-000379
-000381
-000382
-000383
-000385
-000386
-000388
-000391
-000392
-000393
-000394
-000395
-000396
-000397
-000398
-000399
-000401
-000402
-000403
-000404
-000407
-000408
-000409
-000413
-000414
-000415
-000419
-000420
-000422
-000427
-000428
-000429
-000430
-000436
-000437
-000440
-000443
-000446
-000448
-000450
-000451
-000452
-000453
-000454
-000455
-000457
-000459
-000463
-000468
-000469
-000472
-000473
-000475
-000476
-000477
-000478
-000479
-000480
-000481
-000485
-000486
-000489
-000491
-000492
-000493
-000494
-000495
-000496
-000498
-000499
-000503
-000504
-000506
-000508
-000509
-000510
-000512
-000515
-000517
-000519
-000521
-000524
-000527
-000528
-000530
-000533
-000536
-000541
-000542
-000543
-000545
-000546
-000548
-000551
-000554
-000555
-000558
-000559
-000560
-000561
-000564
-000566
-000567
-000568
-000569
-000571
-000572
-000581
-000583
-000588
-000589
-000590
-000591
-000595
-000600
-000601
-000604
-000610
-000611
-000612
-000613
-000614
-000615
-000618
-000619
-000620
-000624
-000625
-000626
-000628
-000630
-000634
-000635
-000636
-000639
-000642
-000644
-000645
-000647
-000648
-000650
-000655
-000657
-000658
-000659
-000660
-000667
-000669
-000670
-000674
-000677
-000679
-000682
-000683
-000684
-000691
-000692
-000694
-000696
-000698
-000699
-000700
-000702
-000704
-000706
-000708
-000716
-000717
-000718
-000721
-000722
-000725
-000727
-000728
-000729
-000731
-000734
-000736
-000737
-000740
-000741
-000745
-000746
-000748
-000750
-000751
-000752
-000754
-000756
-000761
-000765
-000766
-000767
-000768
-000769
-000771
-000772
-000773
-000774
-000778
-000779
-000782
-000790
-000792
-000795
-000798
-000800
-000801
-000802
-000803
-000804
-000805
-000806
-000807
-000809
-000810
-000811
-000812
-000816
-000819
-000823
-000826
-000831
-000837
-000838
-000840
-000841
-000843
-000844
-000847
-000848
-000849
-000850
-000852
-000854
-000859
-000862
-000863
-000869
-000873
-000874
-000875
-000876
-000877
-000878
-000879
-000881
-000884
-000885
-000889
-000893
-000894
-000897
-000899
-000904
-000907
-000909
-000911
-000912
-000915
-000916
-000917
-000920
-000922
-000923
-000926
-000928
-000930
-000931
-000932
-000938
-000939
-000940
-000942
-000943
-000944
-000948
-000949
-000952
-000953
-000956
-000958
-000961
-000963
-000964
-000966
-000967
-000969
-000970
-000971
-000973
-000974
-000976
-000979
-000981
-000983
-000984
-000985
-000986
-000988
-000991
-000999
-001002
-001006
-001007
-001008
-001010
-001011
-001012
-001013
-001014
-001015
-001018
-001019
-001021
-001022
-001025
-001026
-001027
-001035
-001037
-001039
-001042
-001043
-001046
-001050
-001051
-001053
-001054
-001055
-001058
-001063
-001065
-001066
-001067
-001068
-001069
-001070
-001071
-001075
-001076
-001077
-001078
-001083
-001084
-001086
-001088
-001089
-001094
-001095
-001096
-001097
-001099
-001101
-001102
-001104
-001106
-001107
-001108
-001111
-001113
-001114
-001115
-001116
-001118
-001120
-001123
-001125
-001127
-001129
-001131
-001132
-001133
-001134
-001135
-001136
-001138
-001139
-001140
-001141
-001143
-001144
-001145
-001147
-001148
-001149
-001150
-001152
-001153
-001154
-001155
-001158
-001162
-001163
-001167
-001172
-001173
-001176
-001177
-001178
-001179
-001180
-001182
-001183
-001187
-001188
-001189
-001191
-001192
-001193
-001194
-001195
-001198
-001199
-001203
-001206
-001207
-001213
-001214
-001216
-001217
-001218
-001221
-001222
-001224
-001225
-001226
-001228
-001230
-001232
-001234
-001235
-001236
-001237
-001239
-001241
-001242
-001243
-001244
-001245
-001246
-001249
-001251
-001252
-001253
-001254
-001255
-001257
-001259
-001260
-001261
-001263
-001265
-001266
-001267
-001268
-001269
-001270
-001271
-001272
-001273
-001274
-001275
-001281
-001284
-001286
-001287
-001289
-001291
-001292
-001294
-001295
-001296
-001303
-001304
-001305
-001306
-001307
-001308
-001314
-001317
-001318
-001329
-001330
-001331
-001332
-001333
-001334
-001336
-001337
-001339
-001342
-001344
-001345
-001346
-001347
-001350
-001352
-001353
-001355
-001356
-001359
-001363
-001365
-001372
-001374
-001375
-001376
-001377
-001380
-001381
-001382
-001384
-001386
-001387
-001388
-001389
-001391
-001395
-001397
-001398
-001407
-001410
-001411
-001412
-001415
-001416
-001419
-001421
-001424
-001427
-001431
-001432
-001435
-001437
-001438
-001439
-001441
-001442
-001443
-001445
-001446
-001448
-001450
-001451
-001458
-001461
-001463
-001466
-001469
-001471
-001477
-001478
-001480
-001481
-001485
-001487
-001488
-001489
-001495
-001497
-001501
-001502
-001507
-001508
-001511
-001513
-001514
-001516
-001517
-001521
-001522
-001524
-001525
-001526
-001527
-001528
-001533
-001535
-001536
-001537
-001538
-001542
-001545
-001546
-001547
-001549
-001552
-001555
-001557
-001560
-001562
-001564
-001565
-001567
-001569
-001573
-001574
-001576
-001577
-001579
-001582
-001583
-001585
-001586
-001587
-001588
-001589
-001590
-001591
-001592
-001594
-001596
-001597
-001600
-001602
-001603
-001605
-001606
-001610
-001613
-001615
-001616
-001617
-001619
-001621
-001625
-001627
-001629
-001631
-001633
-001634
-001635
-001640
-001643
-001645
-001647
-001650
-001654
-001656
-001658
-001660
-001662
-001664
-001665
-001666
-001667
-001670
-001675
-001680
-001682
-001683
-001684
-001689
-001693
-001694
-001697
-001699
-001701
-001702
-001704
-001705
-001706
-001707
-001709
-001710
-001711
-001712
-001713
-001714
-001717
-001718
-001719
-001721
-001722
-001726
-001727
-001729
-001732
-001733
-001740
-001741
-001742
-001745
-001746
-001749
-001750
-001751
-001752
-001755
-001758
-001762
-001764
-001765
-001768
-001771
-001772
-001774
-001776
-001778
-001780
-001781
-001782
-001783
-001786
-001787
-001794
-001795
-001797
-001800
-001801
-001802
-001804
-001807
-001808
-001813
-001814
-001817
-001818
-001820
-001822
-001823
-001824
-001825
-001828
-001831
-001835
-001840
-001844
-001846
-001848
-001851
-001852
-001853
-001854
-001855
-001856
-001858
-001859
-001861
-001862
-001863
-001867
-001868
-001869
-001872
-001875
-001877
-001878
-001880
-001881
-001884
-001885
-001886
-001887
-001888
-001890
-001892
-001893
-001897
-001898
-001900
-001904
-001905
-001909
-001919
-001920
-001923
-001924
-001925
-001926
-001927
-001928
-001929
-001931
-001932
-001933
-001934
-001936
-001937
-001940
-001941
-001942
-001943
-001945
-001946
-001952
-001954
-001959
-001960
-001966
-001967
-001969
-001972
-001977
-001978
-001979
-001980
-001982
-001983
-001984
-001985
-001986
-001989
-001991
-001995
-001996
-001997
-001999
-002000
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004813.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002031.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000637.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002125.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001778.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002237.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001643.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001013.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003599.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001385.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002079.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002979.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004329.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003205.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004273.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003417.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002531.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003249.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004200.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001241.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001342.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001420.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001375.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000591.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002338.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000665.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004049.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001665.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001060.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004833.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003607.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004320.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001209.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004395.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002307.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000112.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002401.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002460.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001318.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002546.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001943.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001042.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000930.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002670.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003668.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002078.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003314.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002607.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001101.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004622.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004229.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002999.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002986.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004071.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004734.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002940.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000493.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003077.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002761.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005000.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001577.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003110.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004350.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004612.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000758.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000684.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004886.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001638.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003127.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003176.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001607.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002329.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001804.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001176.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002499.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000766.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002176.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003002.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002506.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001950.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003769.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004582.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002051.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004553.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005002.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003216.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004138.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002328.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002217.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001394.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003652.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001634.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001748.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004365.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003114.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003425.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000362.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004648.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001852.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000551.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004596.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004484.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003700.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001962.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004258.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001219.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004559.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001764.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000043.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004514.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002247.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002573.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003838.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002595.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000937.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004345.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003089.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000988.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000773.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000738.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001856.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003306.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002162.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004363.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000270.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003692.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003835.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001067.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002716.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003389.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004288.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004970.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001088.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004437.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002267.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004276.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001512.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000536.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005053.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002580.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002235.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002992.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003756.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004377.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001245.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000584.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002691.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003861.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004888.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001561.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001719.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001947.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004257.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000771.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002455.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000214.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000428.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000964.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003040.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001396.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001392.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001835.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001081.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000755.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004815.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001437.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000226.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002177.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003695.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002773.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004500.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000874.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002430.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001755.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002774.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003384.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002686.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001480.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004964.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001453.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000663.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004368.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002317.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002170.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005024.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002219.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002669.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000816.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004222.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000884.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003750.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000193.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000185.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004636.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000419.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001200.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000839.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001681.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004039.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000862.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001992.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004470.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002385.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000282.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001124.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003955.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001535.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002497.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001706.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000935.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002859.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004226.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001704.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003534.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003826.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003164.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000287.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004492.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000278.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000254.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002238.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001486.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002754.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003913.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003822.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004017.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002332.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004555.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002873.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002050.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000074.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001654.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002218.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004168.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004264.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000790.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003996.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004904.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004887.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001185.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005049.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001567.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000488.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001251.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004199.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001016.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001644.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004937.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000340.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003261.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003395.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004438.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001308.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004216.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003303.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002183.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001307.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003615.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002230.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005075.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004922.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001666.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002523.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002692.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005028.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001589.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002037.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001552.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003527.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003654.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004741.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001075.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004958.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003467.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004569.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003506.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004192.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001220.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002496.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004652.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004649.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002091.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003001.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004152.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004107.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000478.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003108.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004603.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000032.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003320.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001536.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001534.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001472.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000323.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004459.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003505.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003234.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005057.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003076.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004136.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004761.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002066.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003930.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003636.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001844.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004546.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003404.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003537.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003304.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002386.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003546.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001010.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001284.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002805.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004004.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000565.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001784.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000219.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001262.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001675.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001688.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000509.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004653.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002842.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002853.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000426.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002305.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003979.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003331.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004306.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001229.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002250.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003124.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001739.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001490.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003906.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003054.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002757.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003755.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001924.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001517.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003513.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000143.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004286.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004342.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004606.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000513.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002758.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004673.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004220.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003840.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001118.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002952.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002879.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004335.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002381.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003884.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000729.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002572.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001878.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002057.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004113.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000891.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003141.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003484.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003421.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002143.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002337.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000919.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000030.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005069.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001359.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003238.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004163.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001240.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001319.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001611.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004059.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004188.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001454.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004503.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001833.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001434.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004205.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004011.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003929.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003535.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000480.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004891.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003752.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000079.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000899.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003070.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002014.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002324.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000653.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004822.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003759.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001164.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004772.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002540.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000990.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005081.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003023.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002743.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003813.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004548.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002836.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000289.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001774.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000371.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000056.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002856.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004266.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000183.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004962.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003921.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003575.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000021.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003980.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000989.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002316.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001842.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000903.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003579.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000827.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003896.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000794.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004181.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001028.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001258.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004804.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005042.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005051.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004269.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004430.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003293.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003593.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002082.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002001.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002590.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003437.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000225.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000163.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000878.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003970.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002080.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004672.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002848.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004198.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003571.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000001.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004695.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004940.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002018.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004072.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002166.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002602.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003057.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002134.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000735.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004634.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000150.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002363.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000837.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004268.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004973.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002883.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000570.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000404.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004122.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000462.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004566.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003989.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004179.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002110.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004041.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001433.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002802.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000759.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003119.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004753.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001260.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003326.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002226.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003312.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002625.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003474.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000598.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004346.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001085.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004263.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001712.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004343.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001818.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003279.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000113.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000216.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002649.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003594.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001073.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001298.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001713.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002741.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002985.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001334.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000676.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005038.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002981.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001344.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003717.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002936.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002041.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003503.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003257.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003947.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001768.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001979.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002780.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003604.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003573.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001382.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001422.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002220.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002772.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002894.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004255.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003780.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004689.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001865.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001646.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004444.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002419.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002053.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003328.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004439.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003276.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002069.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003122.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000400.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001698.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004617.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002192.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003351.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001657.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002520.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002116.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003938.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002666.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002169.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004931.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004852.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000747.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002547.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003942.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002639.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003036.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003162.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002242.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000133.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004124.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002175.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003140.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000332.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001687.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000049.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003172.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001349.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003724.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003135.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000997.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002809.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000498.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000290.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003116.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001533.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004374.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003916.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003225.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003502.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000076.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004453.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002291.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004309.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002746.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001386.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001523.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001796.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002198.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003343.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001901.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004610.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002360.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002439.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003880.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003496.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003305.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000350.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001358.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004270.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004490.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000741.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003574.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004014.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002687.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002966.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004562.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000334.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003095.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004552.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001099.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000103.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004178.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003521.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004768.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000658.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002838.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004692.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000743.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001407.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003817.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001247.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004159.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002334.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002696.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004881.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000100.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002852.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004532.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002200.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004641.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003372.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003770.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004598.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004230.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002188.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000764.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003606.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000901.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000266.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004339.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003678.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004560.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000952.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001323.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000712.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002211.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002681.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000522.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003042.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002583.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002390.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003228.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000003.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004867.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004687.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001205.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004585.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002528.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002840.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001108.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000090.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004485.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004550.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000582.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001886.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003482.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004756.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004279.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000623.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003888.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002897.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002285.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002383.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004415.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004765.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004524.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000834.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004620.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001159.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003553.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001182.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001162.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003226.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002059.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003883.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001925.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004349.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002505.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000532.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000664.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002374.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004242.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003842.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004901.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001758.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003308.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004115.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003744.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002998.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002446.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004802.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003353.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000452.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004185.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000506.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002813.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001032.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000750.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004451.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002530.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000861.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003085.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000012.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003227.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004525.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001725.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004467.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002260.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004659.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002330.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001287.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002671.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000465.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002953.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000675.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000673.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004455.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001859.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004494.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002259.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002586.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002202.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003852.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004272.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002311.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004604.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001111.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000137.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000677.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001274.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001083.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000605.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000864.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000284.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004977.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003631.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003233.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002483.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004924.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001753.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003612.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004720.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001103.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001531.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002834.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000138.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001550.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002443.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004783.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004409.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003149.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001151.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002016.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002232.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001985.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002299.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002409.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001928.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002796.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000772.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002302.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004114.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002400.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002256.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003214.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002295.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002846.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003544.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003892.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003464.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002886.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003670.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000421.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001527.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001889.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003445.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004683.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003199.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004960.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004807.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000058.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002837.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001723.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001789.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003872.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003013.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002475.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004081.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002864.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002727.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003071.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004697.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000563.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001919.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003711.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001033.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003825.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003418.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000851.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001893.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000459.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004711.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004429.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005065.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000060.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003286.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001526.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000026.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003457.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004935.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004766.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004597.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002592.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003215.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001179.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000782.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001356.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003688.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003890.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004998.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002907.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000592.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003432.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003338.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002355.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000174.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000304.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002425.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000922.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003175.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000475.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001127.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001601.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003111.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003045.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003196.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005009.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003776.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004829.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001213.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000321.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001184.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003407.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002354.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004779.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004814.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002265.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003269.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004073.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003491.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000036.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004472.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002158.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002889.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001781.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004473.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003317.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000020.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002477.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004980.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004879.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004061.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001071.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004104.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002056.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004803.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001987.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001004.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004055.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000382.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003624.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002730.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000166.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003933.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001432.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001655.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003143.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003422.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003857.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004616.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002136.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001626.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000976.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001449.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004513.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004420.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001364.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002782.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002844.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000365.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000538.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000876.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003185.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004103.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000111.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002146.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000255.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003501.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002375.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002943.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002970.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001571.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003056.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004903.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002331.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000829.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003751.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004080.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002699.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001707.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000514.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003583.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000508.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000910.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003601.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000657.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003026.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004462.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001958.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000926.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003841.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000258.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001165.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000819.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001114.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002107.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000556.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000842.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001195.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001667.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004237.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000805.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000969.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003843.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002750.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000033.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001261.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001328.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000338.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004057.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004298.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004942.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003051.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\005011.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004762.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000603.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002118.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004979.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000520.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003408.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004778.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004699.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003423.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004499.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002959.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001619.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004516.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000041.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001913.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002306.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000443.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004219.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001813.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003021.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000733.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002008.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002490.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000940.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004344.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002445.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004511.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002847.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004850.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002921.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001234.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001594.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004016.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004204.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003758.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002408.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004674.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000039.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002869.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004434.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001726.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004378.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003944.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001317.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004608.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002735.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003847.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002424.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000061.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004060.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003781.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002144.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000557.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\002127.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\003241.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004382.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000249.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004015.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\004621.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000349.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\000812.jpg
+C:\Users\Laura Zheng\Documents\Unity\SAAP_Auto-driving_Platform\Data\training_simu_1\images\001199.jpg

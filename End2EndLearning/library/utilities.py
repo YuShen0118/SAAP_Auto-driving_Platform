@@ -140,36 +140,36 @@ def load_train_data(trainPath, nRep, fThreeCameras = False):
 	Load the training data
 	'''
 	## prepare for getting x
-	xFolder = trainPath + 'image_2/'
+	xFolder = trainPath + 'images/'
 	if not os.path.exists(xFolder):
-		sys.exit('Error: the image_2 folder is missing.')
+		sys.exit('Error: the image folder is missing.')
 		
 	## prepare for getting y
-	trainLogPath = trainPath + 'end2endLabels.csv'
+	trainLogPath = trainPath + 'formatted_labels.csv'
 	if not os.path.exists(trainLogPath):
-		sys.exit('Error: the end2endLabels.csv is missing.')
+		sys.exit('Error: the labels.csv is missing.')
 	with open(trainLogPath, newline='') as f:
 		trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
 	
-	## get x and y
+    ## get x and y
 	xList, yList = ([], [])
 	
 	for rep in range(0,nRep):
-		for row in trainLog:
+		for row in trainLog:  
 			## center camera
-			xList.append(xFolder + row[0]) 
-			yList.append(float(row[3]))     
-			
-			## if using three cameras
-			if fThreeCameras:
-				
+	 		xList.append(xFolder + row[0]) 
+ 			yList.append(float(row[3]))     
+ 			
+ 			## if using three cameras
+ 			if fThreeCameras:
+
 				## left camera
-				xList.append(xFolder + row[1])  
-				yList.append(float(row[3]) + 0.25) 
+ 				xList.append(xFolder + row[1])  
+ 				yList.append(float(row[3]) + 0.25) 
 				
 				## right camera
-				xList.append(xFolder + row[2])  
-				yList.append(float(row[3]) - 0.25) 
+ 				xList.append(xFolder + row[2])  
+ 				yList.append(float(row[3]) - 0.25) 
 			
 	return (xList, yList)
 	
