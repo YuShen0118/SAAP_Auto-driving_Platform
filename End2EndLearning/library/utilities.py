@@ -135,17 +135,15 @@ def random_distort(image, angle):
 ##      Preprocessing
 ####################################################
 ####################################################
-def load_train_data(trainPath, nRep, fThreeCameras = False):
+def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 	'''
 	Load the training data
 	'''
 	## prepare for getting x
-	xFolder = trainPath + 'images/'
 	if not os.path.exists(xFolder):
 		sys.exit('Error: the image folder is missing.')
 		
 	## prepare for getting y
-	trainLogPath = trainPath + 'formatted_labels.csv'
 	if not os.path.exists(trainLogPath):
 		sys.exit('Error: the labels.csv is missing.')
 	with open(trainLogPath, newline='') as f:

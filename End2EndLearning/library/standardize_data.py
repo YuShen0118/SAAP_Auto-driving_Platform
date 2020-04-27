@@ -11,7 +11,7 @@ import csv, os, sys
 from pathlib import Path
 
 #### CHANGE THESE AS NEEDED ####
-NVIDIA = True
+NVIDIA = False
 Udacity = True
 
 root = 'C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/'
@@ -26,12 +26,13 @@ UDACITY_path2 = root + 'Udacity/track2data/'
 # original label file locations
 NVIDIA_original_label_file = NVIDIA_path + 'data.txt'
 
-UDACITY_original_label_file1 = UDACITY_path1 + 'driving_log.csv' # track 1
-UDACITY_original_label_file2 = UDACITY_path2 + 'driving_log.csv' # track 2
+UDACITY_original_label_file1 = UDACITY_path1 + 'labels.csv' # track 1
+UDACITY_original_label_file2 = UDACITY_path2 + 'labels.csv' # track 2
 
 #### CHANGE THESE AS NEEDED ####
 
-
+# needed to scale steering angle in Udacity data back to actual angle measurements
+UDACITY_MAX_STEERING_ANGLE = 25
 
 def convert_NVIDIA():
     ''' Converts NVIDIA format to custom format readable by end 2 end model.
@@ -82,9 +83,9 @@ def convert_UDACITY():
         center_image = Path(row[0]).name
         left_image = Path(row[1]).name
         right_image = Path(row[2]).name
-        angle = row[3]
+        angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
         
-        output = ','.join([center_image,left_image,right_image,angle])
+        output = ','.join([center_image,left_image,right_image,str(angle)])
         
         f.write(output + '\n')
     f.close()
@@ -102,9 +103,9 @@ def convert_UDACITY():
         center_image = Path(row[0]).name
         left_image = Path(row[1]).name
         right_image = Path(row[2]).name
-        angle = row[3]
+        angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
         
-        output = ','.join([center_image,left_image,right_image,angle])
+        output = ','.join([center_image,left_image,right_image,str(angle)])
         
         f.write(output + '\n')
     f.close()

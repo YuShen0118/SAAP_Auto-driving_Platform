@@ -13,7 +13,7 @@ if __name__ == "__main__":
     
 	## flags
 	fRandomDistort = False
-	fThreeCameras = False
+	fThreeCameras = False  # set to True if using Udacity data set
 	fClassifier = False
 	flags = [fRandomDistort, fThreeCameras, fClassifier]
 	
@@ -38,10 +38,14 @@ if __name__ == "__main__":
 # 	trainPath = data_root + 'Udacity/track1data/'
     
     # track 2 of Udacity dataset
-	trainPath = data_root + 'Udacity/track2data/'
+# 	trainPath = data_root + 'Udacity/track2data/'
     
+	imagePath = ''
+	labelPath = ''
+	outputPath = ''
+
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	train_dnn(trainPath, netType, flags, specs)
+	train_dnn(imagePath, labelPath, outputPath, netType, flags, specs)
 	
 	
 

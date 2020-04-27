@@ -103,7 +103,7 @@ def gen_train_data_random(xList, yList, batchSize, fRandomDistort = False, fFlip
 
 	        
     
-def train_dnn(trainPath, netType, flags, specs):
+def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	
 	## assigning variables
 	fRandomDistort = flags[0]
@@ -116,7 +116,7 @@ def train_dnn(trainPath, netType, flags, specs):
 	nRep  = specs[4]
 	
 	## prepare the data
-	xList, yList = load_train_data(trainPath, nRep, fThreeCameras)
+	xList, yList = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
 	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 	
@@ -134,17 +134,17 @@ def train_dnn(trainPath, netType, flags, specs):
 	
 	## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
 	if netType == 1:
-		outputPath = trainPath + 'trainedModels/models-cnn/';
+# 		outputPath = trainPath + 'trainedModels/models-cnn/';
 		net = net_nvidia(fClassifier, nClass)
 		trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize)
 		validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 	elif netType == 2:
-		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
 		net = net_lstm(2, nFramesSample)
 		trainGenerator = gen_train_data_lstm_m2o(xTrainList, yTrainList, batchSize, nFramesSample)
 		validGenerator = gen_train_data_lstm_m2o(xValidList, yValidList, batchSize, nFramesSample)
 	elif netType == 3:
-		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
 		net = net_lstm(3, nFramesSample)
 		trainGenerator = gen_train_data_lstm_m2m(xTrainList, yTrainList, batchSize, nFramesSample)
 		validGenerator = gen_train_data_lstm_m2m(xValidList, yValidList, batchSize, nFramesSample)
