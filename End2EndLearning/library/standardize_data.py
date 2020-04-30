@@ -16,6 +16,11 @@ Udacity = True
 
 root = 'C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/'
 
+# NVIDIA dataset from Sully Chen records the actual angle of the steering wheel
+# To get the angle the actual wheels turn, divide the recorded angles by the ratio
+# Recorded on a 2014 Honda Civic: https://hondanews.com/en-US/honda-automobiles/releases/release-b228c382366b432890e04499ebb2b995-2014-civic-si-specifications-and-features
+NVIDIA_STEERING_RATIO = 15.06
+
 # NVIDIA data folder
 NVIDIA_path = root + 'NVIDIA/'
 
@@ -53,7 +58,7 @@ def convert_NVIDIA():
     
     for row in trainLog:
         image = row[0].split()[0]
-        angle = row[0].split()[1]
+        angle = str(float(row[0].split()[1]) / NVIDIA_STEERING_RATIO)
         
         output = ','.join([image,"","",angle])
         
