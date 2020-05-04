@@ -272,23 +272,36 @@ def train_dnn_overfitting(trainSpec, xTrainList, yTrainList, xValidList, yValidL
 	net.save(outputFolder + 'model-final.h5')
 	#print(net.summary())
 
-
+'''
 
 	
-def test_dnn(model, testList, report, isClassify):
+def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
 	
+    ## assigning variables
+# 	fRandomDistort = flags[0]
+	fThreeCameras  = flags[1]
+	fClassifier    = flags[2]
+# 	batchSize 	   = specs[0]
+# 	nEpoch 		   = specs[1]
+	nClass         = specs[2]
+	nFramesSample  = specs[3]
+	nRep  = specs[4]
+    
 	print('\n\n\n')
 	print('********************************************')
 	
-	if isClassify:
+	if fClassifier:
 		print('Classification......')
 	else:
 		print('Regression......')
 
 	### retrieve the test data
-	testFeatures = testList[0]
-	testLabels   = testList[1]
+	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
+	testFeatures = np.array(testFeatures)
+	testLabels = np.array(testLabels)
 
+    
+	print(testFeatures)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 	testData = []
@@ -297,11 +310,27 @@ def test_dnn(model, testList, report, isClassify):
 		testData.append(img)
 	testData = np.array(testData)
 
+    ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	if netType == 1:
+# 		outputPath = trainPath + 'trainedModels/models-cnn/';
+		net = net_nvidia(fClassifier, nClass)
+	elif netType == 2:
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+		net = net_lstm(2, nFramesSample)
+	elif netType == 3:
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+		net = net_lstm(3, nFramesSample)
+
+    ## load model weights
+	if modelPath:
+		net.load_weights(modelPath)
+    
 	### predict and output
-	predictResults = model.predict(testData)
-	f = open(report,'w') 
+	predictResults = net.predict(testData)
+    
+	f = open(outputPath,'w') 
 	for p in predictResults:
-		if isClassify:
+		if fClassifier:
 			f.write(str(np.argmax(p)))
 			print(np.argmax(p))
 		else:
@@ -311,15 +340,15 @@ def test_dnn(model, testList, report, isClassify):
 	f.close()
 	
 
-	#for i in range(len(testLabels)):
-	#	print([str('%.4f' % float(j)) for j in predictResults[i]])
+	for i in range(len(testLabels)):
+		print([str('%.4f' % float(j)) for j in predictResults[i]])
 
 			
 	print('********************************************')
 	print('\n\n\n')
-'''
+
 	
 if __name__ == "__main__":
 	print('\n')
-	print("### This is the library file for the learning process. Please do not directly run it.")
+	print("### This is the library file for testing. Please do not directly run it.")
 	print('\n')
