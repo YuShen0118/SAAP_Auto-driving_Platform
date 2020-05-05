@@ -303,8 +303,8 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath):
 
 	### retrieve the test data
 	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep=1)
-	testFeatures = np.array(testFeatures)
-	testLabels = np.array(testLabels)
+	testFeatures = np.array(testFeatures[:100])
+	testLabels = np.array(testLabels[:100])
 
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
@@ -340,7 +340,7 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath):
     
 	f = open(outputPath,'w')
 	f.write("mse loss: {:.5f}\naccuracy: {:.5f}\n\n".format(score, acc))
-	f.write("{:^15} {:^12} {:^12} {:^12}\n".format("input", "prediction", "groundtruth", "difference"))
+	f.write("{:^12} {:^12} {:^12} {:^12}\n".format("prediction", "groundtruth", "difference", "input"))
     
 	for p in range(len(predictResults)):
 # 		if fClassifier:
@@ -351,7 +351,7 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath):
 		imgName = os.path.basename(testFeatures[p])
 		prediction = predictResults[p][0]
 		groundTruth = testLabels[p]
-		f.write("{:^15} {:^12.3f} {:^12.3f} {:^12.3f}".format(imgName, prediction, groundTruth, prediction-groundTruth))
+		f.write("{:^12.3f} {:^12.3f} {:^12.3f} {:^12}".format(prediction, groundTruth, prediction-groundTruth, imgName))
 		f.write('\n')
 	f.close()
 

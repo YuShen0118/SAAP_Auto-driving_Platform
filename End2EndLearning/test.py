@@ -99,9 +99,9 @@ if __name__ == "__main__":
 	if args.output_path != None:
 		outputPath = args.output_path
 
-##  Commented out; the outputPath should be a filename, not directory
-# 	if not os.path.exists(outputPath):
-# 		os.mkdir(outputPath)
+##  outputPath should be a filename, not directory
+	if not os.path.exists(os.path.dirname(outputPath)):
+		os.mkdir(os.path.dirname(outputPath))
 
 	if modelPath:
 		print('Model used: ' + modelPath)
