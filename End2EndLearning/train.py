@@ -10,6 +10,8 @@ sys.path.insert(0, './library/')
 
 from learning import train_dnn
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
 if __name__ == "__main__":
