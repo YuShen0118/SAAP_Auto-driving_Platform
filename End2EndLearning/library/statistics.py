@@ -4,10 +4,10 @@ Created on Mon Apr 27 23:58:29 2020
 
 @author: Laura Zheng
 """
-
+import os
 import csv
 import numpy as np
-import pandas as pd
+#import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -31,19 +31,37 @@ def plot_steering_angle_dist(dataFilePath, label):
     
     sns.distplot(data).set_title(title);
 
+    minv = np.min(data)
+    maxv = np.max(data)
+
+    #print(minv)
+    #print(maxv)
+
+    return minv, maxv
+
 def plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, outputPath):
     ''' Plots all dataset steering angle distributions and saves to the disk as PNG.
     '''
-    plt.xlim(-15, 15)
-    plot_steering_angle_dist(Udacity_labels, label="Udacity")
-    plot_steering_angle_dist(NVIDIA_labels, label="NVIDIA")
-    plot_steering_angle_dist(custom_labels, label="Custom")
+    minv_Udacity, maxv_Udacity = plot_steering_angle_dist(Udacity_labels, label="Udacity")
+    minv_NVIDIA, maxv_NVIDIA = plot_steering_angle_dist(NVIDIA_labels, label="NVIDIA")
+    minv_custom, maxv_custom = plot_steering_angle_dist(custom_labels, label="Custom")
+
+    minv = min(minv_Udacity, min(minv_NVIDIA, minv_custom))
+    maxv = max(maxv_Udacity, max(maxv_NVIDIA, maxv_custom))
+    #print(minv)
+    #print(maxv)
+    #plt.xlim(-15, 15)
+    plt.xlim(minv, maxv)
     plt.legend(title='Dataset', loc='upper right', labels=['Udacity', 'NVIDIA', 'Custom'])
     plt.savefig(outputPath, format='png',dpi=1200)
 
 
-NVIDIA_labels = 'C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/NVIDIA/formatted_labels.csv'
-Udacity_labels = 'C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/Udacity/track1data/formatted_labels.csv'
-custom_labels = 'C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/training_simu_1/end2endLabels.csv'
+ROOT_DIR = os.path.abspath("../")
+print('Platform root: ', ROOT_DIR)
 
-plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, 'C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/output.png')
+NVIDIA_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsB_trainval.csv'
+Udacity_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsA_trainval.csv'
+custom_labels = ROOT_DIR + '/Data/training_simu_1/end2endLabels.csv'
+output_path = ROOT_DIR + '/Data/output.png'
+
+plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, output_path)

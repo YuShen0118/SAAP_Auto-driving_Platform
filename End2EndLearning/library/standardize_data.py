@@ -10,6 +10,7 @@
 import csv, os, sys
 from pathlib import Path
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 
 ROOT_DIR = os.path.abspath("../")
 print('Platform root: ', ROOT_DIR)
@@ -75,16 +76,26 @@ def convert_UDACITY(input_file, output_file):
         trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
     
     f = open(output_file, "w")
+
+    angles = []
+    for row in trainLog:
+        angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
+        angles.append(angle)
+
+    angles_filtered = gaussian_filter1d(angles, 1)
     
+    i=0
     for row in trainLog:
         center_image = Path(row[0]).name
         left_image = Path(row[1]).name
         right_image = Path(row[2]).name
-        angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
+        #angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
+        angle = str(angles_filtered[i])
         
         output = ','.join([center_image,left_image,right_image,str(angle)])
         
         f.write(output + '\n')
+        i+=1
     f.close()
     
 #split the trainval labels into train labels and val labels, according to the images in the train folder
