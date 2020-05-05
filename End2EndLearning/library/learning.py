@@ -303,8 +303,8 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath):
 
 	### retrieve the test data
 	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep=1)
-	testFeatures = np.array(testFeatures[:100])
-	testLabels = np.array(testLabels[:100])
+	testFeatures = np.array(testFeatures)
+	testLabels = np.array(testLabels)
 
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
