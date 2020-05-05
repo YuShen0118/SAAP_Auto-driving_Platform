@@ -76,7 +76,10 @@ def gen_train_data_random(xList, yList, batchSize, fRandomDistort = False, fFlip
 	X,y = ([],[])
 	while True:       
 		for i in range(len(yList)):
-			img = resize_image(cv2.imread(xList[i]))
+			image_path = xList[i]
+			if not os.path.isfile(image_path):
+				image_path = image_path.replace(".jpg", "_fake.png")
+			img = resize_image(cv2.imread(image_path))
 			angle = yList[i]
 			if fRandomDistort:
 				print('######### Applying random distortion #########')
@@ -163,7 +166,7 @@ def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	nValidStep = int(len(yValidList)/batchSize) + 1
 	net.fit_generator(trainGenerator, steps_per_epoch=nTrainStep, epochs=nEpoch, \
 	verbose=2, callbacks=[modelLog,lossLog], validation_data=validGenerator, validation_steps=nValidStep)
-	#net.save(outputFolder + 'model-final.h5')
+	net.save(outputPath + 'model-final.h5')
 	print(net.summary())
 	
 	
@@ -306,7 +309,10 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
 	print('********************************************')
 	testData = []
 	for i in range(len(testLabels)):
-		img = resize_image(cv2.imread(testFeatures[i]))
+		image_path = testFeatures[i]
+		if not os.path.isfile(image_path):
+			image_path = image_path.replace(".jpg", "_fake.png")
+		img = resize_image(cv2.imread(image_path))
 		testData.append(img)
 	testData = np.array(testData)
 

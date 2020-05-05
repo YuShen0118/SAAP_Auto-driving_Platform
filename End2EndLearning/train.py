@@ -14,27 +14,14 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
-if __name__ == "__main__":
+def train_network(imagePath, labelPath, outputPath):
+	print('Image folder: ' + imagePath)
+	print('Label file: ' + labelPath)
+	print('Output folder: ' + outputPath)
 
-	import argparse
+	if not os.path.exists(outputPath):
+		os.mkdir(outputPath)
 
-    # Parse command line arguments
-	parser = argparse.ArgumentParser(
-		description='Train Mask R-CNN to detect cityscapes.')
-	parser.add_argument('--image_folder_path', required=False,
-						metavar="/path/to/image/folder/",
-						help='/path/to/image/folder/')
-	parser.add_argument('--label_file_path', required=False,
-						metavar="/path/to/label/file",
-						help="/path/to/label/file")
-	parser.add_argument('--output_path', required=False,
-						metavar="/path/to/output/folder/",
-						help="/path/to/output/folder/")
-	args = parser.parse_args()
-
-
-	data_root = ROOT_DIR + '/Data/'
-    
 	## flags
 	fRandomDistort = False
 	fThreeCameras = False  # set to True if using Udacity data set
@@ -52,6 +39,30 @@ if __name__ == "__main__":
 	## train
     ## NOTE: paths must have forward slash (/) character at the end
     
+	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	train_dnn(imagePath, labelPath, outputPath, netType, flags, specs)
+
+if __name__ == "__main__":
+
+	import argparse
+
+    # Parse command line arguments
+	parser = argparse.ArgumentParser(
+		description='Train CNN to predict steering angle.')
+	parser.add_argument('--image_folder_path', required=False,
+						metavar="/path/to/image/folder/",
+						help='/path/to/image/folder/')
+	parser.add_argument('--label_file_path', required=False,
+						metavar="/path/to/label/file",
+						help="/path/to/label/file")
+	parser.add_argument('--output_path', required=False,
+						metavar="/path/to/output/folder/",
+						help="/path/to/output/folder/")
+	args = parser.parse_args()
+
+
+	data_root = ROOT_DIR + '/Data/'
+
     # NVIDIA dataset 
 	trainPath = data_root + 'udacityA_nvidiaB/'
     
@@ -65,17 +76,9 @@ if __name__ == "__main__":
 	if args.label_file_path != None:
 		labelPath = args.label_file_path
 
-	outputPath = data_root + 'udacityA_nvidiaB_results/'
+	outputPath = data_root + 'udacityA_nvidiaB_results/training_models/'
 	if args.output_path != None:
 		outputPath = args.output_path
 
-	if not os.path.exists(outputPath):
-		os.mkdir(outputPath)
-
-	print('Image folder: '+imagePath)
-	print('Label file: '+labelPath)
-	print('Output folder: '+outputPath)
-
-	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	train_dnn(imagePath, labelPath, outputPath, netType, flags, specs)
+	train_network(imagePath, labelPath, outputPath)
 	

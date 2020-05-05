@@ -10,6 +10,36 @@ sys.path.insert(0, './library/')
 
 from learning import test_dnn
 
+def test_network(modelPath, imagePath, labelPath, outputPath):
+	if modelPath:
+		print('Model used: ' + modelPath)
+	else:
+		print('No model specified. Using random initialization of weights.')
+        
+	print('Image folder: '+imagePath)
+	print('Label file: '+labelPath)
+	print('Output file: '+outputPath)
+	
+	file_path = os.path.dirname(outputPath)
+	if not os.path.exists(file_path):
+		os.mkdir(file_path)
+
+	## flags
+	fRandomDistort = False
+	fThreeCameras = False  # set to True if using Udacity data set
+	fClassifier = False
+	flags = [fRandomDistort, fThreeCameras, fClassifier]
+	
+	## parameters
+	batchSize = 128
+	nEpoch = 1000
+	nClass = 2        # only used if fClassifier = True
+	nFramesSample = 5  # only used for LSTMs
+	nRep = 1
+	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
+	
+	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs)
 
 
 if __name__ == "__main__":
@@ -39,20 +69,6 @@ if __name__ == "__main__":
     ### NOTE: the only flags/parameters used in test are fClassifier and nClass. 
     ### Everything was included in test.py in case other models needed to be used in the future.
     
-	## flags
-	fRandomDistort = False
-	fThreeCameras = False  # set to True if using Udacity data set
-	fClassifier = False
-	flags = [fRandomDistort, fThreeCameras, fClassifier]
-	
-	## parameters
-	batchSize = 128
-	nEpoch = 1000
-	nClass = 2        # only used if fClassifier = True
-	nFramesSample = 5  # only used for LSTMs
-	nRep = 1
-	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
-	
 	## train
     ## NOTE: paths must have forward slash (/) character at the end
     
@@ -74,23 +90,11 @@ if __name__ == "__main__":
 	if args.label_file_path != None:
 		modelPath = args.model_path
 
-# 	outputPath = data_root + 'udacityA_nvidiaB_results/'
-	outputPath = data_root + 'test.txt'
+	outputPath = data_root + 'udacityA_nvidiaB_results/test_results/test.txt'
 	if args.output_path != None:
 		outputPath = args.output_path
 
 # 	if not os.path.exists(outputPath):
 # 		os.mkdir(outputPath)
     
-	if modelPath:
-		print('Model used: ' + modelPath)
-	else:
-		print('No model specified. Using random initialization of weights.')
-        
-	print('Image folder: '+imagePath)
-	print('Label file: '+labelPath)
-	print('Output file: '+outputPath)
-
-	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs)
-	
+	test_network(modelPath, imagePath, labelPath, outputPath)
