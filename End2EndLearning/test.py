@@ -57,15 +57,18 @@ if __name__ == "__main__":
     ## NOTE: paths must have forward slash (/) character at the end
     
     # NVIDIA dataset 
-	trainPath = data_root + 'udacityA_nvidiaB/'
+# 	trainPath = data_root + 'udacityA_nvidiaB/'
+	trainPath = data_root + 'NVIDIA/'
     
     #image folder path
-	imagePath = trainPath + 'trainB/'
+# 	imagePath = trainPath + 'trainB/'
+	imagePath = trainPath + 'images/'
 	if args.image_folder_path != None:
 		imagePath = args.image_folder_path
 
 	#label file path
-	labelPath = trainPath + 'labelsB_train.csv'
+# 	labelPath = trainPath + 'labelsB_train.csv'
+	labelPath = trainPath + 'formatted_labels.csv'
 	if args.label_file_path != None:
 		labelPath = args.label_file_path
 
@@ -75,9 +78,9 @@ if __name__ == "__main__":
 		modelPath = args.model_path
 
 # 	outputPath = data_root + 'udacityA_nvidiaB_results/'
-	outputPath = data_root + 'test.txt'
-	if args.output_path != None:
-		outputPath = args.output_path
+# 	outputPath = data_root + 'test.txt'
+# 	if args.output_path != None:
+# 		outputPath = args.output_path
 
 # 	if not os.path.exists(outputPath):
 # 		os.mkdir(outputPath)
@@ -89,8 +92,8 @@ if __name__ == "__main__":
         
 	print('Image folder: '+imagePath)
 	print('Label file: '+labelPath)
-	print('Output file: '+outputPath)
+# 	print('Output file: '+outputPath)
 
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs)
+	test_dnn(modelPath, imagePath, labelPath, netType, flags, specs)
 	
