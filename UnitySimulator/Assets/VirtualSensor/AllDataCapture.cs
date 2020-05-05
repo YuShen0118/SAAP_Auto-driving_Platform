@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class AllDataCapture : MonoBehaviour
 {
-    public string outputPath = "C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/training_simu_1";
+    public string outputPath = "C:/Users/Laura Zheng/Documents/Unity/SAAP_Auto-driving_Platform/Data/training_simu_1/";
 
     public Camera mainCam; //待截图的目标摄像机
 
@@ -77,11 +77,11 @@ public class AllDataCapture : MonoBehaviour
 
         pointCloud = new float[rt.height * rt.width * 4];
 
-        if (saveEnd2EndLabel)
-        {
+        //if (saveEnd2EndLabel)
+        //{
             //clear history
-            File.WriteAllText(outputPath + "/end2endLabels.csv", "");
-        }
+        //    File.WriteAllText(outputPath + "/end2endLabels.csv", "");
+        //}
     }
 
     public byte[] getRenderResult()

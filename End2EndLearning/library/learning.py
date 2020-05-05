@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 
 from utilities import resize_image, random_distort, load_train_data
 from networks import net_lstm, net_nvidia
+import time
 
 
 
@@ -278,33 +279,33 @@ def train_dnn_overfitting(trainSpec, xTrainList, yTrainList, xValidList, yValidL
 '''
 
 	
-def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
+def test_dnn(modelPath, imageDir, labelPath, outputPath):
 	
     ## assigning variables
 # 	fRandomDistort = flags[0]
-	fThreeCameras  = flags[1]
-	fClassifier    = flags[2]
+# 	fThreeCameras  = flags[1]
+# 	fClassifier    = flags[2]
 # 	batchSize 	   = specs[0]
 # 	nEpoch 		   = specs[1]
-	nClass         = specs[2]
-	nFramesSample  = specs[3]
-	nRep  = specs[4]
+# 	nClass         = specs[2]
+# 	nFramesSample  = specs[3]
+# 	nRep  = specs[4]
     
+        
+        
 	print('\n\n\n')
 	print('********************************************')
 	
-	if fClassifier:
-		print('Classification......')
-	else:
-		print('Regression......')
+# 	if fClassifier:
+# 		print('Classification......')
+# 	else:
+	print('Regression......')
 
 	### retrieve the test data
-	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
+	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep=1)
 	testFeatures = np.array(testFeatures)
 	testLabels = np.array(testLabels)
 
-    
-	print(testFeatures)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 	testData = []
@@ -317,37 +318,45 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
 	testData = np.array(testData)
 
     ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	if netType == 1:
+# 	if netType == 1:
 # 		outputPath = trainPath + 'trainedModels/models-cnn/';
-		net = net_nvidia(fClassifier, nClass)
-	elif netType == 2:
-# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
-		net = net_lstm(2, nFramesSample)
-	elif netType == 3:
-# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
-		net = net_lstm(3, nFramesSample)
+	net = net_nvidia(False, 2)
+# 	elif netType == 2:
+# # 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+# 		net = net_lstm(2, nFramesSample)
+# 	elif netType == 3:
+# # 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+# 		net = net_lstm(3, nFramesSample)
 
-    ## load model weights
-	if modelPath:
-		net.load_weights(modelPath)
+#     ## load model weights
+# 	if modelPath:
+# 		net.load_weights(modelPath)
     
 	### predict and output
 	predictResults = net.predict(testData)
+	score, acc = net.evaluate(testData, testLabels)
+	print("Test loss: " + str(score))
+	print("Test accuracy: " + str(acc))
     
-	f = open(outputPath,'w') 
-	for p in predictResults:
-		if fClassifier:
-			f.write(str(np.argmax(p)))
-			print(np.argmax(p))
-		else:
-			f.write(str(p[0]))
-			print(p[0])
+	f = open(outputPath,'w')
+	f.write("mse loss: {:.5f}\naccuracy: {:.5f}\n\n".format(score, acc))
+	f.write("{:^15} {:^12} {:^12} {:^12}\n".format("input", "prediction", "groundtruth", "difference"))
+    
+	for p in range(len(predictResults)):
+# 		if fClassifier:
+#  			f.write(str(np.argmax(p)))
+#  			print(np.argmax(p))
+# 		else: 
+        # for regression
+		imgName = os.path.basename(testFeatures[p])
+		prediction = predictResults[p][0]
+		groundTruth = testLabels[p]
+		f.write("{:^15} {:^12.3f} {:^12.3f} {:^12.3f}".format(imgName, prediction, groundTruth, prediction-groundTruth))
 		f.write('\n')
 	f.close()
-	
 
-	for i in range(len(testLabels)):
-		print([str('%.4f' % float(j)) for j in predictResults[i]])
+# 	for i in range(len(testLabels)):
+# 		print([str('%.4f' % float(j)) for j in predictResults[i]])
 
 			
 	print('********************************************')

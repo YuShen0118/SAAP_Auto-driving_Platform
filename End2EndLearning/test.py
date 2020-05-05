@@ -1,4 +1,7 @@
-### This script is the testing file.
+### This script is the testing file for regression DNN.
+### Implementation assumptions in test_dnn: 
+    ## netType=1 (CNN), nRep=1, nClass=2, loss function = mse
+    ## fThreeCameras=False, fClassifier=False
 
 import sys
 import os
@@ -89,12 +92,26 @@ if __name__ == "__main__":
 	modelPath = None
 	if args.label_file_path != None:
 		modelPath = args.model_path
-
+        
+    # output path, should be a filename. 
 	outputPath = data_root + 'udacityA_nvidiaB_results/test_results/test.txt'
+
 	if args.output_path != None:
 		outputPath = args.output_path
 
+##  Commented out; the outputPath should be a filename, not directory
 # 	if not os.path.exists(outputPath):
 # 		os.mkdir(outputPath)
-    
-	test_network(modelPath, imagePath, labelPath, outputPath)
+
+	if modelPath:
+		print('Model used: ' + modelPath)
+	else:
+		print('No model specified. Using random initialization of weights.')
+        
+	print('Image folder: '+imagePath)
+	print('Label file: '+labelPath)
+# 	print('Output file: '+outputPath)
+
+# 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	test_dnn(modelPath, imagePath, labelPath, outputPath)
+
