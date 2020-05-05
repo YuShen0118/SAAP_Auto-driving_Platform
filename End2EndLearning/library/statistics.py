@@ -26,6 +26,15 @@ def plot_steering_angle_dist(dataFilePath, label):
             steeringAngleValues.append(float(row[3]))
         
     data = np.array(steeringAngleValues)
+
+    '''
+    count=0
+    for v in steeringAngleValues:
+        if v < 0.5 and v > -0.5:
+            count += 1
+
+    print(str(count) + " / " + str(len(steeringAngleValues)) + " = " + str(count/len(steeringAngleValues)))
+    '''
     
     sns.set(color_codes=True)
     
