@@ -113,5 +113,5 @@ if __name__ == "__main__":
 # 	print('Output file: '+outputPath)
 
 # 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	test_dnn(modelPath, imagePath, labelPath, outputPath)
+	test_network(modelPath, imagePath, labelPath, outputPath)
 

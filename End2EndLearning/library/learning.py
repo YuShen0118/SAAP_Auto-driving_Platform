@@ -279,33 +279,33 @@ def train_dnn_overfitting(trainSpec, xTrainList, yTrainList, xValidList, yValidL
 '''
 
 	
-def test_dnn(modelPath, imageDir, labelPath, outputPath):
+def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
 	
     ## assigning variables
 # 	fRandomDistort = flags[0]
-# 	fThreeCameras  = flags[1]
-# 	fClassifier    = flags[2]
+	fThreeCameras  = flags[1]
+	fClassifier    = flags[2]
 # 	batchSize 	   = specs[0]
 # 	nEpoch 		   = specs[1]
-# 	nClass         = specs[2]
-# 	nFramesSample  = specs[3]
-# 	nRep  = specs[4]
+	nClass         = specs[2]
+	nFramesSample  = specs[3]
+	nRep  = specs[4]
     
-        
-        
 	print('\n\n\n')
 	print('********************************************')
 	
-# 	if fClassifier:
-# 		print('Classification......')
-# 	else:
-	print('Regression......')
+	if fClassifier:
+		print('Classification......')
+	else:
+		print('Regression......')
 
 	### retrieve the test data
-	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep=1)
+	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
 	testFeatures = np.array(testFeatures)
 	testLabels = np.array(testLabels)
 
+    
+	print(testFeatures)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 	testData = []
@@ -318,28 +318,41 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath):
 	testData = np.array(testData)
 
     ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-# 	if netType == 1:
+	if netType == 1:
 # 		outputPath = trainPath + 'trainedModels/models-cnn/';
-	net = net_nvidia(False, 2)
-# 	elif netType == 2:
-# # 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
-# 		net = net_lstm(2, nFramesSample)
-# 	elif netType == 3:
-# # 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
-# 		net = net_lstm(3, nFramesSample)
+		net = net_nvidia(fClassifier, nClass)
+	elif netType == 2:
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+		net = net_lstm(2, nFramesSample)
+	elif netType == 3:
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+		net = net_lstm(3, nFramesSample)
 
-#     ## load model weights
-# 	if modelPath:
-# 		net.load_weights(modelPath)
-    
+    ## load model weights
+	if modelPath:
+		net.load_weights(modelPath)
+
 	### predict and output
 	predictResults = net.predict(testData)
-	score, acc = net.evaluate(testData, testLabels)
-	print("Test loss: " + str(score))
-	print("Test accuracy: " + str(acc))
-    
+	#score, acc = net.evaluate(testData, testLabels)
+
 	f = open(outputPath,'w')
-	f.write("mse loss: {:.5f}\naccuracy: {:.5f}\n\n".format(score, acc))
+	mse_loss = np.mean(np.square(predictResults.flatten() - testLabels))
+	print("mse loss: " + str(mse_loss))
+	f.write("mse loss: {:.5f}\n".format(mse_loss))
+
+	#thresh_holds = [0.01, 0.033, 0.1, 0.33, 1, 3.3]
+	thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+	acc_list = []
+	for thresh_hold in thresh_holds:
+		acc = np.sum(np.abs(predictResults.flatten() - testLabels) < thresh_hold) / len(testLabels)
+		print("accuracy (+-" + str(thresh_hold) + "): " + str(acc))
+		f.write("accuracy (+-{:.3f}): {:.5f}\n".format(thresh_hold, acc))
+		acc_list.append(acc)
+
+	print("mean accuracy: " + str(np.mean(acc_list)))
+	f.write("mean accuracy: {:.5f}\n\n".format(np.mean(acc_list)))
+    
 	f.write("{:^12} {:^12} {:^12} {:^12}\n".format("prediction", "groundtruth", "difference", "input"))
     
 	for p in range(len(predictResults)):

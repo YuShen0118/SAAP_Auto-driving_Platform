@@ -82,7 +82,8 @@ def convert_UDACITY(input_file, output_file):
         angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
         angles.append(angle)
 
-    angles_filtered = gaussian_filter1d(angles, 1)
+    #angles_filtered = gaussian_filter1d(angles, 1)
+    angles_filtered = angles
     
     i=0
     for row in trainLog:
@@ -99,7 +100,7 @@ def convert_UDACITY(input_file, output_file):
     f.close()
     
 #split the trainval labels into train labels and val labels, according to the images in the train folder
-def split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename):
+def split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename, step_size=1):
     with open(lables_trainval_filename, newline='') as f:
         labels_trainval = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
 
@@ -116,6 +117,9 @@ def split(imgs_train_folder, lables_trainval_filename, lables_train_filename, la
     labels_train = labels_trainval[train_mask]
     val_mask = ~train_mask
     labels_val = labels_trainval[val_mask]
+
+    labels_train = labels_train[0::step_size]
+    labels_val = labels_val[0::step_size]
 
     lables_train_filename = lables_trainval_filename.replace('trainval', 'train')
     f = open(lables_train_filename, "w")
@@ -168,5 +172,5 @@ if SPLIT:
     lables_trainval_filename = root + 'labelsB_trainval.csv'
     lables_train_filename = root + 'labelsB_train.csv'
     lables_val_filename = root + 'labelsB_val.csv'
-    split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename)
+    split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename, step_size=6)
     print("split nvidia labels successfully!")
