@@ -13,7 +13,7 @@ from learning import train_dnn
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
-from train import train_network
+from train import train_network, train_network_multi
 from test import test_network
 
 DATASET_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB/"
@@ -50,7 +50,8 @@ def single_test():
 
 
 def unit_test_for_style():
-	TRAIN_LIST = ["trainB", "trainB_fake_GAN", "trainB_fake_color", "trainA", "trainA_fake_GAN", "trainA_fake_color"]
+	TRAIN_LIST = ["trainA", "trainA_fake_GAN", "trainA_fake_color", "trainB", "trainB_fake_GAN", "trainB_fake_color"]
+	VAL_LIST = ["valA", "valA_fake_GAN", "valA_fake_color", "valB", "valB_fake_GAN", "valB_fake_color"]
 
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
@@ -61,7 +62,7 @@ def unit_test_for_style():
 		outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
 		train_network(imagePath, labelPath, outputPath)
 
-		for val_folder in TRAIN_LIST:
+		for val_folder in VAL_LIST:
 			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
 			val_folder = val_folder.replace("train", "val")
 
@@ -97,6 +98,43 @@ def unit_test_for_quality():
 				outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
 				test_network(modelPath, imagePath, labelPath, outputPath)
 
+def combination_test_for_style():
+	TRAIN_FOLDER_LIST = [["trainB", "trainA"],
+					["trainB", "trainA_fake_GAN"],
+					["trainB", "trainA_fake_color"],
+					["trainB", "trainA", "trainA_fake_GAN", "trainA_fake_color"]]
+	VAL_LIST = ["valB", "valA"]
+
+	i = 0
+	for train_folder_list in TRAIN_FOLDER_LIST:
+		imagePath_list = []
+		labelPath_list = []
+		trainOutputPath = TRAIN_OUTPUT_ROOT + "combine" + str(i) + "/"
+
+		#if i > 1:
+		for train_folder in train_folder_list:
+			imagePath = DATASET_ROOT + train_folder + "/"
+			if "trainA" in train_folder:
+				labelPath = DATASET_ROOT + "labelsA_train.csv"
+			else:
+				labelPath = DATASET_ROOT + "labelsB_train.csv"
+			imagePath_list.append(imagePath)
+			labelPath_list.append(labelPath)
+		train_network_multi(imagePath_list, labelPath_list, trainOutputPath)
+
+		for val_folder in VAL_LIST:
+			modelPath = trainOutputPath + "model-final.h5"
+			imagePath = DATASET_ROOT + val_folder + "/"
+			if "valA" in val_folder:
+				labelPath = DATASET_ROOT + "labelsA_val.csv"
+			else:
+				labelPath = DATASET_ROOT + "labelsB_val.csv"
+			valOutputPath = TEST_OUTPUT_ROOT + "(combine" + str(i) + ")_(" + val_folder + ")/test_result.txt"
+			test_network(modelPath, imagePath, labelPath, valOutputPath)
+
+		i += 1
+
+
 if __name__ == "__main__":
 	import argparse
 	parser = argparse.ArgumentParser(description='batch train test')
@@ -107,5 +145,6 @@ if __name__ == "__main__":
 		os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
 
 	#single_test()
-	unit_test_for_style()
+	#unit_test_for_style()
 	#unit_test_for_quality()
+	combination_test_for_style()

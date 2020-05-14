@@ -10,7 +10,7 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
-from utilities import resize_image, random_distort, load_train_data
+from utilities import resize_image, random_distort, load_train_data, load_train_data_multi
 from networks import net_lstm, net_nvidia
 import time
 
@@ -121,6 +121,70 @@ def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	
 	## prepare the data
 	xList, yList = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
+	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
+	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
+	
+	## change the data format if necessary
+	if fClassifier:
+		print('\n######### Classification #########')
+		yTrainList = to_categorical(yTrainList, num_classes = nClass)
+		yValidList = to_categorical(yValidList, num_classes = nClass)
+	else:
+		print('\n######### Regression #########')
+		
+	print('Train data:', xTrainList.shape, yTrainList.shape)
+	print('Valid data:', xValidList.shape, yValidList.shape)
+	print('##############################\n')
+	
+	## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	if netType == 1:
+# 		outputPath = trainPath + 'trainedModels/models-cnn/';
+		net = net_nvidia(fClassifier, nClass)
+		trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize)
+		validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
+	elif netType == 2:
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+		net = net_lstm(2, nFramesSample)
+		trainGenerator = gen_train_data_lstm_m2o(xTrainList, yTrainList, batchSize, nFramesSample)
+		validGenerator = gen_train_data_lstm_m2o(xValidList, yValidList, batchSize, nFramesSample)
+	elif netType == 3:
+# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+		net = net_lstm(3, nFramesSample)
+		trainGenerator = gen_train_data_lstm_m2m(xTrainList, yTrainList, batchSize, nFramesSample)
+		validGenerator = gen_train_data_lstm_m2m(xValidList, yValidList, batchSize, nFramesSample)
+
+	## setup outputs
+	if not os.path.exists(outputPath):
+		os.makedirs(outputPath)
+	else:
+		shutil.rmtree(outputPath)
+		os.makedirs(outputPath)
+	modelLog = ModelCheckpoint(outputPath + 'model{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
+	lossLog  = CSVLogger(outputPath + 'loss-log', append=True, separator=',')
+	
+	## train
+	nTrainStep = int(len(yTrainList)/batchSize) + 1
+	nValidStep = int(len(yValidList)/batchSize) + 1
+	net.fit_generator(trainGenerator, steps_per_epoch=nTrainStep, epochs=nEpoch, \
+	verbose=2, callbacks=[modelLog,lossLog], validation_data=validGenerator, validation_steps=nValidStep)
+	net.save(outputPath + 'model-final.h5')
+	print(net.summary())
+	
+
+def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs):
+	
+	## assigning variables
+	fRandomDistort = flags[0]
+	fThreeCameras  = flags[1]
+	fClassifier    = flags[2]
+	batchSize 	   = specs[0]
+	nEpoch 		   = specs[1]
+	nClass         = specs[2]
+	nFramesSample  = specs[3]
+	nRep  = specs[4]
+	
+	## prepare the data
+	xList, yList = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras)
 	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 	

@@ -171,6 +171,49 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 			
 	return (xList, yList)
 	
+def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False):
+	'''
+	Load the training data
+	'''
+	## prepare for getting x
+	for xFolder in xFolder_list:
+		if not os.path.exists(xFolder):
+			sys.exit('Error: the image folder is missing.')
+		
+	## prepare for getting y
+	trainLog_list = []
+	for trainLogPath in trainLogPath_list:
+		if not os.path.exists(trainLogPath):
+			sys.exit('Error: the labels.csv is missing.')
+		with open(trainLogPath, newline='') as f:
+			trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
+			trainLog_list.append(trainLog)
+	
+    ## get x and y
+	xList, yList = ([], [])
+	
+	i = 0
+	for rep in range(0,nRep):
+		for trainLog in trainLog_list:
+			xFolder = xFolder_list[i]
+			i+=1
+			for row in trainLog:
+				## center camera
+		 		xList.append(xFolder + row[0]) 
+	 			yList.append(float(row[3]))     
+	 			
+	 			## if using three cameras
+	 			if fThreeCameras:
+
+					## left camera
+	 				xList.append(xFolder + row[1])  
+	 				yList.append(float(row[3]) + 0.25) 
+					
+					## right camera
+	 				xList.append(xFolder + row[2])  
+	 				yList.append(float(row[3]) - 0.25) 
+				
+	return (xList, yList)
 	
 def load_train_data_aux(trainFolder, imageList, auxList, angleList):
 	'''
