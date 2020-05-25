@@ -106,7 +106,7 @@ def gen_train_data_random(xList, yList, batchSize, fRandomDistort = False, fFlip
 						xList, yList = shuffle(xList, yList)
 
 	        
-    
+'''
 def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	
 	## assigning variables
@@ -169,9 +169,9 @@ def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	verbose=2, callbacks=[modelLog,lossLog], validation_data=validGenerator, validation_steps=nValidStep)
 	net.save(outputPath + 'model-final.h5')
 	print(net.summary())
-	
+'''
 
-def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs):
+def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs, modelPath = "", trainRatio = 1.0):
 	
 	## assigning variables
 	fRandomDistort = flags[0]
@@ -185,6 +185,11 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	
 	## prepare the data
 	xList, yList = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras)
+
+	if trainRatio < 1.0:
+		xList, _ = train_test_split(np.array(xList), test_size=1-trainRatio, random_state=420)
+		yList, _ = train_test_split(np.array(yList), test_size=1-trainRatio, random_state=420)
+
 	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 	
@@ -216,6 +221,9 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		net = net_lstm(3, nFramesSample)
 		trainGenerator = gen_train_data_lstm_m2m(xTrainList, yTrainList, batchSize, nFramesSample)
 		validGenerator = gen_train_data_lstm_m2m(xValidList, yValidList, batchSize, nFramesSample)
+
+	if modelPath != "":
+		net.load_weights(modelPath)
 
 	## setup outputs
 	if not os.path.exists(outputPath):
@@ -393,7 +401,7 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
 		net = net_lstm(3, nFramesSample)
 
     ## load model weights
-	if modelPath:
+	if modelPath != "":
 		net.load_weights(modelPath)
 
 	### predict and output

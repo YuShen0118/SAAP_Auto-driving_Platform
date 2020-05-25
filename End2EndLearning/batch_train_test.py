@@ -8,8 +8,6 @@ print('PLATFORM_ROOT_DIR ', ROOT_DIR)
 
 sys.path.insert(0, './library/')
 
-from learning import train_dnn
-
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
@@ -90,8 +88,6 @@ def unit_test_for_quality():
 			for val_folder in TRAIN_LIST:
 				modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
 				val_folder = val_folder.replace("train", "val")
-				if val_folder == "valB":
-					continue
 
 				imagePath = DATASET_ROOT + val_folder + "/"
 				labelPath = DATASET_ROOT + "labelsB_val.csv"
@@ -111,7 +107,6 @@ def combination_test_for_style():
 		labelPath_list = []
 		trainOutputPath = TRAIN_OUTPUT_ROOT + "combine" + str(i) + "/"
 
-		#if i > 1:
 		for train_folder in train_folder_list:
 			imagePath = DATASET_ROOT + train_folder + "/"
 			if "trainA" in train_folder:
@@ -134,6 +129,51 @@ def combination_test_for_style():
 
 		i += 1
 
+def combination_test_for_style_pretrain():
+	#TRAIN_RATIO_LIST = [0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
+	#TRAIN_RATIO_LIST = [1, 0.1, 0.01, 0.001]
+	#TRAIN_RATIO_LIST = [0.3, 0.03, 0.003]
+	#TRAIN_RATIO_LIST = [0.1, 0.01, 0.001]
+	TRAIN_RATIO_LIST = [0.0002]
+	#TRAIN_RATIO_LIST = [1.0]
+	PRETRAIN_MODEL_LIST = ["","trainA"]
+	#PRETRAIN_MODEL_LIST = ["trainA"]
+	#PRETRAIN_MODEL_LIST = [""]
+	TRAIN_LIST = ["trainB"]
+	VAL_LIST = ["valB", "valA"]
+
+	id = 0
+	for train_ratio in TRAIN_RATIO_LIST:
+		for pretrain_model in PRETRAIN_MODEL_LIST:
+			for train_folder in TRAIN_LIST:
+				id += 1
+				print(id)
+				imagePath = DATASET_ROOT + train_folder + "/"
+				if "trainA" in train_folder:
+					labelPath = DATASET_ROOT + "labelsA_train.csv"
+				else:
+					labelPath = DATASET_ROOT + "labelsB_train.csv"
+
+				if pretrain_model == "":
+					trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "/"
+					pretrain_model_path = ""
+				else:
+					trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)/"
+					pretrain_model_path = TRAIN_OUTPUT_ROOT + pretrain_model + "/model-final.h5"
+
+				train_network(imagePath, labelPath, trainOutputPath, pretrain_model_path, trainRatio=train_ratio)
+
+				for val_folder in VAL_LIST:
+					modelPath = trainOutputPath + "/model-final.h5"
+					val_folder = val_folder.replace("train", "val")
+
+					imagePath = DATASET_ROOT + val_folder + "/"
+					if "valA" in val_folder:
+						labelPath = DATASET_ROOT + "labelsA_val.csv"
+					else:
+						labelPath = DATASET_ROOT + "labelsB_val.csv"
+					outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)" + ")_(" + val_folder + ")/test_result.txt"
+					test_network(modelPath, imagePath, labelPath, outputPath)
 
 if __name__ == "__main__":
 	import argparse
@@ -144,7 +184,8 @@ if __name__ == "__main__":
 	if (args.gpu_id != None):
 		os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
 
-	#single_test()
+	single_test()
 	#unit_test_for_style()
 	#unit_test_for_quality()
-	combination_test_for_style()
+	#combination_test_for_style()
+	#combination_test_for_style_pretrain()
