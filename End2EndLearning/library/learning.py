@@ -5,6 +5,7 @@ import os
 import shutil
 import numpy as np
 
+import keras
 from keras.utils.np_utils import to_categorical
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from sklearn.utils import shuffle
@@ -171,7 +172,7 @@ def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	print(net.summary())
 '''
 
-def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs, modelPath = "", trainRatio = 1.0):
+def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs, modelPath = "", trainRatio = 1.0, partialPreModel = False):
 	
 	## assigning variables
 	fRandomDistort = flags[0]
@@ -223,7 +224,19 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		validGenerator = gen_train_data_lstm_m2m(xValidList, yValidList, batchSize, nFramesSample)
 
 	if modelPath != "":
+		print("pretrain modelPath: ", modelPath)
 		net.load_weights(modelPath)
+		print(partialPreModel)
+		if partialPreModel:
+			print("partial PreModel not activate")
+			net_untrain = net_nvidia(fClassifier, nClass)
+			start_layer_id=8
+			#for i in range(start_layer_id):
+			#	net.layers[i].trainable = False
+			#for i in range(start_layer_id, len(net.layers)):
+				#net.layers[i].set_weights(net_untrain.layers[i].get_weights())
+			#	net.layers[i].trainable = False
+			#net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
 	## setup outputs
 	if not os.path.exists(outputPath):
@@ -415,6 +428,7 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs):
 
 	#thresh_holds = [0.01, 0.033, 0.1, 0.33, 1, 3.3]
 	thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+	#thresh_holds = [1, 2, 4, 8]
 	acc_list = []
 	for thresh_hold in thresh_holds:
 		acc = np.sum(np.abs(predictResults.flatten() - testLabels) < thresh_hold) / len(testLabels)

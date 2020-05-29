@@ -72,10 +72,19 @@ def unit_test_for_style():
 			outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
 			test_network(modelPath, imagePath, labelPath, outputPath)
 
-def unit_test_for_quality():
+def unit_test_for_quality(subtask_id):
 	TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3"],
 					["trainB", "trainB_noise_1", "trainB_noise_2", "trainB_noise_3"],
 					["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3"]]
+
+	if subtask_id == '0':
+		TRAIN_LIST_LIST = [["trainB_blur_4", "trainB_blur_5"]]
+	elif subtask_id == '1':
+		TRAIN_LIST_LIST = [["trainB_noise_4", "trainB_noise_5"]]
+	elif subtask_id == '2':
+		TRAIN_LIST_LIST = [["trainB_distort_4", "trainB_distort_5", "trainB_distort_6"]]
+	else:
+		return
 
 	for TRAIN_LIST in TRAIN_LIST_LIST:
 		for train_folder in TRAIN_LIST:
@@ -131,16 +140,15 @@ def combination_test_for_style():
 
 def combination_test_for_style_pretrain():
 	#TRAIN_RATIO_LIST = [0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
-	#TRAIN_RATIO_LIST = [1, 0.1, 0.01, 0.001]
-	#TRAIN_RATIO_LIST = [0.3, 0.03, 0.003]
-	#TRAIN_RATIO_LIST = [0.1, 0.01, 0.001]
-	TRAIN_RATIO_LIST = [0.0002]
-	#TRAIN_RATIO_LIST = [1.0]
-	PRETRAIN_MODEL_LIST = ["","trainA"]
+	TRAIN_RATIO_LIST = [0.25, 0.5, 0.75]
 	#PRETRAIN_MODEL_LIST = ["trainA"]
-	#PRETRAIN_MODEL_LIST = [""]
-	TRAIN_LIST = ["trainB"]
-	VAL_LIST = ["valB", "valA"]
+	#PRETRAIN_MODEL_LIST = ["combine0"]
+	PRETRAIN_MODEL_LIST = [""]
+	#TRAIN_LIST = ["trainB"]
+	TRAIN_LIST = ["trainA"]
+	#VAL_LIST = ["valB", "valA"]
+	VAL_LIST = ["valA"]
+	partial_preModel = False
 
 	id = 0
 	for train_ratio in TRAIN_RATIO_LIST:
@@ -158,10 +166,16 @@ def combination_test_for_style_pretrain():
 					trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "/"
 					pretrain_model_path = ""
 				else:
-					trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)/"
+					if partial_preModel:
+						trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_partialpretrain)/"
+					else:
+						trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)/"
 					pretrain_model_path = TRAIN_OUTPUT_ROOT + pretrain_model + "/model-final.h5"
 
-				train_network(imagePath, labelPath, trainOutputPath, pretrain_model_path, trainRatio=train_ratio)
+				if (train_ratio == 1 and pretrain_model == ""):
+					continue
+
+				train_network(imagePath, labelPath, trainOutputPath, pretrain_model_path, trainRatio=train_ratio, partialPreModel=partial_preModel)
 
 				for val_folder in VAL_LIST:
 					modelPath = trainOutputPath + "/model-final.h5"
@@ -179,13 +193,30 @@ if __name__ == "__main__":
 	import argparse
 	parser = argparse.ArgumentParser(description='batch train test')
 	parser.add_argument('--gpu_id', required=False, metavar="gpu_id", help='gpu id (0/1)')
+	parser.add_argument('--task_id', required=False, metavar="task_id", help='task_id id (0/1)')
+	parser.add_argument('--subtask_id', required=False, metavar="subtask_id", help='subtask_id id (0/1)')
 	args = parser.parse_args()
 
 	if (args.gpu_id != None):
 		os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
+	print("CUDA_VISIBLE_DEVICES " + os.environ["CUDA_VISIBLE_DEVICES"])
 
-	single_test()
-	#unit_test_for_style()
-	#unit_test_for_quality()
-	#combination_test_for_style()
-	#combination_test_for_style_pretrain()
+	if args.task_id:
+		if args.task_id == '0':
+			single_test()
+		elif args.task_id == '1':
+			unit_test_for_style()
+		elif args.task_id == '2':
+			unit_test_for_quality(args.subtask_id)
+		elif args.task_id == '3':
+			combination_test_for_style()
+		elif args.task_id == '4':
+			combination_test_for_style_pretrain()
+		else:
+			print("Unknown task: " + args.task_id)
+	else:
+		#single_test()
+		#unit_test_for_style()
+		#unit_test_for_quality()
+		#combination_test_for_style()
+		combination_test_for_style_pretrain()

@@ -14,14 +14,14 @@ from scipy.ndimage import gaussian_filter1d
 
 ROOT_DIR = os.path.abspath("../")
 print('Platform root: ', ROOT_DIR)
+root = ROOT_DIR + '/Data/udacityA_nvidiaB/'
+print('Dataset root: ', root)
 
 #### CHANGE THESE AS NEEDED ####
 NVIDIA = True
 Udacity = True
 SPLIT = True
 
-root = ROOT_DIR + '/Data/udacityA_nvidiaB/'
-print('Dataset root: ', root)
 
 # NVIDIA dataset from Sully Chen records the actual angle of the steering wheel
 # To get the angle the actual wheels turn, divide the recorded angles by the ratio
@@ -82,7 +82,7 @@ def convert_UDACITY(input_file, output_file):
         angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
         angles.append(angle)
 
-    #angles_filtered = gaussian_filter1d(angles, 1)
+    #angles_filtered = gaussian_filter1d(angles, 2)
     angles_filtered = angles
     
     i=0

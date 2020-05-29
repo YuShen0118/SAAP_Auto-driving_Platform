@@ -169,6 +169,7 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
  				xList.append(xFolder + row[2])  
  				yList.append(float(row[3]) - 0.25) 
 			
+	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
 	
 def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False):
@@ -212,7 +213,8 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 					## right camera
 	 				xList.append(xFolder + row[2])  
 	 				yList.append(float(row[3]) - 0.25) 
-				
+
+	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
 	
 def load_train_data_aux(trainFolder, imageList, auxList, angleList):
