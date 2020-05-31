@@ -15,8 +15,12 @@ from train import train_network, train_network_multi
 from test import test_network
 
 DATASET_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB/"
-TRAIN_OUTPUT_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB_results/train_results/"
-TEST_OUTPUT_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB_results/test_results/"
+OUTPUT_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB_results/"
+TRAIN_OUTPUT_ROOT = OUTPUT_ROOT + "train_results/"
+TEST_OUTPUT_ROOT = OUTPUT_ROOT + "test_results/"
+
+if not os.path.exists(OUTPUT_ROOT):
+	os.mkdir(OUTPUT_ROOT)
 
 if not os.path.exists(TRAIN_OUTPUT_ROOT):
 	os.mkdir(TRAIN_OUTPUT_ROOT)
@@ -25,7 +29,7 @@ if not os.path.exists(TEST_OUTPUT_ROOT):
 	os.mkdir(TEST_OUTPUT_ROOT)
 
 def single_test():
-	train_folder = "trainB"
+	train_folder = "trainA_MUNIT_GAN"
 	val_folder = "valB"
 
 	imagePath = DATASET_ROOT + train_folder + "/"
@@ -215,8 +219,8 @@ if __name__ == "__main__":
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
-		#single_test()
+		single_test()
 		#unit_test_for_style()
 		#unit_test_for_quality()
 		#combination_test_for_style()
-		combination_test_for_style_pretrain()
+		#combination_test_for_style_pretrain()
