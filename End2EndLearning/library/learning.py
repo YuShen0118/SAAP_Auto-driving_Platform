@@ -185,11 +185,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	nRep  = specs[4]
 	
 	## prepare the data
-	xList, yList = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras)
-
-	if trainRatio < 1.0:
-		xList, _ = train_test_split(np.array(xList), test_size=1-trainRatio, random_state=420)
-		yList, _ = train_test_split(np.array(yList), test_size=1-trainRatio, random_state=420)
+	xList, yList = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras, trainRatio)
 
 	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)

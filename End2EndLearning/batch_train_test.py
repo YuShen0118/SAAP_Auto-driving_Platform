@@ -107,52 +107,102 @@ def unit_test_for_quality(subtask_id):
 				outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
 				test_network(modelPath, imagePath, labelPath, outputPath)
 
-def combination_test_for_style():
+def combination_test_for_style(subtask_id):
 	TRAIN_FOLDER_LIST = [["trainB", "trainA"],
 					["trainB", "trainA_fake_GAN"],
 					["trainB", "trainA_fake_color"],
 					["trainB", "trainA", "trainA_fake_GAN", "trainA_fake_color"]]
-	VAL_LIST = ["valB", "valA"]
+	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1.0]
+
+	if subtask_id == '0':
+		TRAIN_FOLDER_LIST = [["trainA", "trainB"]]
+		#TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1.0]]
+		TRAIN_RATIO_LIST = [[0.25,0.5], [0.5,0.5], [0.75,0.5], [1.0,0.5]]
+	elif subtask_id == '1':
+		TRAIN_FOLDER_LIST = [["trainA_fake_GAN", "trainB"]]
+		#TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1.0]]
+		TRAIN_RATIO_LIST = [[0.25,0.5], [0.5,0.5], [0.75,0.5], [1.0,0.5]]
+	elif subtask_id == '2':
+		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN", "trainB"]]
+		#TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1.0]]
+		TRAIN_RATIO_LIST = [[0.25,0.5], [0.5,0.5], [0.75,0.5], [1.0,0.5]]
+	elif subtask_id == '3':
+		TRAIN_FOLDER_LIST = [["trainA", "trainA_fake_GAN", "trainA_MUNIT_GAN", "trainB"]]
+		#TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1.0]]
+		TRAIN_RATIO_LIST = [[0.25,0.25,0.25,0.5], [0.5,0.5,0.5,0.5], [0.75,0.75,0.75,0.5], [1.0,1.0,1.0,0.5]]
+	elif subtask_id == '4':
+		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN"]]
+		#TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1.0]]
+		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
+	elif subtask_id == '5':
+		TRAIN_FOLDER_LIST = [["trainA", "trainA_fake_GAN", "trainA_MUNIT_GAN"]]
+		#TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1.0]]
+		TRAIN_RATIO_LIST = [[0.25,0.25,0.25], [0.5,0.5,0.5], [0.75,0.75,0.75], [1.0,1.0,1.0]]
+	else:
+		return
+
+	VAL_LIST = ["valB"]
 
 	i = 0
 	for train_folder_list in TRAIN_FOLDER_LIST:
-		imagePath_list = []
-		labelPath_list = []
-		trainOutputPath = TRAIN_OUTPUT_ROOT + "combine" + str(i) + "/"
+		for train_ratio in TRAIN_RATIO_LIST:
+			imagePath_list = []
+			labelPath_list = []
 
-		for train_folder in train_folder_list:
-			imagePath = DATASET_ROOT + train_folder + "/"
-			if "trainA" in train_folder:
-				labelPath = DATASET_ROOT + "labelsA_train.csv"
-			else:
-				labelPath = DATASET_ROOT + "labelsB_train.csv"
-			imagePath_list.append(imagePath)
-			labelPath_list.append(labelPath)
-		train_network_multi(imagePath_list, labelPath_list, trainOutputPath)
+			trainOurputFolder = "combine_" + str(i) + "_" + str(subtask_id) + "_" + str(train_ratio)
+			trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
 
-		for val_folder in VAL_LIST:
-			modelPath = trainOutputPath + "model-final.h5"
-			imagePath = DATASET_ROOT + val_folder + "/"
-			if "valA" in val_folder:
-				labelPath = DATASET_ROOT + "labelsA_val.csv"
-			else:
-				labelPath = DATASET_ROOT + "labelsB_val.csv"
-			valOutputPath = TEST_OUTPUT_ROOT + "(combine" + str(i) + ")_(" + val_folder + ")/test_result.txt"
-			test_network(modelPath, imagePath, labelPath, valOutputPath)
+			for train_folder in train_folder_list:
+				imagePath = DATASET_ROOT + train_folder + "/"
+				if "trainA" in train_folder:
+					labelPath = DATASET_ROOT + "labelsA_train.csv"
+				else:
+					labelPath = DATASET_ROOT + "labelsB_train.csv"
+				imagePath_list.append(imagePath)
+				labelPath_list.append(labelPath)
+			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, trainRatio=train_ratio)
+
+			for val_folder in VAL_LIST:
+				modelPath = trainOutputPath + "model-final.h5"
+				imagePath = DATASET_ROOT + val_folder + "/"
+				if "valA" in val_folder:
+					labelPath = DATASET_ROOT + "labelsA_val.csv"
+				else:
+					labelPath = DATASET_ROOT + "labelsB_val.csv"
+				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + val_folder + ")/test_result.txt"
+				test_network(modelPath, imagePath, labelPath, valOutputPath)
 
 		i += 1
 
-def combination_test_for_style_pretrain():
+def combination_test_for_style_pretrain(subtask_id=-1):
 	#TRAIN_RATIO_LIST = [0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
-	TRAIN_RATIO_LIST = [0.25, 0.5, 0.75]
+	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1]
+	
+	TRAIN_RATIO_LIST = [0.5]
+	
 	#PRETRAIN_MODEL_LIST = ["trainA"]
 	#PRETRAIN_MODEL_LIST = ["combine0"]
+	#PRETRAIN_MODEL_LIST = ["trainA_fake_GAN_1", "trainA_fake_GAN_0.75", "trainA_fake_GAN_0.5", "trainA_fake_GAN_0.25"]
 	PRETRAIN_MODEL_LIST = [""]
-	#TRAIN_LIST = ["trainB"]
-	TRAIN_LIST = ["trainA"]
+	TRAIN_LIST = ["trainB"]
+	#TRAIN_LIST = ["trainA_fake_GAN"]
 	#VAL_LIST = ["valB", "valA"]
-	VAL_LIST = ["valA"]
+	VAL_LIST = ["valB"]
 	partial_preModel = False
+
+	
+	if subtask_id == '0':
+		PRETRAIN_MODEL_LIST = ["trainA_0.25", "trainA_0.5", "trainA_0.75", "trainA_1"]
+	elif subtask_id == '1':
+		PRETRAIN_MODEL_LIST = ["trainA_fake_GAN_0.25", "trainA_fake_GAN_0.5", "trainA_fake_GAN_0.75", "trainA_fake_GAN_1"]
+	elif subtask_id == '2':
+		PRETRAIN_MODEL_LIST = ["trainA_MUNIT_GAN_0.25", "trainA_MUNIT_GAN_0.5", "trainA_MUNIT_GAN_0.75", "trainA_MUNIT_GAN_1"]
+	elif subtask_id == '3':
+		PRETRAIN_MODEL_LIST = ["trainA_ALL_0.25", "trainA_ALL_0.5", "trainA_ALL_0.75", "trainA_ALL_1"]
+	else:
+		return
+	
+
 
 	id = 0
 	for train_ratio in TRAIN_RATIO_LIST:
@@ -213,14 +263,14 @@ if __name__ == "__main__":
 		elif args.task_id == '2':
 			unit_test_for_quality(args.subtask_id)
 		elif args.task_id == '3':
-			combination_test_for_style()
+			combination_test_for_style(args.subtask_id)
 		elif args.task_id == '4':
-			combination_test_for_style_pretrain()
+			combination_test_for_style_pretrain(args.subtask_id)
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
-		single_test()
+		#single_test()
 		#unit_test_for_style()
 		#unit_test_for_quality()
 		#combination_test_for_style()
-		#combination_test_for_style_pretrain()
+		combination_test_for_style_pretrain()

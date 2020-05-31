@@ -4,7 +4,7 @@ import os
 import sys
 import csv
 import math
-
+import random
 import cv2    
 import numpy as np
 import matplotlib.pyplot as plt
@@ -171,8 +171,8 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 			
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
-	
-def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False):
+
+def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0):
 	'''
 	Load the training data
 	'''
@@ -189,30 +189,46 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 		with open(trainLogPath, newline='') as f:
 			trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
 			trainLog_list.append(trainLog)
+
+	if not isinstance(ratio, list):
+		ratio = [ratio]*len(xFolder_list)
 	
     ## get x and y
 	xList, yList = ([], [])
 	
-	i = 0
 	for rep in range(0,nRep):
+		i = 0
 		for trainLog in trainLog_list:
 			xFolder = xFolder_list[i]
-			i+=1
+			xList_1 = []
+			yList_1 = []
 			for row in trainLog:
 				## center camera
-		 		xList.append(xFolder + row[0]) 
-	 			yList.append(float(row[3]))     
+		 		xList_1.append(xFolder + row[0]) 
+	 			yList_1.append(float(row[3]))     
 	 			
 	 			## if using three cameras
 	 			if fThreeCameras:
 
 					## left camera
-	 				xList.append(xFolder + row[1])  
-	 				yList.append(float(row[3]) + 0.25) 
+	 				xList_1.append(xFolder + row[1])  
+	 				yList_1.append(float(row[3]) + 0.25) 
 					
 					## right camera
-	 				xList.append(xFolder + row[2])  
-	 				yList.append(float(row[3]) - 0.25) 
+	 				xList_1.append(xFolder + row[2])  
+	 				yList_1.append(float(row[3]) - 0.25) 
+
+			if ratio[i] < 1:
+				n = int(len(trainLog) * ratio[i])
+				random.shuffle(xList_1)
+				random.shuffle(yList_1)
+				xList_1 = xList_1[0:n]
+				yList_1 = yList_1[0:n]
+			print(len(xList_1))
+			xList = xList + xList_1
+			yList = yList + yList_1
+
+			i+=1
 
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
