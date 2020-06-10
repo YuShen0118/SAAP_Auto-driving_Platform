@@ -220,7 +220,9 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 
 			if ratio[i] < 1:
 				n = int(len(trainLog) * ratio[i])
+				random.seed(42)
 				random.shuffle(xList_1)
+				random.seed(42)
 				random.shuffle(yList_1)
 				xList_1 = xList_1[0:n]
 				yList_1 = yList_1[0:n]

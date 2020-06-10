@@ -53,10 +53,13 @@ def plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, outputPath):
     '''
     minv_Udacity, maxv_Udacity = plot_steering_angle_dist(Udacity_labels, label="Udacity")
     minv_NVIDIA, maxv_NVIDIA = plot_steering_angle_dist(NVIDIA_labels, label="NVIDIA")
-    minv_custom, maxv_custom = plot_steering_angle_dist(custom_labels, label="Custom")
+    #minv_custom, maxv_custom = plot_steering_angle_dist(custom_labels, label="Custom")
 
-    minv = min(minv_Udacity, min(minv_NVIDIA, minv_custom))
-    maxv = max(maxv_Udacity, max(maxv_NVIDIA, maxv_custom))
+    #minv = min(minv_Udacity, min(minv_NVIDIA, minv_custom))
+    #maxv = max(maxv_Udacity, max(maxv_NVIDIA, maxv_custom))
+
+    minv = min(minv_Udacity, minv_NVIDIA)
+    maxv = max(maxv_Udacity, maxv_NVIDIA)
     #print(minv)
     #print(maxv)
     #plt.xlim(-15, 15)

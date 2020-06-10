@@ -48,12 +48,13 @@ def single_test():
 	else:
 		labelPath = DATASET_ROOT + "labelsB_val.csv"
 	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
+	#modelPath = ""
 	test_network(modelPath, imagePath, labelPath, outputPath)
 
 
 def unit_test_for_style():
-	TRAIN_LIST = ["trainA", "trainA_fake_GAN", "trainA_fake_color", "trainB", "trainB_fake_GAN", "trainB_fake_color"]
-	VAL_LIST = ["valA", "valA_fake_GAN", "valA_fake_color", "valB", "valB_fake_GAN", "valB_fake_color"]
+	TRAIN_LIST = ["trainA", "trainB", "trainA_fake_GAN", "trainB_fake_GAN", "trainA_MUNIT_GAN", "trainB_MUNIT_GAN", "trainA_fake_color", "trainB_fake_color"]
+	VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valB_fake_GAN", "valA_MUNIT_GAN", "valB_MUNIT_GAN", "valA_fake_color", "valB_fake_color"]
 
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
@@ -82,11 +83,11 @@ def unit_test_for_quality(subtask_id):
 					["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3"]]
 
 	if subtask_id == '0':
-		TRAIN_LIST_LIST = [["trainB_blur_4", "trainB_blur_5"]]
+		TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5"]]
 	elif subtask_id == '1':
-		TRAIN_LIST_LIST = [["trainB_noise_4", "trainB_noise_5"]]
+		TRAIN_LIST_LIST = [["trainB", "trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5"]]
 	elif subtask_id == '2':
-		TRAIN_LIST_LIST = [["trainB_distort_4", "trainB_distort_5", "trainB_distort_6"]]
+		TRAIN_LIST_LIST = [["trainB", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5", "trainB_distort_6"]]
 	else:
 		return
 
@@ -115,31 +116,35 @@ def combination_test_for_style(subtask_id):
 	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1.0]
 
 	if subtask_id == '0':
-		TRAIN_FOLDER_LIST = [["trainA", "trainB"]]
-		#TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1.0]]
-		TRAIN_RATIO_LIST = [[0.25,0.5], [0.5,0.5], [0.75,0.5], [1.0,0.5]]
-	elif subtask_id == '1':
-		TRAIN_FOLDER_LIST = [["trainA_fake_GAN", "trainB"]]
-		#TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1.0]]
-		TRAIN_RATIO_LIST = [[0.25,0.5], [0.5,0.5], [0.75,0.5], [1.0,0.5]]
-	elif subtask_id == '2':
-		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN", "trainB"]]
-		#TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1.0]]
-		TRAIN_RATIO_LIST = [[0.25,0.5], [0.5,0.5], [0.75,0.5], [1.0,0.5]]
-	elif subtask_id == '3':
-		TRAIN_FOLDER_LIST = [["trainA", "trainA_fake_GAN", "trainA_MUNIT_GAN", "trainB"]]
-		#TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1.0]]
-		TRAIN_RATIO_LIST = [[0.25,0.25,0.25,0.5], [0.5,0.5,0.5,0.5], [0.75,0.75,0.75,0.5], [1.0,1.0,1.0,0.5]]
-	elif subtask_id == '4':
-		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN"]]
-		#TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1.0]]
+		TRAIN_FOLDER_LIST = [["trainA"]]
 		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
-	elif subtask_id == '5':
+	elif subtask_id == '1':
+		TRAIN_FOLDER_LIST = [["trainA_fake_GAN"]]
+		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
+	elif subtask_id == '2':
+		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN"]]
+		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
+	elif subtask_id == '3':
 		TRAIN_FOLDER_LIST = [["trainA", "trainA_fake_GAN", "trainA_MUNIT_GAN"]]
-		#TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1.0]]
 		TRAIN_RATIO_LIST = [[0.25,0.25,0.25], [0.5,0.5,0.5], [0.75,0.75,0.75], [1.0,1.0,1.0]]
+	elif subtask_id == '4':
+		TRAIN_FOLDER_LIST = [["trainA", "trainB"]]
+		TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1]]
+	elif subtask_id == '5':
+		TRAIN_FOLDER_LIST = [["trainA_fake_GAN", "trainB"]]
+		TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1]]
+	elif subtask_id == '6':
+		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN", "trainB"]]
+		TRAIN_RATIO_LIST = [[0.25,1], [0.5,1], [0.75,1], [1.0,1]]
+	elif subtask_id == '7':
+		TRAIN_FOLDER_LIST = [["trainA", "trainA_fake_GAN", "trainA_MUNIT_GAN", "trainB"]]
+		TRAIN_RATIO_LIST = [[0.25,0.25,0.25,1], [0.5,0.5,0.5,1], [0.75,0.75,0.75,1], [1.0,1.0,1.0,1]]
 	else:
 		return
+
+	#pretrain_model = "tmp"
+	#pretrain_model_path = TRAIN_OUTPUT_ROOT + pretrain_model + "/model-final.h5"
+	pretrain_model_path = ""
 
 	VAL_LIST = ["valB"]
 
@@ -160,7 +165,7 @@ def combination_test_for_style(subtask_id):
 					labelPath = DATASET_ROOT + "labelsB_train.csv"
 				imagePath_list.append(imagePath)
 				labelPath_list.append(labelPath)
-			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, trainRatio=train_ratio)
+			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, trainRatio=train_ratio)
 
 			for val_folder in VAL_LIST:
 				modelPath = trainOutputPath + "model-final.h5"
@@ -178,7 +183,7 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 	#TRAIN_RATIO_LIST = [0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
 	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1]
 	
-	TRAIN_RATIO_LIST = [0.5]
+	TRAIN_RATIO_LIST = [1]
 	
 	#PRETRAIN_MODEL_LIST = ["trainA"]
 	#PRETRAIN_MODEL_LIST = ["combine0"]
@@ -199,6 +204,7 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 		PRETRAIN_MODEL_LIST = ["trainA_MUNIT_GAN_0.25", "trainA_MUNIT_GAN_0.5", "trainA_MUNIT_GAN_0.75", "trainA_MUNIT_GAN_1"]
 	elif subtask_id == '3':
 		PRETRAIN_MODEL_LIST = ["trainA_ALL_0.25", "trainA_ALL_0.5", "trainA_ALL_0.75", "trainA_ALL_1"]
+		#PRETRAIN_MODEL_LIST = ["combine_0_3_[0.25, 0.25, 0.25]", "combine_0_3_[1.0, 1.0, 1.0]"]
 	else:
 		return
 	
@@ -226,8 +232,8 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 						trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)/"
 					pretrain_model_path = TRAIN_OUTPUT_ROOT + pretrain_model + "/model-final.h5"
 
-				if (train_ratio == 1 and pretrain_model == ""):
-					continue
+				#if (train_ratio == 1 and pretrain_model == ""):
+				#	continue
 
 				train_network(imagePath, labelPath, trainOutputPath, pretrain_model_path, trainRatio=train_ratio, partialPreModel=partial_preModel)
 
@@ -240,7 +246,11 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 						labelPath = DATASET_ROOT + "labelsA_val.csv"
 					else:
 						labelPath = DATASET_ROOT + "labelsB_val.csv"
-					outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)" + ")_(" + val_folder + ")/test_result.txt"
+
+					if partial_preModel:
+						outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_partialpretrain)" + ")_(" + val_folder + ")/test_result.txt"
+					else:
+						outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)" + ")_(" + val_folder + ")/test_result.txt"
 					test_network(modelPath, imagePath, labelPath, outputPath)
 
 if __name__ == "__main__":
@@ -269,8 +279,8 @@ if __name__ == "__main__":
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
-		#single_test()
+		single_test()
 		#unit_test_for_style()
 		#unit_test_for_quality()
 		#combination_test_for_style()
-		combination_test_for_style_pretrain()
+		#combination_test_for_style_pretrain()
