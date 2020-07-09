@@ -13,7 +13,7 @@ sys.path.insert(0, './library/')
 
 from learning import test_dnn
 
-def test_network(modelPath, imagePath, labelPath, outputPath):
+def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0):
 	if modelPath:
 		print('Model used: ' + modelPath)
 	else:
@@ -42,7 +42,7 @@ def test_network(modelPath, imagePath, labelPath, outputPath):
 	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
 	
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs)
+	test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID)
 
 
 if __name__ == "__main__":

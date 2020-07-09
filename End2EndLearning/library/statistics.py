@@ -68,12 +68,143 @@ def plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, outputPath):
     plt.savefig(outputPath, format='png',dpi=1200)
 
 
-ROOT_DIR = os.path.abspath("../")
-print('Platform root: ', ROOT_DIR)
+def draw_label_distribution():
+    ROOT_DIR = os.path.abspath("../")
+    print('Platform root: ', ROOT_DIR)
 
-NVIDIA_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsB_trainval.csv'
-Udacity_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsA_trainval.csv'
-custom_labels = ROOT_DIR + '/Data/training_simu_1/end2endLabels.csv'
-output_path = ROOT_DIR + '/Data/output.png'
+    NVIDIA_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsB_trainval.csv'
+    Udacity_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsA_trainval.csv'
+    custom_labels = ROOT_DIR + '/Data/training_simu_1/end2endLabels.csv'
+    output_path = ROOT_DIR + '/Data/output.png'
 
-plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, output_path)
+    plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, output_path)
+
+
+def read_float_list(file_name):
+    x = []
+    file_in = open(file_name, 'r')
+    for y in file_in.read().split('\n'):
+        if len(y) > 0:
+            x.append(float(y))
+    return np.array(x)
+
+def plot_distribution(data, output_folder="", title="distribution"):
+    sns.set(color_codes=True)
+    sns.distplot(data).set_title(title)
+    minv = np.min(data)
+    maxv = np.max(data)
+    plt.xlim(minv, maxv)
+    #plt.legend(loc='upper right', labels=BN_folders)
+    plt.savefig(output_folder + title + ".png", format='png')
+    plt.clf()
+    #plt.show()
+
+def show_statistics(data, base_data, output_folder="", case_title="", BN_flag=0):
+    f_BN = open(output_folder + "BN_" + case_title + ".txt",'w')
+
+    s = 0
+    if BN_flag==0:
+        dimension_in_each_layer = [3, 24, 24, 36, 36, 48, 48, 64, 64, 64, 64, 1, 1, 1, 1, 1, 1, 1, 1]
+        wanted_layer_id = [0, 1, 3, 5, 7, 9, 12, 14, 16, 18]
+    elif BN_flag==1:
+        dimension_in_each_layer = [3, 24, 24, 24, 36, 36, 36, 48, 48, 48, 64, 64, 64, 64, 64, 64, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        wanted_layer_id = [0, 2, 5, 8, 11, 14, 18, 21, 24, 26]
+    elif BN_flag==2:
+        dimension_in_each_layer = [3, 3, 24, 24, 24, 24, 24, 24, 36, 36, 36, 36, 36, 36, 48, 48, 48, 48, 48, 48, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        wanted_layer_id = [0, 4, 10, 16, 22, 28, 36, 42, 48, 52]
+
+    data_wanted = []
+    data_wanted_base = []
+    value_list = []
+    value_percent_list = []
+    #dimension_in_each_layer = [24, 36, 48, 64, 64]
+    for i in range(len(dimension_in_each_layer)):
+        t = s + dimension_in_each_layer[i]
+        if i in wanted_layer_id:
+            print("s " + str(s) + " t " + str(t))
+            l2_norm = np.linalg.norm(data[s:t])
+            l2_norm_base = np.linalg.norm(base_data[s:t])
+            value_list.append(l2_norm)
+            value_percent_list.append(l2_norm / l2_norm_base * 100)
+            print(case_title + ", layer "+str(i) + " L2 norm: " + str(l2_norm) + "  ratio: " + str(l2_norm / l2_norm_base * 100) + "%")
+            f_BN.write(case_title + ", layer "+str(i) + " L2 norm: " + str(l2_norm) + "  ratio: " + str(l2_norm / l2_norm_base * 100) + "%\n")
+            #if i <= 10:
+            #    plot_distribution(data[s:t], output_folder, "Layer " + str(i) + " L2 distance distribution w.r.t. " + case_title)
+            data_wanted = data_wanted + data[s:t].tolist()
+            data_wanted_base = data_wanted_base + base_data[s:t].tolist()
+        s = t
+    
+    print(len(data_wanted))
+    l2_norm = np.linalg.norm(data_wanted)
+    l2_norm_base = np.linalg.norm(data_wanted_base)
+    value_list.append(l2_norm)
+    value_percent_list.append(l2_norm / l2_norm_base * 100)
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!" + case_title + ", total L2 norm: " + str(np.linalg.norm(data_wanted)) + "  ratio: " + str(l2_norm / l2_norm_base * 100) + "%")
+    f_BN.write(case_title + ", total L2 norm: " + str(np.linalg.norm(data_wanted)) + "  ratio: " + str(l2_norm / l2_norm_base * 100) + "%\n")
+
+    f_BN.write("\n")
+    f_BN.write("\n")
+    for value in value_list:
+        f_BN.write("{:.3f} & ".format(value))
+    f_BN.write("\n")
+    for value_percent in value_percent_list:
+        f_BN.write("{:.2f}\\% & ".format(value_percent))
+    f_BN.write("\n")
+    for value in value_list:
+        f_BN.write("{:.3f}\t".format(value))
+    f_BN.write("\n")
+    for value_percent in value_percent_list:
+        f_BN.write("{:.2f}\\%\t".format(value_percent))
+    f_BN.write("\n")
+    f_BN.close()
+    plot_distribution(data, output_folder, "L2 distance distribution of all layers w.r.t. " + case_title)
+
+def show_BN_statistics_difference():
+    ROOT_DIR = os.path.abspath("../")
+    print('Platform root: ', ROOT_DIR)
+    DATA_DIR = ROOT_DIR + "/Data/udacityA_nvidiaB_results/test_results/"
+    
+    #BN_folder_1 = "(trainA)_(trainA)"
+    BN_folder_1 = "(trainB)_(valB)"
+    #BN_folder_1 = "(trainA)_(trainA)"
+    #BN_folder_1 = "(trainA)_(valB)"
+    #BN_folder_1 = "(trainC1)_(trainC1)"
+    #BN_folder_1 = "(trainB_BN)_(valB)"
+    #BN_folder_1 = "(trainB)_(trainA_advp)_(valB)"
+    #BN_folder_1 = "(trainB_noise_3)_(valB_noise_3)"
+    #BN_folder_2 = "(trainB)_(valB_distort_5)"
+    #BN_folder_2 = "(trainB_noise_3)_(valB)"
+    #BN_folder_2 = "(combine2)_(valB)"
+    BN_folder_2 = "(trainB)_(trainA_similarBN10)"
+    #BN_folder_2 = "(trainB)_(valA)"
+    #BN_folder_2 = "(trainC1)_(valC1)"
+    #BN_folder_2 = "(trainB_1_trainC1_BN_pretrain_reinitheader_BN1_reinitBN_BN)_(valB)"
+    #BN_folder_2 = "(trainB)_(trainC1_advp)_(valB)"
+    BN_flag = 0
+    
+    BN_means_1 = read_float_list(DATA_DIR + BN_folder_1 + "/BN_means.txt")
+    BN_stds_1 = read_float_list(DATA_DIR + BN_folder_1 + "/BN_stds.txt")
+    
+    BN_means_2 = read_float_list(DATA_DIR + BN_folder_2 + "/BN_means.txt")
+    BN_stds_2 = read_float_list(DATA_DIR + BN_folder_2 + "/BN_stds.txt")
+
+    OUTPUT_DIR = ROOT_DIR + "/Data/udacityA_nvidiaB_results/BN_comparison/"
+    if not os.path.exists(OUTPUT_DIR):
+        os.mkdir(OUTPUT_DIR)
+
+    output_folder = OUTPUT_DIR + "[" + BN_folder_1 + "][" + BN_folder_2 + "]/"
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+    
+    show_statistics(BN_means_1 - BN_means_2, BN_means_1, output_folder, case_title="mean", BN_flag=BN_flag)
+    show_statistics(BN_means_1, BN_means_1, output_folder, case_title="mean_1", BN_flag=BN_flag)
+    show_statistics(BN_means_2, BN_means_1, output_folder, case_title="mean_2", BN_flag=BN_flag)
+    show_statistics(BN_stds_1 - BN_stds_2, BN_stds_1, output_folder, case_title="std", BN_flag=BN_flag)
+    show_statistics(BN_stds_1, BN_stds_1, output_folder, case_title="std_1", BN_flag=BN_flag)
+    show_statistics(BN_stds_2, BN_stds_1, output_folder, case_title="std_2", BN_flag=BN_flag)
+
+
+if __name__ == "__main__":
+    #draw_label_distribution()
+    show_BN_statistics_difference()

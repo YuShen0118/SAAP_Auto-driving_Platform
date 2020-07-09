@@ -141,11 +141,11 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 	'''
 	## prepare for getting x
 	if not os.path.exists(xFolder):
-		sys.exit('Error: the image folder is missing.')
+		sys.exit('Error: the image folder is missing. ' + xFolder)
 		
 	## prepare for getting y
 	if not os.path.exists(trainLogPath):
-		sys.exit('Error: the labels.csv is missing.')
+		sys.exit('Error: the labels.csv is missing. ' + trainLogPath)
 	with open(trainLogPath, newline='') as f:
 		trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
 	
@@ -179,13 +179,13 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 	## prepare for getting x
 	for xFolder in xFolder_list:
 		if not os.path.exists(xFolder):
-			sys.exit('Error: the image folder is missing.')
+			sys.exit('Error: the image folder is missing. ' + xFolder)
 		
 	## prepare for getting y
 	trainLog_list = []
 	for trainLogPath in trainLogPath_list:
 		if not os.path.exists(trainLogPath):
-			sys.exit('Error: the labels.csv is missing.')
+			sys.exit('Error: the labels.csv is missing. ' + trainLogPath)
 		with open(trainLogPath, newline='') as f:
 			trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
 			trainLog_list.append(trainLog)

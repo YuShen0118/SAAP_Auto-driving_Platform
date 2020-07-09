@@ -28,40 +28,118 @@ if not os.path.exists(TRAIN_OUTPUT_ROOT):
 if not os.path.exists(TEST_OUTPUT_ROOT):
 	os.mkdir(TEST_OUTPUT_ROOT)
 
+def get_label_file_name(folder_name, suffix=""):
+	if "valA" in folder_name:
+		labelName = "labelsA_val"
+	elif "valB" in folder_name:
+		labelName = "labelsB_val"
+	elif "valC1" in folder_name:
+		labelName = "labelsC1_val"
+	elif "valC2" in folder_name:
+		labelName = "labelsC2_val"
+	elif "trainA" in folder_name:
+		labelName = "labelsA_train"
+	elif "trainB" in folder_name:
+		labelName = "labelsB_train"
+	elif "trainC1" in folder_name:
+		labelName = "labelsC1_train"
+	elif "trainC2" in folder_name:
+		labelName = "labelsC2_train"
+
+	labelName = labelName + suffix
+	labelName = labelName + ".csv"
+	return labelName
+
 def single_test():
-	train_folder = "trainA_MUNIT_GAN"
-	val_folder = "valB"
+	train_folder = "trainB_1_trainA_BN_pretrain_reinitheader_BN1"
+	val_folder = "valA"
 
 	imagePath = DATASET_ROOT + train_folder + "/"
-	if "trainA" in train_folder:
-		labelPath = DATASET_ROOT + "labelsA_train.csv"
-	else:
-		labelPath = DATASET_ROOT + "labelsB_train.csv"
+	labelName = get_label_file_name(train_folder)
+	labelPath = DATASET_ROOT + labelName
+
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
 	train_network(imagePath, labelPath, outputPath)
 
-	modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
+	modelPath = outputPath + "/model-final.h5"
 
 	imagePath = DATASET_ROOT + val_folder + "/"
-	if "valA" in val_folder:
-		labelPath = DATASET_ROOT + "labelsA_val.csv"
-	else:
-		labelPath = DATASET_ROOT + "labelsB_val.csv"
+	labelName = get_label_file_name(val_folder, "")
+	labelPath = DATASET_ROOT + labelName
+	#labelPath = DATASET_ROOT + "labelsB_train.csv"
+
 	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
 	#modelPath = ""
 	test_network(modelPath, imagePath, labelPath, outputPath)
 
+def single_test_similarBN():
+	train_folder = "trainB_1_trainA_BN_pretrain_reinitheader"
+	val_folder = "valA"
+	BN_flag = 1
+	#suffix = "_similarBN40"
+	suffix = ""
+
+	imagePath = DATASET_ROOT + train_folder + "/"
+	labelName = get_label_file_name(train_folder, suffix)
+	labelPath = DATASET_ROOT + labelName
+
+	outputPath = TRAIN_OUTPUT_ROOT + train_folder + suffix + "_BN" + str(BN_flag) + "/"
+	train_network(imagePath, labelPath, outputPath, BN_flag=BN_flag)
+
+	modelPath = outputPath + "/model-final.h5"
+
+	imagePath = DATASET_ROOT + val_folder + "/"
+	labelName = get_label_file_name(val_folder)
+	labelPath = DATASET_ROOT + labelName
+	#labelPath = DATASET_ROOT + "labelsB_train.csv"
+
+	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + suffix + "_BN" + str(BN_flag) + ")_(" + val_folder + ")/test_result.txt"
+	#modelPath = ""
+	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag)
+
+
+def single_test_AdvProp():
+	train_folder = "trainB"
+	val_folder = "valA"
+	train_folder_advp = "trainA"
+	val_folder_advp = "valA"
+	#suffix = "_similarBN40"
+	suffix = ""
+	pathID = 1
+
+	imagePath = DATASET_ROOT + train_folder + "/"
+	labelName = get_label_file_name(train_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	imagePath_advp = DATASET_ROOT + train_folder_advp + "/"
+	labelName_advp = get_label_file_name(train_folder_advp, suffix)
+	labelPath_advp = DATASET_ROOT + labelName_advp
+
+	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + train_folder_advp + suffix + "_advp/"
+	train_network(imagePath, labelPath, outputPath, BN_flag=2, imagePath_advp=imagePath_advp, labelPath_advp=labelPath_advp)
+
+	modelPath = outputPath + "/model-final.h5"
+
+	imagePath = DATASET_ROOT + val_folder + "/"
+	labelName = get_label_file_name(val_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + train_folder_advp + suffix + "_advp)_(" + val_folder + ")/test_result.txt"
+	#modelPath = ""
+	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=2, pathID=pathID)
+
 
 def unit_test_for_style():
 	TRAIN_LIST = ["trainA", "trainB", "trainA_fake_GAN", "trainB_fake_GAN", "trainA_MUNIT_GAN", "trainB_MUNIT_GAN", "trainA_fake_color", "trainB_fake_color"]
+	#TRAIN_LIST = ["trainA_1", "trainB", "trainA_fake_GAN_1", "trainA_MUNIT_GAN_1"]
 	VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valB_fake_GAN", "valA_MUNIT_GAN", "valB_MUNIT_GAN", "valA_fake_color", "valB_fake_color"]
+	#VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valA_MUNIT_GAN"]
+
 
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
-		if "trainA" in train_folder:
-			labelPath = DATASET_ROOT + "labelsA_train.csv"
-		else:
-			labelPath = DATASET_ROOT + "labelsB_train.csv"
+		labelName = get_label_file_name(train_folder)
+		labelPath = DATASET_ROOT + labelName
 		outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
 		train_network(imagePath, labelPath, outputPath)
 
@@ -69,27 +147,30 @@ def unit_test_for_style():
 			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
 			val_folder = val_folder.replace("train", "val")
 
+			if not (train_folder == "trainA_MUNIT_GAN_1" or val_folder == "valA_MUNIT_GAN"):
+				continue
+
 			imagePath = DATASET_ROOT + val_folder + "/"
-			if "valA" in val_folder:
-				labelPath = DATASET_ROOT + "labelsA_val.csv"
-			else:
-				labelPath = DATASET_ROOT + "labelsB_val.csv"
+			labelName = get_label_file_name(val_folder)
+			labelPath = DATASET_ROOT + labelName
 			outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
 			test_network(modelPath, imagePath, labelPath, outputPath)
 
-def unit_test_for_quality(subtask_id):
-	TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3"],
-					["trainB", "trainB_noise_1", "trainB_noise_2", "trainB_noise_3"],
-					["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3"]]
+def unit_test_for_quality(subtask_id=-1):
+	TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5"],
+					["trainB", "trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5"],
+					["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5"]]
 
+	'''
 	if subtask_id == '0':
 		TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5"]]
 	elif subtask_id == '1':
 		TRAIN_LIST_LIST = [["trainB", "trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5"]]
 	elif subtask_id == '2':
-		TRAIN_LIST_LIST = [["trainB", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5", "trainB_distort_6"]]
+		TRAIN_LIST_LIST = [["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5"]]
 	else:
 		return
+	'''
 
 	for TRAIN_LIST in TRAIN_LIST_LIST:
 		for train_folder in TRAIN_LIST:
@@ -101,7 +182,11 @@ def unit_test_for_quality(subtask_id):
 
 			for val_folder in TRAIN_LIST:
 				modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
+				if train_folder != val_folder:
+					continue
 				val_folder = val_folder.replace("train", "val")
+#				if train_folder != "trainB" and val_folder != "valB":
+#					continue
 
 				imagePath = DATASET_ROOT + val_folder + "/"
 				labelPath = DATASET_ROOT + "labelsB_val.csv"
@@ -120,7 +205,10 @@ def combination_test_for_style(subtask_id):
 		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
 	elif subtask_id == '1':
 		TRAIN_FOLDER_LIST = [["trainA_fake_GAN"]]
-		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
+		#TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
+		TRAIN_RATIO_LIST = [[0.25], [0.5]]
+		#TRAIN_RATIO_LIST = [[1.0]]
+		#TRAIN_RATIO_LIST = [[0.5], [0.25]]
 	elif subtask_id == '2':
 		TRAIN_FOLDER_LIST = [["trainA_MUNIT_GAN"]]
 		TRAIN_RATIO_LIST = [[0.25], [0.5], [0.75], [1.0]]
@@ -159,10 +247,8 @@ def combination_test_for_style(subtask_id):
 
 			for train_folder in train_folder_list:
 				imagePath = DATASET_ROOT + train_folder + "/"
-				if "trainA" in train_folder:
-					labelPath = DATASET_ROOT + "labelsA_train.csv"
-				else:
-					labelPath = DATASET_ROOT + "labelsB_train.csv"
+				labelName = get_label_file_name(train_folder)
+				labelPath = DATASET_ROOT + labelName
 				imagePath_list.append(imagePath)
 				labelPath_list.append(labelPath)
 			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, trainRatio=train_ratio)
@@ -170,10 +256,8 @@ def combination_test_for_style(subtask_id):
 			for val_folder in VAL_LIST:
 				modelPath = trainOutputPath + "model-final.h5"
 				imagePath = DATASET_ROOT + val_folder + "/"
-				if "valA" in val_folder:
-					labelPath = DATASET_ROOT + "labelsA_val.csv"
-				else:
-					labelPath = DATASET_ROOT + "labelsB_val.csv"
+				labelName = get_label_file_name(val_folder)
+				labelPath = DATASET_ROOT + labelName
 				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + val_folder + ")/test_result.txt"
 				test_network(modelPath, imagePath, labelPath, valOutputPath)
 
@@ -183,7 +267,8 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 	#TRAIN_RATIO_LIST = [0.3, 0.1, 0.03, 0.01, 0.003, 0.001]
 	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1]
 	
-	TRAIN_RATIO_LIST = [1]
+	#TRAIN_RATIO_LIST = [1]
+	TRAIN_RATIO_LIST = [0.5, 0.1, 0.01, 0.001]
 	
 	#PRETRAIN_MODEL_LIST = ["trainA"]
 	#PRETRAIN_MODEL_LIST = ["combine0"]
@@ -194,6 +279,9 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 	#VAL_LIST = ["valB", "valA"]
 	VAL_LIST = ["valB"]
 	partial_preModel = False
+	reinit_header = False
+	reinit_BN = False
+	BN_flag = 0
 
 	
 	if subtask_id == '0':
@@ -205,10 +293,24 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 	elif subtask_id == '3':
 		PRETRAIN_MODEL_LIST = ["trainA_ALL_0.25", "trainA_ALL_0.5", "trainA_ALL_0.75", "trainA_ALL_1"]
 		#PRETRAIN_MODEL_LIST = ["combine_0_3_[0.25, 0.25, 0.25]", "combine_0_3_[1.0, 1.0, 1.0]"]
-	else:
-		return
+	elif subtask_id == '4':
+		PRETRAIN_MODEL_LIST = ["trainA", "trainA_fake_GAN", "trainA_MUNIT_GAN"]
+	elif subtask_id == '5':
+		PRETRAIN_MODEL_LIST = ["trainA_BN", "trainC1_BN"]
+		PRETRAIN_MODEL_LIST = ["trainC1_BN"]
+	#else:
+	#	return
 	
 
+	suffix = "_pretrain"
+	if partial_preModel:
+		suffix = "_partialpretrain"
+	if reinit_header:
+		suffix = suffix + "_reinitheader"
+	if BN_flag > 0:
+		suffix = suffix + "_BN" + str(BN_flag)
+	if reinit_BN:
+		suffix = suffix + "_reinitBN"
 
 	id = 0
 	for train_ratio in TRAIN_RATIO_LIST:
@@ -217,41 +319,35 @@ def combination_test_for_style_pretrain(subtask_id=-1):
 				id += 1
 				print(id)
 				imagePath = DATASET_ROOT + train_folder + "/"
-				if "trainA" in train_folder:
-					labelPath = DATASET_ROOT + "labelsA_train.csv"
-				else:
-					labelPath = DATASET_ROOT + "labelsB_train.csv"
+				labelName = get_label_file_name(train_folder)
+				labelPath = DATASET_ROOT + labelName
 
 				if pretrain_model == "":
 					trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "/"
 					pretrain_model_path = ""
 				else:
-					if partial_preModel:
-						trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_partialpretrain)/"
-					else:
-						trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)/"
+
+					trainOutputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + suffix + ")/"
+
 					pretrain_model_path = TRAIN_OUTPUT_ROOT + pretrain_model + "/model-final.h5"
 
 				#if (train_ratio == 1 and pretrain_model == ""):
 				#	continue
 
-				train_network(imagePath, labelPath, trainOutputPath, pretrain_model_path, trainRatio=train_ratio, partialPreModel=partial_preModel)
+				train_network(imagePath, labelPath, trainOutputPath, pretrain_model_path, trainRatio=train_ratio, partialPreModel=partial_preModel, reinitHeader=reinit_header, BN_flag=BN_flag, reinitBN=reinit_BN)
 
 				for val_folder in VAL_LIST:
 					modelPath = trainOutputPath + "/model-final.h5"
 					val_folder = val_folder.replace("train", "val")
 
 					imagePath = DATASET_ROOT + val_folder + "/"
-					if "valA" in val_folder:
-						labelPath = DATASET_ROOT + "labelsA_val.csv"
-					else:
-						labelPath = DATASET_ROOT + "labelsB_val.csv"
+					labelName = get_label_file_name(val_folder)
+					labelPath = DATASET_ROOT + labelName
 
-					if partial_preModel:
-						outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_partialpretrain)" + ")_(" + val_folder + ")/test_result.txt"
-					else:
-						outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + "_pretrain)" + ")_(" + val_folder + ")/test_result.txt"
-					test_network(modelPath, imagePath, labelPath, outputPath)
+					outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + "_" + str(train_ratio) + "_(" + pretrain_model + suffix + ")" + ")_(" + val_folder + ")/test_result.txt"
+					test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, reinitBN=reinit_BN)
+
+
 
 if __name__ == "__main__":
 	import argparse
@@ -279,7 +375,9 @@ if __name__ == "__main__":
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
-		single_test()
+		#single_test()
+		single_test_similarBN()
+		#single_test_AdvProp()
 		#unit_test_for_style()
 		#unit_test_for_quality()
 		#combination_test_for_style()
