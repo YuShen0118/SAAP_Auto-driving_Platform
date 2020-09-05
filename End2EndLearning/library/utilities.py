@@ -155,7 +155,7 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 	for rep in range(0,nRep):
 		for row in trainLog:  
 			## center camera
-	 		xList.append(xFolder + row[0]) 
+	 		xList.append(xFolder + os.path.basename(row[0])) 
  			yList.append(float(row[3]))     
  			
  			## if using three cameras
@@ -172,7 +172,7 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
 
-def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0):
+def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0, specialFilter = False):
 	'''
 	Load the training data
 	'''
@@ -204,19 +204,23 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 			yList_1 = []
 			for row in trainLog:
 				## center camera
-		 		xList_1.append(xFolder + row[0]) 
-	 			yList_1.append(float(row[3]))     
+				if not specialFilter:
+					xList_1.append(xFolder + os.path.basename(row[0])) 
+					yList_1.append(float(row[3]))     
+				elif float(row[3]) < 0:
+					xList_1.append(xFolder + os.path.basename(row[0])) 
+					yList_1.append(float(row[3]))
 	 			
 	 			## if using three cameras
-	 			if fThreeCameras:
+				if fThreeCameras:
 
 					## left camera
-	 				xList_1.append(xFolder + row[1])  
-	 				yList_1.append(float(row[3]) + 0.25) 
+					xList_1.append(xFolder + row[1])  
+					yList_1.append(float(row[3]) + 0.25) 
 					
 					## right camera
-	 				xList_1.append(xFolder + row[2])  
-	 				yList_1.append(float(row[3]) - 0.25) 
+					xList_1.append(xFolder + row[2])  
+					yList_1.append(float(row[3]) - 0.25) 
 
 			if ratio[i] < 1:
 				n = int(len(trainLog) * ratio[i])

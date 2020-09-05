@@ -112,10 +112,12 @@ def net_nvidia_1(fClassifier, nClass):
 		mainOutput = Dense(1)(z)
 		net = Model(inputs = mainInput, outputs = mainOutput)
 		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
+
+	print(net.summary())
 	return net
 
 
-def net_nvidia_BN(fClassifier, nClass):
+def net_nvidia_BN(fClassifier, nClass, lr=1e-4):
 	mainInput = Input(shape=(66,200,3))
 	x1 = Lambda(lambda x: x/127.5 - 1.0)(mainInput)
 	x1 = Conv2D(24, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))(x1)
@@ -147,15 +149,15 @@ def net_nvidia_BN(fClassifier, nClass):
 		if nClass > 2:
 			mainOutput = Dense(nClass, activation='softmax')(z)
 			net = Model(inputs = mainInput, outputs = mainOutput)
-			net.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
+			net.compile(optimizer=Adam(lr=lr), loss='categorical_crossentropy', metrics=['accuracy'])
 		else:
 			mainOutput = Dense(1, activation='sigmoid')(z)
 			net = Model(inputs = mainInput, outputs = mainOutput)
-			net.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+			net.compile(optimizer=Adam(lr=lr), loss='binary_crossentropy', metrics=['accuracy'])
 	else:
 		mainOutput = Dense(1)(z)
 		net = Model(inputs = mainInput, outputs = mainOutput)
-		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
+		net.compile(optimizer=Adam(lr=lr), loss='mse', metrics=['accuracy'])
 	return net
 
 

@@ -11,17 +11,17 @@ print('PLATFORM_ROOT_DIR ', ROOT_DIR)
 
 sys.path.insert(0, './library/')
 
-from learning import test_dnn
+from learning import test_dnn, test_dnn_visualize, visualize_dnn_on_image
 
-def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0):
+def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5):
 	if modelPath:
 		print('Model used: ' + modelPath)
 	else:
 		print('No model specified. Using random initialization of weights.')
         
 	print('Image folder: '+imagePath)
-	print('Label file: '+labelPath)
-	print('Output file: '+outputPath)
+	print('Label path: '+labelPath)
+	print('Output path: '+outputPath)
 	
 	file_path = os.path.dirname(outputPath)
 	if not os.path.exists(file_path):
@@ -30,19 +30,54 @@ def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=
 	## flags
 	fRandomDistort = False
 	fThreeCameras = False  # set to True if using Udacity data set
-	fClassifier = False
+	fClassifier = classification
 	flags = [fRandomDistort, fThreeCameras, fClassifier]
 	
 	## parameters
 	batchSize = 128
 	nEpoch = 1000
-	nClass = 2        # only used if fClassifier = True
+	nClass = 49        # only used if fClassifier = True
 	nFramesSample = 5  # only used for LSTMs
 	nRep = 1
 	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
 	
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID)
+	if visualize:
+		test_dnn_visualize(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID, radius)
+	else:
+		test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID)
+
+
+def visualize_network_on_image(modelPath, imagePath, label, outputPath, radius=10, BN_flag=0, pathID=0, classification=False):
+	if modelPath:
+		print('Model used: ' + modelPath)
+	else:
+		print('No model specified. Using random initialization of weights.')
+        
+	print('Image path: '+imagePath)
+	print('Steering angle label: '+str(label))
+	print('Output path: '+outputPath)
+	
+	file_path = os.path.dirname(outputPath)
+	if not os.path.exists(file_path):
+		os.mkdir(file_path)
+
+	## flags
+	fRandomDistort = False
+	fThreeCameras = False  # set to True if using Udacity data set
+	fClassifier = classification
+	flags = [fRandomDistort, fThreeCameras, fClassifier]
+	
+	## parameters
+	batchSize = 128
+	nEpoch = 1000
+	nClass = 49        # only used if fClassifier = True
+	nFramesSample = 5  # only used for LSTMs
+	nRep = 1
+	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
+	
+	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	visualize_dnn_on_image(modelPath, imagePath, label, outputPath, netType, flags, specs, radius, BN_flag, pathID)
 
 
 if __name__ == "__main__":

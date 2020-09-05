@@ -14,10 +14,13 @@ from learning import train_dnn_multi
 #os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
-def train_network(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, BN_flag=0, imagePath_advp=[], labelPath_advp=[], reinitBN = False):
-	train_network_multi([imagePath], [labelPath], outputPath, modelPath, trainRatio, partialPreModel, reinitHeader, BN_flag, [imagePath_advp], [labelPath_advp], reinitBN)
+def train_network(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
+	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False):
+	train_network_multi([imagePath], [labelPath], outputPath, modelPath, trainRatio, partialPreModel, reinitHeader, BN_flag, 
+		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification)
 
-def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], reinitBN = False):
+def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
+	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False,):
 	print('Image folder: ' + str(imagePath_list))
 	print('Label file: ' + str(labelPath_list))
 	print('Output folder: ' + outputPath)
@@ -28,13 +31,13 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 	## flags
 	fRandomDistort = False
 	fThreeCameras = False  # set to True if using Udacity data set
-	fClassifier = False
+	fClassifier = classification
 	flags = [fRandomDistort, fThreeCameras, fClassifier]
 	
 	## parameters
 	batchSize = 128
 	nEpoch = 1000
-	nClass = 2        # only used if fClassifier = True
+	nClass = 49        # only used if fClassifier = True
 	nFramesSample = 5  # only used for LSTMs
 	nRep = 1
 	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
@@ -43,7 +46,8 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
     ## NOTE: paths must have forward slash (/) character at the end
     
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, BN_flag, imagePath_list_advp, labelPath_list_advp, reinitBN)
+	train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
+		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN)
 
 if __name__ == "__main__":
 

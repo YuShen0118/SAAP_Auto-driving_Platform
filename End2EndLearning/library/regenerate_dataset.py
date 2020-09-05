@@ -315,8 +315,188 @@ def generate_dataset_distort(dataset_path, folder):
         cv2.imwrite(new_image_path, new_image)
 
 
+def get_edge_map(image):
+    blur = cv2.GaussianBlur(image,(31,31),0)
+    blur = blur / np.max(blur)
+    blur = blur * 2 + image / np.max(image)
+    edge_map = blur / np.max(blur)
+    return edge_map
+
+
+def transfer_to_edge_map(dataset_folder, out_folder):
+    image_paths = glob.glob(dataset_folder + "/*.png")
+
+    if len(image_paths) == 0:
+        image_paths = glob.glob(dataset_folder + "/*.jpg")
+
+    if len(image_paths) == 0:
+        print("No images in " + dataset_folder)
+        return
+
+    for image_path in image_paths:
+        print(image_path)
+        image_ori = cv2.imread(image_path)
+        #cv2.imshow("original image", image_ori)
+        #edges = cv2.Canny(image_ori,100,200)
+        laplacian = cv2.Laplacian(image_ori,cv2.CV_8U)
+
+        #cv2.imshow("laplacian without border process between frames", laplacian)
+        # deal with border between frames
+        if image_ori.shape[0] == 128:
+            laplacian[:,415:417,:] = np.zeros((laplacian.shape[0], 2, laplacian.shape[2]))
+            laplacian[:,831:833,:] = np.zeros((laplacian.shape[0], 2, laplacian.shape[2]))
+
+        '''
+        #cv2.imshow("laplacian", laplacian)
+        blur = cv2.GaussianBlur(laplacian,(31,31),0)
+        #cv2.imshow("blurred laplacian", blur)
+        blur = blur / np.max(blur)
+        #cv2.imshow("rescaled blurred laplacian", blur)
+        blur = blur + laplacian / np.max(laplacian)
+        edge_map = blur / np.max(blur)
+        #cv2.imshow("edge map", edge_map)
+        #cv2.waitKey(0)
+        '''
+        edge_map = get_edge_map(laplacian)
+
+        out_image_path = image_path.replace(os.path.dirname(image_path), out_folder+"/")
+        cv2.imwrite(out_image_path, edge_map*255)
+        #cv2.imwrite("test.jpg", laplacian)
+
+    return
+
+
+
+def transfer_to_combined_map(dataset_folder, out_folder):
+    print("transfer_to_combined_map")
+    image_paths = glob.glob(dataset_folder + "/*.png")
+
+    if len(image_paths) == 0:
+        image_paths = glob.glob(dataset_folder + "/*.jpg")
+
+    if len(image_paths) == 0:
+        print("No images in " + dataset_folder)
+        return
+
+    for image_path in image_paths:
+        print(image_path)
+        image_ori = cv2.imread(image_path, 0)
+        #cv2.imshow("original image", image_ori)
+        #edges = cv2.Canny(image_ori,100,200)
+        laplacian = cv2.Laplacian(image_ori,cv2.CV_8U)
+
+        #cv2.imshow("laplacian without border process between frames", laplacian)
+        # deal with border between frames
+        if image_ori.shape[0] == 128:
+            laplacian[:,415:417] = np.zeros((laplacian.shape[0], 2))
+            laplacian[:,831:833] = np.zeros((laplacian.shape[0], 2))
+
+        laplacian_edge_map = get_edge_map(laplacian)
+
+        canny_edges = cv2.Canny(image_ori,150,200)
+        if image_ori.shape[0] == 128:
+            canny_edges[:,415:417] = np.zeros((canny_edges.shape[0], 2))
+            canny_edges[:,831:833] = np.zeros((canny_edges.shape[0], 2))
+
+        canny_edge_map = get_edge_map(canny_edges)
+
+        image_ori = image_ori / np.max(image_ori)
+
+        combined_image = np.dstack((image_ori, laplacian_edge_map, canny_edge_map))
+
+        '''
+        cv2.imshow("image_ori", image_ori)
+        cv2.imshow("laplacian_edge_map", laplacian_edge_map)
+        cv2.imshow("canny_edge_map", canny_edge_map)
+        cv2.imshow("combined_image", combined_image)
+        cv2.waitKey(0)
+        '''
+
+        out_image_path = image_path.replace(os.path.dirname(image_path), out_folder+"/")
+        cv2.imwrite(out_image_path, combined_image*255)
+
+    return
+
+
+def transfer_to_3_maps(dataset_path, dataset_folder, out_folders):
+    dataset_folder = os.path.join(dataset_path, dataset_folder)
+
+    print("transfer_to_3_maps")
+    for out_folder in out_folders:
+        out_folder = os.path.join(dataset_path, out_folder)
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
+
+    image_paths = glob.glob(dataset_folder + "/*.png")
+
+    if len(image_paths) == 0:
+        image_paths = glob.glob(dataset_folder + "/*.jpg")
+
+    if len(image_paths) == 0:
+        print("No images in " + dataset_folder)
+        return
+
+    for image_path in image_paths:
+        print(image_path)
+        image_ori = cv2.imread(image_path, 0)
+        #cv2.imshow("original image", image_ori)
+        #edges = cv2.Canny(image_ori,100,200)
+        laplacian = cv2.Laplacian(image_ori,cv2.CV_8U)
+
+        #cv2.imshow("laplacian without border process between frames", laplacian)
+        # deal with border between frames
+        if image_ori.shape[0] == 128:
+            laplacian[:,415:417] = np.zeros((laplacian.shape[0], 2))
+            laplacian[:,831:833] = np.zeros((laplacian.shape[0], 2))
+
+        laplacian_edge_map = get_edge_map(laplacian)
+
+        canny_edges = cv2.Canny(image_ori,150,200)
+        if image_ori.shape[0] == 128:
+            canny_edges[:,415:417] = np.zeros((canny_edges.shape[0], 2))
+            canny_edges[:,831:833] = np.zeros((canny_edges.shape[0], 2))
+
+        canny_edge_map = get_edge_map(canny_edges)
+
+        image_ori = image_ori / np.max(image_ori)
+
+        combined_image = np.dstack((image_ori, laplacian_edge_map, canny_edge_map))
+
+        '''
+        cv2.imshow("image_ori", image_ori)
+        cv2.imshow("laplacian_edge_map", laplacian_edge_map)
+        cv2.imshow("canny_edge_map", canny_edge_map)
+        cv2.imshow("combined_image", combined_image)
+        cv2.waitKey(0)
+        '''
+
+        out_image_path0 = image_path.replace(os.path.dirname(image_path), os.path.join(dataset_path, out_folders[0]))
+        cv2.imwrite(out_image_path0, laplacian)
+        out_image_path1 = image_path.replace(os.path.dirname(image_path), os.path.join(dataset_path, out_folders[1]))
+        cv2.imwrite(out_image_path1, canny_edges)
+        out_image_path2 = image_path.replace(os.path.dirname(image_path), os.path.join(dataset_path, out_folders[2]))
+        cv2.imwrite(out_image_path2, laplacian_edge_map*255)
+        out_image_path3 = image_path.replace(os.path.dirname(image_path), os.path.join(dataset_path, out_folders[3]))
+        cv2.imwrite(out_image_path3, canny_edge_map*255)
+        out_image_path4 = image_path.replace(os.path.dirname(image_path), os.path.join(dataset_path, out_folders[4]))
+        cv2.imwrite(out_image_path4, combined_image*255)
+
+    return
+
+
+def list_image_files(dataset_folder):
+    #image_paths = glob.glob(dataset_folder + "/*/*/image_02/data/*.png")
+    image_paths = glob.glob(dataset_folder + "/image_02/data/*.png")
+    file1 = open("myfile.txt","w")
+    for image_path in image_paths:
+        file1.write(image_path)
+        file1.write('\n')
+    file1.close()
+
+
 if __name__ == '__main__':
     #print(__doc__)
+    '''
     folderA = os.path.join(dataset_path, "trainA")
     folderB = os.path.join(dataset_path, "trainB")
 
@@ -337,3 +517,22 @@ if __name__ == '__main__':
     
     #folder = "labelsB"
     #generate_dataset_distort(dataset_path, folder)
+    '''
+
+    folder = "valB"
+    transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
+
+    folder = "valA"
+    transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
+
+    folder = "valC1"
+    transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
+
+    folder = "trainB"
+    transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
+
+    folder = "trainA"
+    transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
+
+    folder = "trainC1"
+    transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
