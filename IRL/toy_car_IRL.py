@@ -5,7 +5,7 @@ IRL algorithm developed for the toy car obstacle avoidance problem
 import numpy as np
 import logging
 import scipy
-from playing import play            # get the RL Test agent, gives out feature expectations after 2000 frames
+from playing import play,play_multi_model            # get the RL Test agent, gives out feature expectations after 2000 frames
 from neuralNets import net1         # construct the nn and send to playing
 from cvxopt import matrix, solvers  # convex optimization library
 from learning import QLearning      # get the Reinforcement learner
@@ -31,6 +31,7 @@ class IRLAgent:
         self.policy_fe_list = {self.random_dis:self.random_fe} # storing the policies and their respective t values in a dictionary
         print ("Expert - Random's distance at the beginning: " , self.random_dis) 
         self.current_dis = self.random_dis
+        self.model_list = []
     
     
     def ComputeOptimalWeights(self): 
@@ -44,10 +45,12 @@ class IRLAgent:
         policy_fe_list = [self.expert_fe]
         h_list = [1]
 
+        policy_fe_diff_list = []
         # add the feature expectations of other policies
         for i in self.policy_fe_list.keys():
             policy_fe_list.append(self.policy_fe_list[i])
             h_list.append(1)
+            policy_fe_diff_list.append(np.array(self.expert_fe)-np.array(self.policy_fe_list[i]))
             
         # The resulting weights dot product expert police feature's expectations should be >= 1
         # The resulting weights dot product other policies' feature expectations should be <= -1
@@ -61,6 +64,7 @@ class IRLAgent:
         weights = np.squeeze(np.asarray(sol['x']))
         norm = np.linalg.norm(weights)
         weights = weights/norm
+
         print("Computing optimal weights finished!")
         return weights # return the normalized weights
 
@@ -85,11 +89,50 @@ class IRLAgent:
         # hyperdistance = t
         temp_hyper_dis = np.abs(np.dot(weights, np.asarray(self.expert_fe)-np.asarray(temp_fe))) 
         self.policy_fe_list[temp_hyper_dis] = temp_fe
+        if opt_count == 1:
+            del self.policy_fe_list[self.random_dis]
+        self.model_list.append(model)
         
         print("Updating Policy FE list finished!")
         return temp_hyper_dis, aver_score, aver_dist, stop_status
         
         
+    def TestNewMixingPolicy(self, weights, scene_file_name):  
+
+        policy_fe_list = []
+        policy_fe_diff_list = []
+        # add the feature expectations of other policies
+        for i in self.policy_fe_list.keys():
+            policy_fe_list.append(self.policy_fe_list[i])
+            policy_fe_diff_list.append(np.array(self.expert_fe)-np.array(self.policy_fe_list[i]))
+
+        feture_matrix = np.matrix(policy_fe_list)
+        miu_expert = np.matrix(self.expert_fe).T
+        n = len(policy_fe_list)
+
+        P = matrix(2*feture_matrix@feture_matrix.T, tc='d')
+        q = matrix(-2 * feture_matrix @ miu_expert, tc='d')
+        G = matrix(-1 * np.eye(n), tc='d')
+        h = matrix(np.zeros((n,1)), tc='d')
+        A = matrix(np.ones((1,n)), tc='d')
+        b = matrix(np.ones((1,1)), tc='d')
+
+        sol = solvers.qp(P,q,G,h,A,b)
+        lamda = np.asarray(sol['x'])
+        #print(miu_expert.T)
+        #print((feture_matrix.T@lamda-miu_expert).T)
+        lamda = lamda.flatten()
+        #print(lamda)
+
+        weights = self.ComputeOptimalWeights()
+        policy_fe_diff_list_mat = np.matrix(policy_fe_diff_list)
+        distance_list = np.abs(weights @ policy_fe_diff_list_mat.T)
+        min_dist = np.min(distance_list)
+
+        temp_fe, aver_score, aver_dist = play_multi_model(self.model_list, lamda, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
+
+        return min_dist, aver_score, aver_dist
+
         
     def IRL(self, scene_file_name):
         # create a folder for storing results
@@ -116,6 +159,11 @@ class IRLAgent:
             self.current_dis, score, car_dist, stop_status = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name, enlarge_lr)
             if stop_status == 1:
                 enlarge_lr += 1
+
+            print("UpdatePolicyFEList finished")
+            # Main Step 2.5: use the latest model list to get a best policy (has most similar feature expectation with expert)
+            self.current_dis, score, car_dist = self.TestNewMixingPolicy(weights_new, scene_file_name)
+
             f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
             f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score) + "  trajectory length " + str(car_dist))
             f1.write('\n')
@@ -124,11 +172,6 @@ class IRLAgent:
             # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
             print("The stopping distance thresould is: ", epsilon)
             print("The latest policy to expert policy distance is: ", self.current_dis)
-            
-            if nearest_dist > self.current_dis:
-                nearest_dist = self.current_dis
-                nearest_iter_no = opt_count
-            print("So far the nearest dist is: ", nearest_dist, ", in the", nearest_iter_no, "th iteration")
 
             print("Total consumed time: ", timeit.default_timer() - start_time, " s")
             print("Total consumed time: ", (timeit.default_timer() - start_time)/3600.0, " h")
@@ -178,6 +221,10 @@ if __name__ == '__main__':
     expert_scene3_norm_fe = [1.42574, 1.66786, 2.00430, 2.48840, 2.89550, 3.25129, 3.73261, 4.32617, 4.68527, 4.71859, 5.57236, 1.53114, 1.17484, 0.98507, 0.82957, 0.74758, 0.68431, 0.63544, 0.60974, 0.58946, 0.58962, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 9.93355, 5.48316, 5.01861, 5.03865, 5.01324, 5.00027, 5.00004, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 0.02578, 0.00000, 0.03752, 0.00000]
     random_scene3_norm_fe = [0.36357, 0.39925, 0.45543, 0.52319, 0.61193, 0.74234, 0.93921, 1.23736, 1.83733, 2.67268, 3.66366, 4.57498, 5.27648, 4.47506, 2.19105, 1.09935, 0.57707, 0.43996, 0.41455, 0.43089, 0.63150, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 5.00000, 6.35501, 8.58788, 9.64641, 9.85931, 9.92374, 9.96307, 9.95680, 8.61283, 5.10218, 0.00000, 0.01673, 0.00001]
 
+
+    expert_city_no_norm_fe = [139.14573, 148.79673, 159.14211, 177.13265, 197.08391, 225.48979, 247.19806, 266.35487, 293.04903, 326.56844, 369.50046, 396.40893, 429.47554, 466.40125, 140.61482, 95.34397, 49.28687, 40.73446, 32.92940, 30.93725, 25.84396, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 34.95831, 0.03268, 0.00000, 0.00000,]
+    random_city_no_norm_fe = [29.025, 34.002, 37.255, 45.250, 55.072, 66.649, 85.591, 112.990, 165.417, 249.220, 334.337, 412.105, 483.076, 547.334, 516.133, 231.536, 209.542, 201.966, 201.387, 203.153, 217.825, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 10.000, 55.676, -0.260, 0.000, 0.900]
+
     # training parameters
     nn_param = [164, 150]
     params = {
@@ -197,7 +244,7 @@ if __name__ == '__main__':
     scene_file_name = 'scenes/scene-ground-car.txt'
     scene_file_name = 'scenes/scene-city.txt'
 
-    irl_learner = IRLAgent(params, random_scene2_norm_fe, expert_scene2_norm_fe, epsilon, \
+    irl_learner = IRLAgent(params, random_city_no_norm_fe, expert_city_no_norm_fe, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
     irl_learner.IRL(scene_file_name)

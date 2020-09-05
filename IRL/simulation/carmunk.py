@@ -171,7 +171,7 @@ class GameState:
                     #highy = lowy + (maxy-miny)/grid - border
                     self.obstacles_car.append(self.create_obstacle_car(
                         np.random.randint(lowx, highx), np.random.randint(lowy, highy), 
-                        np.random.random()*math.pi, np.random.random()*20, 3))
+                        np.random.random()*math.pi, np.random.random()*20*MULTI, 3))
         elif scene_file_name!='':
             #load scene
             with open(scene_file_name) as f:
