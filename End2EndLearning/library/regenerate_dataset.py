@@ -534,7 +534,7 @@ def generate_HSV_datasets(originalDataset, channel, direction):
     
     color_str = color_str_dic.get(channel)
            
-    direction_str = "lighter" if direction == 0 else "darker"
+    direction_str = "darker" if direction == 0 else "lighter"
     
     saveDir = "_".join([originalDataset, color_str, direction_str])
     
@@ -571,7 +571,7 @@ def generate_YUV_datasets(originalDataset, channel, direction):
     
     color_str = color_str_dic.get(channel)
            
-    direction_str = "lighter" if direction == 0 else "darker"
+    direction_str = "darker" if direction == 0 else "lighter"
     
     saveDir = "_".join([originalDataset, color_str, direction_str])
     
