@@ -8,7 +8,7 @@ import glob
 import os
 
 # Root directory of the project
-ROOT_DIR = os.path.abspath("../")
+ROOT_DIR = os.path.abspath("../../")
 print('Platform root: ', ROOT_DIR)
 #root = ROOT_DIR + '/Data/udacityA_nvidiaB/'
 #print('Dataset root: ', root)
@@ -493,6 +493,116 @@ def list_image_files(dataset_folder):
         file1.write('\n')
     file1.close()
 
+def generate_RGB_dataset(originalDataset, channel, direction):
+
+    color_str_dic = {
+        0: "B",
+        1: "G", 
+        2: "R"
+    }
+    
+    color_str = color_str_dic.get(channel)
+           
+    direction_str = "darker" if direction == 0 else "lighter"
+    
+    saveDir = "_".join([originalDataset, color_str, direction_str])
+    
+    for i in glob.glob(os.path.join(originalDataset, "*.jpg")):
+        temp = cv2.imread(str(i))
+        image = temp.copy()
+        
+        if direction == 0:
+            image[:, :, channel] = image[:, :, channel] * 0.5
+        elif direction == 1:
+            image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+
+        
+        if not os.path.exists(saveDir):
+            os.makedirs(saveDir)
+            
+        saveAsName = os.path.join(saveDir, os.path.basename(i))
+        
+        cv2.imwrite(saveAsName, image)
+
+def generate_HSV_datasets(originalDataset, channel, direction):
+    
+    color_str_dic = {
+        0: "H",
+        1: "S", 
+        2: "V"
+    }
+    
+    color_str = color_str_dic.get(channel)
+           
+    direction_str = "darker" if direction == 0 else "lighter"
+    
+    saveDir = "_".join([originalDataset, color_str, direction_str])
+    
+    for i in glob.glob(os.path.join(originalDataset, "*.jpg")):
+        temp = cv2.imread(i)
+        image = temp.copy()
+        
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        
+        if direction == 0:
+            image[:, :, channel] = image[:, :, channel] * 0.5
+        elif direction == 1:
+            if channel == 0:
+                image[:, :, channel] = (image[:, :, channel] * 0.5) + (180 * 0.5)
+            else:
+                image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+
+        if not os.path.exists(saveDir):
+            os.makedirs(saveDir)
+            
+        saveAsName = os.path.join(saveDir, os.path.basename(i))
+        
+        cv2.imwrite(saveAsName, image)
+
+def generate_YUV_datasets(originalDataset, channel, direction):
+    
+    color_str_dic = {
+        0: "Y_luma",
+        1: "U_blueproj", 
+        2: "V_redproj"
+    }
+    
+    color_str = color_str_dic.get(channel)
+           
+    direction_str = "darker" if direction == 0 else "lighter"
+    
+    saveDir = "_".join([originalDataset, color_str, direction_str])
+    
+    for i in glob.glob(os.path.join(originalDataset, "*.jpg")):
+        temp = cv2.imread(i)
+        image = temp.copy()
+
+        # cv2.imshow( "Before", image )
+        # cv2.waitKey(0)
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+        if direction == 0:
+            image[:, :, channel] = image[:, :, channel] * 0.5
+        elif direction == 1:
+            image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+
+        # image[:, :, 0] = image[:, :, 0]*0
+        # image[:, :, 1] = image[:, :, 1]*0
+        # image[:, :, 2] = image[:, :, 2]*0
+
+        image = cv2.cvtColor(image, cv2.COLOR_YUV2BGR)
+
+        if not os.path.exists(saveDir):
+            os.makedirs(saveDir)
+            
+        saveAsName = os.path.join(saveDir, os.path.basename(i))
+        # cv2.imshow( "After", image )
+        # cv2.waitKey(0)
+        # break # comment
+        cv2.imwrite(saveAsName, image)
+
 
 if __name__ == '__main__':
     #print(__doc__)
@@ -519,6 +629,7 @@ if __name__ == '__main__':
     #generate_dataset_distort(dataset_path, folder)
     '''
 
+    '''
     folder = "valB"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
 
@@ -536,3 +647,42 @@ if __name__ == '__main__':
 
     folder = "trainC1"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
+    '''
+    
+    dataFolder = os.path.join(dataset_path, "valB")
+
+    # # Generating dataset modifying blue channel
+    # generate_RGB_dataset(dataFolder, 0, 0)
+    # generate_RGB_dataset(dataFolder, 0, 1)
+
+    # # Generating dataset modifying green channel
+    # generate_RGB_dataset(dataFolder, 1, 0)
+    # generate_RGB_dataset(dataFolder, 1, 1)
+
+    # # Generating dataset modifying red channel
+    # generate_RGB_dataset(dataFolder, 2, 0)
+    # generate_RGB_dataset(dataFolder, 2, 1)
+            
+    # # Generating dataset modifying hue
+    # generate_HSV_datasets(dataFolder, 0, 0)
+    # generate_HSV_datasets(dataFolder, 0, 1)
+
+    # # Generating dataset modifying saturation
+    # generate_HSV_datasets(dataFolder, 1, 0)
+    # generate_HSV_datasets(dataFolder, 1, 1)
+
+    # Generating dataset modifying value
+    generate_HSV_datasets(dataFolder, 2, 0)
+    generate_HSV_datasets(dataFolder, 2, 1)
+
+    # Generating dataset modifying luma
+    generate_YUV_datasets(dataFolder, 0, 0)
+    generate_YUV_datasets(dataFolder, 0, 1)
+
+    # Generating dataset modifying blue projection
+    generate_YUV_datasets(dataFolder, 1, 0)
+    generate_YUV_datasets(dataFolder, 1, 1)
+
+    # Generating dataset modifying red projection
+    generate_YUV_datasets(dataFolder, 2, 0)
+    generate_YUV_datasets(dataFolder, 2, 1)
