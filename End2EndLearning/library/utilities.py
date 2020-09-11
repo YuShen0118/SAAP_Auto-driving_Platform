@@ -8,6 +8,7 @@ import random
 import cv2    
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.utils import shuffle
 
 
 
@@ -135,7 +136,7 @@ def random_distort(image, angle):
 ##      Preprocessing
 ####################################################
 ####################################################
-def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
+def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False, ratio = 1.0):
 	'''
 	Load the training data
 	'''
@@ -153,21 +154,37 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False):
 	xList, yList = ([], [])
 	
 	for rep in range(0,nRep):
+		xList_1, yList_1 = ([], [])
 		for row in trainLog:  
 			## center camera
-	 		xList.append(xFolder + os.path.basename(row[0])) 
- 			yList.append(float(row[3]))     
+	 		xList_1.append(xFolder + os.path.basename(row[0])) 
+ 			yList_1.append(float(row[3]))     
  			
  			## if using three cameras
  			if fThreeCameras:
 
 				## left camera
- 				xList.append(xFolder + row[1])  
- 				yList.append(float(row[3]) + 0.25) 
+ 				xList_1.append(xFolder + row[1])  
+ 				yList_1.append(float(row[3]) + 0.25) 
 				
 				## right camera
- 				xList.append(xFolder + row[2])  
- 				yList.append(float(row[3]) - 0.25) 
+ 				xList_1.append(xFolder + row[2])  
+ 				yList_1.append(float(row[3]) - 0.25) 
+
+		if ratio < 1:
+			n = int(len(trainLog) * ratio)
+
+			#random.seed(42)
+			#random.shuffle(xList_1)
+			#random.seed(42)
+			#random.shuffle(yList_1)
+			xList_1, yList_1 = shuffle(xList_1, yList_1)
+
+			xList_1 = xList_1[0:n]
+			yList_1 = yList_1[0:n]
+
+		xList = xList + xList_1
+		yList = yList + yList_1
 			
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
@@ -224,10 +241,13 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 
 			if ratio[i] < 1:
 				n = int(len(trainLog) * ratio[i])
-				random.seed(42)
-				random.shuffle(xList_1)
-				random.seed(42)
-				random.shuffle(yList_1)
+
+				#random.seed(42)
+				#random.shuffle(xList_1)
+				#random.seed(42)
+				#random.shuffle(yList_1)
+				xList_1, yList_1 = shuffle(xList_1, yList_1)
+
 				xList_1 = xList_1[0:n]
 				yList_1 = yList_1[0:n]
 			print(len(xList_1))
@@ -239,6 +259,65 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
 	
+def load_train_data_multi_pack(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0, specialFilter = False):
+	'''
+	Load the training data
+	'''
+	## prepare for getting x
+	for xFolder in xFolder_list:
+		if not os.path.exists(xFolder):
+			sys.exit('Error: the image folder is missing. ' + xFolder)
+		
+	## prepare for getting y
+	trainLog_list = []
+	for trainLogPath in trainLogPath_list:
+		if not os.path.exists(trainLogPath):
+			sys.exit('Error: the labels.csv is missing. ' + trainLogPath)
+		with open(trainLogPath, newline='') as f:
+			trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
+			trainLog_list.append(trainLog)
+
+	if not isinstance(ratio, list):
+		ratio = [ratio]*len(xFolder_list)
+	
+    ## get x and y
+	xList, yList = ([], [])
+
+	n = len(trainLog_list)
+	m = len(trainLog_list[0])
+	
+	for rep in range(0,nRep):
+		for i in range(m):
+			xUnit, yUnit = ([], [])
+			for j in range(n):
+				xFolder = xFolder_list[j]
+				row = trainLog[i]
+				## center camera
+				if not specialFilter:
+					xUnit.append(xFolder + os.path.basename(row[0])) 
+					yUnit.append(float(row[3]))     
+				elif float(row[3]) < 0:
+					xUnit.append(xFolder + os.path.basename(row[0])) 
+					yUnit.append(float(row[3]))
+
+			xList.append(xUnit)
+			yList.append(yUnit)
+
+	if ratio[0] < 1:
+		k = int(m * ratio[i])
+
+		#random.seed(42)
+		#random.shuffle(xList_1)
+		#random.seed(42)
+		#random.shuffle(yList_1)
+		xList, yList = shuffle(xList, yList)
+
+		xList = xList[0:k]
+		yList = yList[0:k]
+
+	#yList = np.array(yList)*10 + 10
+	return (xList, yList)
+
 def load_train_data_aux(trainFolder, imageList, auxList, angleList):
 	'''
     Load the training data, append to imageList, auxList and angleList, and optionally repeat them 

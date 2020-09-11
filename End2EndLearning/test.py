@@ -13,7 +13,7 @@ sys.path.insert(0, './library/')
 
 from learning import test_dnn, test_dnn_visualize, visualize_dnn_on_image
 
-def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5):
+def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1):
 	if modelPath:
 		print('Model used: ' + modelPath)
 	else:
@@ -22,10 +22,11 @@ def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=
 	print('Image folder: '+imagePath)
 	print('Label path: '+labelPath)
 	print('Output path: '+outputPath)
-	
+
 	file_path = os.path.dirname(outputPath)
-	if not os.path.exists(file_path):
-		os.mkdir(file_path)
+	if file_path != '':
+		if not os.path.exists(file_path):
+			os.mkdir(file_path)
 
 	## flags
 	fRandomDistort = False
@@ -41,11 +42,14 @@ def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=
 	nRep = 1
 	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
 	
+	MA = 0
 	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
 	if visualize:
 		test_dnn_visualize(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID, radius)
 	else:
-		test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID)
+		MA = test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID, ratio)
+
+	return MA
 
 
 def visualize_network_on_image(modelPath, imagePath, label, outputPath, radius=10, BN_flag=0, pathID=0, classification=False):

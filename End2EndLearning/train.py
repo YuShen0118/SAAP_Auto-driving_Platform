@@ -2,6 +2,7 @@
 
 import sys
 import os
+from test import test_network
 
 ROOT_DIR = os.path.abspath("../")
 print('PLATFORM_ROOT_DIR ', ROOT_DIR)
@@ -15,12 +16,12 @@ from learning import train_dnn_multi
 
 
 def train_network(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False):
+	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1):
 	train_network_multi([imagePath], [labelPath], outputPath, modelPath, trainRatio, partialPreModel, reinitHeader, BN_flag, 
-		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification)
+		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification, netType)
 
 def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False,):
+	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, pack_flag=False):
 	print('Image folder: ' + str(imagePath_list))
 	print('Label file: ' + str(labelPath_list))
 	print('Output folder: ' + outputPath)
@@ -45,9 +46,145 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 	## train
     ## NOTE: paths must have forward slash (/) character at the end
     
-	netType = 1        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	#netType = netType        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
 	train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
-		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN)
+		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag)
+
+
+def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
+	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1):
+	print('Image folder: ' + str(imagePath))
+	print('Label file: ' + str(labelPath))
+	print('Output folder: ' + outputPath)
+
+	if not os.path.exists(outputPath):
+		os.mkdir(outputPath)
+
+	## flags
+	fRandomDistort = False
+	fThreeCameras = False  # set to True if using Udacity data set
+	fClassifier = classification
+	flags = [fRandomDistort, fThreeCameras, fClassifier]
+	
+	## parameters
+	nRound = 20
+	nEpoch = 50
+	batchSize = 128
+	nClass = 49        # only used if fClassifier = True
+	nFramesSample = 5  # only used for LSTMs
+	nRep = 1
+	specs = [batchSize, nEpoch, nClass, nFramesSample, nRep]
+
+	blur_level = 1
+	noise_level = 1
+	distortion_level = 1
+
+	G_level = 1
+	S_level = 1
+	Y_level = 1
+
+	imagePath0 = imagePath[0:-1]
+
+	val_ratio = 0.1
+	f = open(outputPath+"factor_level_choices.txt",'w')
+	for rid in range(nRound):
+		blur_imagePath = imagePath0+'_blur_'+str(blur_level)+'/'
+		noise_imagePath = imagePath0+'_noise_'+str(noise_level)+'/'
+		distortion_imagePath = imagePath0+'_distort_'+str(distortion_level)+'/'
+		G_imagePath = imagePath0+'_G_darker/' if G_level == 1 else imagePath0+'_G_lighter/'
+		S_imagePath = imagePath0+'_S_darker/' if S_level == 1 else imagePath0+'_S_lighter/'
+		Y_imagePath = imagePath0+'_Y_luma_darker/' if Y_level == 1 else imagePath0+'_Y_luma_lighter/'
+
+		imagePath_list = [imagePath, blur_imagePath, noise_imagePath, distortion_imagePath, G_imagePath, S_imagePath, Y_imagePath]
+		
+		labelPath_list = [labelPath] * len(imagePath_list)
+
+		#Noise only
+		#imagePath_list = [imagePath, imagePath0+'_noise_'+str(noise_level)+'/']
+		#labelPath_list = [labelPath, labelPath]
+
+		train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
+			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN)
+
+		modelPath = outputPath + "model-final.h5"
+		valOutputPath = ""
+
+		print('blur MAs:')
+		MA_min = 1
+		for new_blur_level in range(1,6):
+			blurImagePath = imagePath0+'_blur_'+str(new_blur_level)+'/'
+			MA = test_network(modelPath, blurImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			print(new_blur_level, ': ', MA)
+			if MA_min > MA:
+				MA_min = MA
+				blur_level = new_blur_level
+
+		print('noise MAs:')
+		MA_min = 1
+		for new_noise_level in range(1,6):
+			noiseImagePath = imagePath0+'_noise_'+str(new_noise_level)+'/'
+			MA = test_network(modelPath, noiseImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			print(new_noise_level, ': ', MA)
+			if MA_min > MA:
+				MA_min = MA
+				noise_level = new_noise_level
+
+		print('distort MAs:')
+		MA_min = 1
+		for new_distort_level in range(1,6):
+			distortImagePath = imagePath0+'_distort_'+str(new_distort_level)+'/'
+			MA = test_network(modelPath, distortImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			print(new_distort_level, ': ', MA)
+			if MA_min > MA:
+				MA_min = MA
+				distortion_level = new_distort_level
+
+		print('G MAs:')
+		MA_min = 1
+		for new_G_level in range(1,3):
+			G_imagePath = imagePath0+'_G_darker/' if G_level == 1 else imagePath0+'_G_lighter/'
+			MA = test_network(modelPath, G_imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			print(new_G_level, ': ', MA)
+			if MA_min > MA:
+				MA_min = MA
+				G_level = new_G_level
+
+		print('S MAs:')
+		MA_min = 1
+		for new_S_level in range(1,3):
+			S_imagePath = imagePath0+'_S_darker/' if S_level == 1 else imagePath0+'_S_lighter/'
+			MA = test_network(modelPath, S_imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			print(new_S_level, ': ', MA)
+			if MA_min > MA:
+				MA_min = MA
+				S_level = new_S_level
+
+		print('Y MAs:')
+		MA_min = 1
+		for new_Y_level in range(1,3):
+			Y_imagePath = imagePath0+'_Y_luma_darker/' if Y_level == 1 else imagePath0+'_Y_luma_lighter/'
+			MA = test_network(modelPath, Y_imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			print(new_Y_level, ': ', MA)
+			if MA_min > MA:
+				MA_min = MA
+				Y_level = new_Y_level
+
+		print('new blur level: ', blur_level)
+		print('new noise level: ', noise_level)
+		print('new distort level: ', distortion_level)
+		print('new G channel level: ', G_level)
+		print('new S channel level: ', S_level)
+		print('new Y channel level: ', Y_level)
+		f.write("round no: "+str(rid)+"\n")
+		f.write("new blur level: "+str(blur_level)+"\n")
+		f.write("new noise level: "+str(noise_level)+"\n")
+		f.write("new distort level: "+str(distortion_level)+"\n\n")
+		f.write("new G channel level: "+str(G_level)+"\n")
+		f.write("new S channel level: "+str(S_level)+"\n")
+		f.write("new Y channel level: "+str(Y_level)+"\n\n")
+		f.flush()
+	f.close()
+
 
 if __name__ == "__main__":
 

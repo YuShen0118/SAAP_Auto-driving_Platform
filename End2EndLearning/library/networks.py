@@ -12,6 +12,8 @@ from keras.optimizers import Adam
 from keras import layers
 from keras import activations
 from keras.layers.normalization import BatchNormalization
+import tensorflow as tf
+import keras
 
 
 def net_lstm(netType, nFramesSample):
@@ -40,9 +42,9 @@ def net_lstm(netType, nFramesSample):
 	return net
 
 
-def create_nvidia_network(BN_flag, fClassifier, nClass):
+def create_nvidia_network(BN_flag, fClassifier, nClass, nChannel=3):
 	if BN_flag == 0:
-		net = net_nvidia_1(fClassifier, nClass)
+		net = net_nvidia_1(fClassifier, nClass, nChannel)
 	elif BN_flag == 1:
 		net = net_nvidia_BN(fClassifier, nClass)
 	elif BN_flag == 2:
@@ -50,7 +52,7 @@ def create_nvidia_network(BN_flag, fClassifier, nClass):
 	return net
 
 		
-
+'''
 def net_nvidia(fClassifier, nClass):
 	mainInput = Input(shape=(66,200,3))
 	x1 = Lambda(lambda x: x/127.5 - 1.0)(mainInput)
@@ -77,10 +79,10 @@ def net_nvidia(fClassifier, nClass):
 		net = Model(inputs = mainInput, outputs = mainOutput)
 		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 	return net
+'''
 
-
-def net_nvidia_1(fClassifier, nClass):
-	mainInput = Input(shape=(66,200,3))
+def net_nvidia_1(fClassifier, nClass, nChannel=3):
+	mainInput = Input(shape=(66,200,nChannel))
 	x1 = Lambda(lambda x: x/127.5 - 1.0)(mainInput)
 	x1 = Conv2D(24, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))(x1)
 	x1 = layers.Activation(activations.elu)(x1)
@@ -113,7 +115,7 @@ def net_nvidia_1(fClassifier, nClass):
 		net = Model(inputs = mainInput, outputs = mainOutput)
 		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
-	print(net.summary())
+	#print(net.summary())
 	return net
 
 
@@ -250,6 +252,146 @@ def net_nvidia_AdvProp(fClassifier, nClass):
 				  loss=["mse", 'mse'],
 				  loss_weights=[1, 1], metrics=['accuracy'])
 	return net
+
+'''
+class Gaussian_noise_layer(layers.Layer):
+	def __init__(self, initializer="he_normal", **kwargs):
+		super(Gaussian_noise_layer, self).__init__(**kwargs)
+		self.initializer = keras.initializers.get(initializer)
+
+	def build(self, input_shape):
+		self.std = self.add_weight(
+			shape=[1],
+			initializer=self.initializer,
+			name="std",
+			trainable=True,
+		)
+
+	def call(self, inputs):
+		noise = tf.random_normal(shape=tf.shape(inputs), mean=0.0, stddev=self.std*1000, dtype=tf.float32) 
+		return inputs + noise
+'''
+
+class Gaussian_noise_layer(keras.layers.Layer):
+	def __init__(self):
+		super(Gaussian_noise_layer, self).__init__()
+		w_init = tf.random_normal_initializer()
+		initial_value=w_init(shape=(1,1), dtype="float32")
+		self.std = tf.Variable(initial_value=initial_value,trainable=True)
+		print(self.std)
+		print('!!!!!!!!!!!!!!!!!!!')
+
+	def call(self, inputs):
+		print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+		print(self.std.eval(session=tf.compat.v1.Session()))
+		print('!!!!!!!!!!!!!!!!!!!')
+		noise = tf.random_normal(shape=tf.shape(inputs), mean=0.0, stddev=tf.reduce_sum(self.std).eval(session=tf.compat.v1.Session())[0], dtype=tf.float32) 
+		return inputs + noise
+
+'''
+class Gaussian_noise_layer(keras.layers.Layer):
+	def __init__(self):
+		units=32
+		input_dim=32
+		super(Gaussian_noise_layer, self).__init__()
+		w_init = tf.random_normal_initializer()
+		self.w = tf.Variable(
+			initial_value=w_init(shape=(input_dim, units), dtype="float32"),
+			trainable=True,
+		)
+		b_init = tf.zeros_initializer()
+		self.b = tf.Variable(
+			initial_value=b_init(shape=(units,), dtype="float32"), trainable=True
+		)
+
+	def call(self, inputs):
+		return tf.matmul(inputs, self.w) + self.b
+'''
+
+class GAN_Nvidia():
+	def __init__(self):
+		self.img_rows = 66
+		self.img_cols = 200
+		self.channels = 3
+		self.img_shape = (self.img_rows, self.img_cols, self.channels)
+
+        #optimizer = Adam(0.0002, 0.5)
+		optimizer = Adam(lr=1e-4)
+
+        # Build and compile the discriminator
+		self.d = self.build_discriminators()
+		self.d.compile(optimizer=optimizer, loss='mse', metrics=['accuracy'])
+
+        # Build the generator
+		self.g = self.build_generators()
+
+        # The generator takes noise as input and generated imgs
+		z = Input(shape=self.img_shape)
+		img_gene = self.g(z)
+
+        # For the combined model we will only train the generators
+		self.d.trainable = False
+
+        # The valid takes generated images as input and determines validity
+		valid = self.d(img_gene)
+
+        # The combined model  (stacked generators and discriminators)
+        # Trains generators to fool discriminators
+		self.combined = Model(z, valid)
+		self.combined.compile(optimizer=optimizer, loss=self.generator_loss, metrics=['accuracy'])
+
+	def generator_loss(self, y_true, y_pred):
+		mse = tf.keras.losses.MeanSquaredError()
+		return -mse(y_true, y_pred)
+
+	def gaussian_noise_layer(self, input_layer, std):
+		noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=std, dtype=tf.float32) 
+		return input_layer + noise
+
+	def build_generators(self):
+
+		mainInput = Input(shape=self.img_shape)
+		mainOutput = Gaussian_noise_layer()(mainInput)
+
+		model = Model(inputs = mainInput, outputs = mainOutput)
+
+		print("********************** Generator Model *****************************")
+		model.summary()
+
+		return model
+
+	def build_discriminators(self):
+
+		mainInput = Input(shape=self.img_shape)
+
+		x1 = Lambda(lambda x: x/127.5 - 1.0)(mainInput)
+		x1 = Conv2D(24, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))(x1)
+		x1 = layers.Activation(activations.elu)(x1)
+		x1 = Conv2D(36, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))(x1)
+		x1 = layers.Activation(activations.elu)(x1)
+		x1 = Conv2D(48, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))(x1)
+		x1 = layers.Activation(activations.elu)(x1)
+		x1 = Conv2D(64, (3, 3), padding='valid', kernel_regularizer=l2(0.001))(x1)
+		x1 = layers.Activation(activations.elu)(x1)
+		x1 = Conv2D(64, (3, 3), padding='valid', kernel_regularizer=l2(0.001))(x1)
+		x1 = layers.Activation(activations.elu)(x1)
+		x2 = Flatten()(x1)
+		z = Dense(100, kernel_regularizer=l2(0.001))(x2)
+		z = layers.Activation(activations.elu)(z)
+		z = Dense(50,  kernel_regularizer=l2(0.001))(z)
+		z = layers.Activation(activations.elu)(z)
+		z = Dense(10,  kernel_regularizer=l2(0.001))(z)
+		z = layers.Activation(activations.elu)(z)
+
+		mainOutput = Dense(1)(z)
+
+		model = Model(inputs = mainInput, outputs = mainOutput)
+		print("********************** Discriminator Model *****************************")
+		model.summary()
+
+		return model
+
+
 
 	
 if __name__ == "__main__":

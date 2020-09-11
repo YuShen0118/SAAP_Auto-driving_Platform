@@ -11,7 +11,7 @@ sys.path.insert(0, './library/')
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
-from train import train_network, train_network_multi
+from train import train_network, train_network_multi, train_network_multi_factor_search
 from test import test_network, visualize_network_on_image
 from library.fid_score import *
 
@@ -56,13 +56,8 @@ def get_label_file_name(folder_name, suffix=""):
 	return labelName
 
 def single_test():
-	train_folder = "combine_S_lighter_darker_trainB"
-	#train_folder = "combine_distort5_trainB"
-	val_folder = "valB_S_lighter"
-	#val_folder = "valB_S_darker"
-	#val_folder = "valB"
-	#val_folder = "valB_comb"
-	#val_folder = "valB_lap_blur"
+	train_folder = "trainB"
+	val_folder = "valB"
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder)
@@ -83,9 +78,10 @@ def single_test():
 	test_network(modelPath, imagePath, labelPath, outputPath)
 
 def single_test_with_config(subtask_id=-1):
-	train_folder = "combine_trainC1_trainB_1_1"
-	val_folder = "valC1"
-	BN_flag = 1
+	train_folder = "trainB"
+	val_folder = "valB"
+	BN_flag = 0
+	net_type = 1  # 1: CNN (default), 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
 	#suffix = "_similarBN40"
 	train_label_suffix = ""
 	#val_label_suffix = "_small"
@@ -122,13 +118,15 @@ def single_test_with_config(subtask_id=-1):
 		train_suffix = train_suffix + "_BN" + str(BN_flag)
 	if classification:
 		train_suffix = train_suffix + "_classify"
+	if net_type == 5:
+		train_suffix = train_suffix + "_GAN"
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder, train_label_suffix)
 	labelPath = DATASET_ROOT + labelName
 
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + train_suffix + "/"
-	#train_network(imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification)
+	train_network(imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, netType=net_type)
 
 	modelPath = outputPath + "/model-final.h5"
 
@@ -232,6 +230,29 @@ def test_AdvProp(subtask_id=-1):
 		test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=2, pathID=test_pathID)
 
 
+def multi_factor_search_test():
+	train_folder = "trainB"
+	val_folder = "valB"
+
+	imagePath = DATASET_ROOT + train_folder + "/"
+	labelName = get_label_file_name(train_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	trainOurputFolder = train_folder + "_quality_channel"
+	trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
+	train_network_multi_factor_search(imagePath, labelPath, trainOutputPath)
+
+	modelPath = trainOutputPath + "/model-final.h5"
+
+	imagePath = DATASET_ROOT + val_folder + "/"
+	labelName = get_label_file_name(val_folder, "")
+	labelPath = DATASET_ROOT + labelName
+	#labelPath = DATASET_ROOT + "labelsB_train.csv"
+
+	valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + val_folder + ")/test_result.txt"
+	#modelPath = ""
+	test_network(modelPath, imagePath, labelPath, valOutputPath)
+
 
 def unit_test_for_style():
 	TRAIN_LIST = ["trainA", "trainB", "trainA_fake_GAN", "trainB_fake_GAN", "trainA_MUNIT_GAN", "trainB_MUNIT_GAN", "trainA_fake_color", "trainB_fake_color"]
@@ -239,20 +260,25 @@ def unit_test_for_style():
 	VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valB_fake_GAN", "valA_MUNIT_GAN", "valB_MUNIT_GAN", "valA_fake_color", "valB_fake_color"]
 	#VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valA_MUNIT_GAN"]
 
+	TRAIN_LIST = ["trainB_quality_adv"]
+	VAL_LIST = ["valB", "valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5"\
+				, "valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5"\
+				, "valB_distort_1", "valB_distort_2", "valB_distort_3", "valB_distort_4", "valB_distort_5"]
+
 
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
 		labelName = get_label_file_name(train_folder)
 		labelPath = DATASET_ROOT + labelName
 		outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
-		train_network(imagePath, labelPath, outputPath)
+		#train_network(imagePath, labelPath, outputPath)
 
 		for val_folder in VAL_LIST:
 			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
 			val_folder = val_folder.replace("train", "val")
 
-			if not (train_folder == "trainA_MUNIT_GAN_1" or val_folder == "valA_MUNIT_GAN"):
-				continue
+			#if not (train_folder == "trainA_MUNIT_GAN_1" or val_folder == "valA_MUNIT_GAN"):
+			#	continue
 
 			imagePath = DATASET_ROOT + val_folder + "/"
 			labelName = get_label_file_name(val_folder)
@@ -309,6 +335,7 @@ def combination_test_for_style(subtask_id):
 	VAL_LIST = ["valB"]
 	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1.0]
 	BN_flag = 0
+	pack_in_channel = False
 
 	if subtask_id == '0':
 		TRAIN_FOLDER_LIST = [["trainA"]]
@@ -377,10 +404,12 @@ def combination_test_for_style(subtask_id):
 		TRAIN_FOLDER_LIST = [["trainB_lap_blur", "trainB"]]
 		TRAIN_RATIO_LIST = [[1,1]]
 		BN_flag = 0
+		pack_in_channel = True
 	elif subtask_id == '18':
 		TRAIN_FOLDER_LIST = [["trainB_comb", "trainB"]]
 		TRAIN_RATIO_LIST = [[1,1]]
 		BN_flag = 0
+		pack_in_channel = True
 	elif subtask_id == '19':
 		TRAIN_FOLDER_LIST = [["trainB_lap_blur"]]
 		VAL_LIST = ["valB_lap_blur"]
@@ -427,7 +456,27 @@ def combination_test_for_style(subtask_id):
 		TRAIN_FOLDER_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5"]]
 		TRAIN_RATIO_LIST = [[1,1,1,1,1,1]]
 		BN_flag = 0
+	elif subtask_id == '27':
+		TRAIN_FOLDER_LIST = [["trainB", "trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5"]]
+		TRAIN_RATIO_LIST = [[1,1,1,1,1,1]]
+		BN_flag = 0
+	elif subtask_id == '28':
+		TRAIN_FOLDER_LIST = [["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5"]]
+		TRAIN_RATIO_LIST = [[1,1,1,1,1,1]]
+		BN_flag = 0
+	elif subtask_id == '29':
+		TRAIN_FOLDER_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5", \
+		"trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5",\
+		"trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5",\
+		"trainB_G_darker", "trainB_G_lighter",\
+		"trainB_S_darker", "trainB_S_lighter",\
+		"trainB_Y_luma_darker", "trainB_Y_luma_lighter"
+		]]
+		TRAIN_RATIO_LIST = [1]*len(TRAIN_FOLDER_LIST[0])
+		TRAIN_RATIO_LIST = [TRAIN_RATIO_LIST]
+		BN_flag = 0
 	else:
+		print('invalid subtask_id!!!')
 		return
 
 	#pretrain_model = "tmp"
@@ -436,6 +485,8 @@ def combination_test_for_style(subtask_id):
 	suffix = ""
 	if BN_flag > 0:
 		suffix = suffix + "_BN" + str(BN_flag)
+	if pack_in_channel:
+		suffix = suffix + "_pack_channel"
 
 
 	i = 0
@@ -456,7 +507,7 @@ def combination_test_for_style(subtask_id):
 				labelPath = DATASET_ROOT + labelName
 				imagePath_list.append(imagePath)
 				labelPath_list.append(labelPath)
-			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio)
+			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio, pack_flag=pack_in_channel)
 
 			for val_folder in VAL_LIST:
 				modelPath = trainOutputPath + "model-final.h5"
@@ -727,12 +778,15 @@ if __name__ == "__main__":
 			test_AdvProp(args.subtask_id)
 		elif args.task_id == '7':
 			calculate_FID(args.subtask_id)
+		elif args.task_id == '8':
+			multi_factor_search_test()
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
 		single_test()
 		#single_test_with_config()
 		#single_test_AdvProp()
+		#multi_factor_search_test()
 		#unit_test_for_style()
 		#unit_test_for_quality()
 		#combination_test_for_style()
