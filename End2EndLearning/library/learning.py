@@ -585,18 +585,21 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 				else:
 					img = np.concatenate((img, img_1), axis=2)
 
-			noise = np.random.uniform(low=0, high=255, size=(img.shape[0], img.shape[1], 1))
-			img = np.concatenate((img, noise), axis=2)
+			#noise = np.random.uniform(low=0, high=255, size=(img.shape[0], img.shape[1], 1))
+			#img = np.concatenate((img, noise), axis=2)
 			testData.append(img)
 
 	testData = np.array(testData)
+	nChannel=3
 	if pack_flag:
 		testFeatures = testFeatures[:,0]
+		nChannel = 3*len(imageDir_list)
+
 
     ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
 	if netType == 1:
 # 		outputPath = trainPath + 'trainedModels/models-cnn/';
-		net = create_nvidia_network(BN_flag, fClassifier, nClass) #, nChannel=7
+		net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
 	elif netType == 2:
 # 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
 		net = net_lstm(2, nFramesSample)
