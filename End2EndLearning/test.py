@@ -11,16 +11,19 @@ print('PLATFORM_ROOT_DIR ', ROOT_DIR)
 
 sys.path.insert(0, './library/')
 
-from learning import test_dnn, test_dnn_visualize, visualize_dnn_on_image
+from learning import test_dnn_multi, test_dnn_visualize, visualize_dnn_on_image
 
 def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1):
+	test_network_multi(modelPath, [imagePath], [labelPath], outputPath, BN_flag, pathID, classification, visualize, radius, ratio)
+
+def test_network_multi(modelPath, imagePath_list, labelPath_list, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1, pack_flag=False):
 	if modelPath:
 		print('Model used: ' + modelPath)
 	else:
 		print('No model specified. Using random initialization of weights.')
         
-	print('Image folder: '+imagePath)
-	print('Label path: '+labelPath)
+	print('Image folder: '+str(imagePath_list))
+	print('Label path: '+str(labelPath_list))
 	print('Output path: '+outputPath)
 
 	file_path = os.path.dirname(outputPath)
@@ -47,7 +50,7 @@ def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=
 	if visualize:
 		test_dnn_visualize(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID, radius)
 	else:
-		MA = test_dnn(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID, ratio)
+		MA = test_dnn_multi(modelPath, imagePath_list, labelPath_list, outputPath, netType, flags, specs, BN_flag, pathID, ratio, pack_flag)
 
 	return MA
 

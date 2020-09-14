@@ -266,6 +266,7 @@ def load_train_data_multi_pack(xFolder_list, trainLogPath_list, nRep, fThreeCame
 	## prepare for getting x
 	for xFolder in xFolder_list:
 		if not os.path.exists(xFolder):
+			print(xFolder_list)
 			sys.exit('Error: the image folder is missing. ' + xFolder)
 		
 	## prepare for getting y
@@ -291,7 +292,7 @@ def load_train_data_multi_pack(xFolder_list, trainLogPath_list, nRep, fThreeCame
 			xUnit, yUnit = ([], [])
 			for j in range(n):
 				xFolder = xFolder_list[j]
-				row = trainLog[i]
+				row = trainLog_list[j][i]
 				## center camera
 				if not specialFilter:
 					xUnit.append(xFolder + os.path.basename(row[0])) 

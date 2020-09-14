@@ -14,7 +14,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
 from utilities import resize_image, random_distort, load_train_data, load_train_data_multi, load_train_data_multi_pack
-from networks import net_lstm, create_nvidia_network, GAN_Nvidia
+from networks import net_lstm, create_nvidia_network, GAN_Nvidia, mean_accuracy
 import time
 import ntpath
 
@@ -122,6 +122,9 @@ def gen_train_data_random_pack_channel(xList, yList, batchSize, fRandomDistort =
 					img = img_1
 				else:
 					img = np.concatenate((img, img_1), axis=2)
+
+			#noise = np.random.uniform(low=0, high=255, size=(img.shape[0], img.shape[1], 1))
+			#img = np.concatenate((img, noise), axis=2)
 
 			angle = yList[i][0]
 			if fRandomDistort:
@@ -364,18 +367,19 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			#for i in range(start_layer_id, len(net.layers)):
 				#net.layers[i].set_weights(net_untrain.layers[i].get_weights())
 			#	net.layers[i].trainable = False
-			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
+			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
 		if reinitHeader:
 			print("reinit header activate")
 			net_untrain = create_nvidia_network(BN_flag, fClassifier, nClass)
 			net.layers[-1].set_weights(net_untrain.layers[-1].get_weights())
-			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
+			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
 		if reinitBN:
 			net_untrain = create_nvidia_network(BN_flag, fClassifier, nClass)
 			BN_layer_ids = [3, 6, 9, 12, 15, 19, 22, 25]
 			for id in BN_layer_ids:
 				net.layers[id].set_weights(net_untrain.layers[id].get_weights())
-			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
+			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
+			#net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
 
 	## setup outputs
@@ -387,7 +391,8 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 
 	modelLog = ModelCheckpoint(outputPath + 'model{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
 	lossLog  = CSVLogger(outputPath + 'loss-log', append=True, separator=',')
-	
+	#tensorboard_callback = keras.callbacks.TensorBoard(log_dir=outputPath+"logs/")
+
 	## train
 	if netType != 5:
 		nTrainStep = int(len(yTrainList)/batchSize) + 1
@@ -519,7 +524,7 @@ def train_dnn_overfitting(trainSpec, xTrainList, yTrainList, xValidList, yValidL
 '''
 
 	
-def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs, BN_flag=0, pathID=0, ratio=1):
+def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType, flags, specs, BN_flag=0, pathID=0, ratio=1, pack_flag=False):
 	
     ## assigning variables
 # 	fRandomDistort = flags[0]
@@ -540,9 +545,16 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs, 
 		print('Regression......')
 
 	### retrieve the test data
-	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras, ratio=ratio)
+	if not pack_flag:
+		testFeatures, testLabels = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
+	else:
+		testFeatures, testLabels = load_train_data_multi_pack(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
+
+	#testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras, ratio=ratio)
 	testFeatures = np.array(testFeatures)
 	testLabels = np.array(testLabels)
+	if pack_flag:
+		testLabels = testLabels[:,0]
 	n = len(testLabels)
 
 	if fClassifier:
@@ -554,19 +566,37 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs, 
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 	testData = []
-	for i in range(len(testLabels)):
-		image_path = testFeatures[i]
-		if not os.path.isfile(image_path):
-			image_path = image_path.replace(".jpg", "_fake.png")
-		img = resize_image(cv2.imread(image_path))
-		testData.append(img)
+	if not pack_flag:
+		for i in range(len(testLabels)):
+			image_path = testFeatures[i]
+			if not os.path.isfile(image_path):
+				image_path = image_path.replace(".jpg", "_fake.png")
+			img = resize_image(cv2.imread(image_path))
+			testData.append(img)
+	else:
+		for i in range(len(testFeatures)):
+			for j in range(len(testFeatures[i])):
+				image_path = testFeatures[i][j]
+				if not os.path.isfile(image_path):
+					image_path = image_path.replace(".jpg", "_fake.png")
+				img_1 = resize_image(cv2.imread(image_path))
+				if j == 0:
+					img = img_1
+				else:
+					img = np.concatenate((img, img_1), axis=2)
+
+			noise = np.random.uniform(low=0, high=255, size=(img.shape[0], img.shape[1], 1))
+			img = np.concatenate((img, noise), axis=2)
+			testData.append(img)
 
 	testData = np.array(testData)
+	if pack_flag:
+		testFeatures = testFeatures[:,0]
 
     ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
 	if netType == 1:
 # 		outputPath = trainPath + 'trainedModels/models-cnn/';
-		net = create_nvidia_network(BN_flag, fClassifier, nClass)
+		net = create_nvidia_network(BN_flag, fClassifier, nClass) #, nChannel=7
 	elif netType == 2:
 # 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
 		net = net_lstm(2, nFramesSample)
@@ -711,13 +741,13 @@ def test_dnn(modelPath, imageDir, labelPath, outputPath, netType, flags, specs, 
 				#print(len(img_list_succ))
 				#print(len(img_list_fail))
 				for img_file in img_list_succ:
-					f_img_list_succ.write(img_file)
+					f_img_list_succ.write(str(img_file))
 					f_img_list_succ.write('\n')
 
 				for i in range(len(fail_flag)):
 					if fail_flag[i] == True:
 						img_file = testFeatures[i]
-						f_img_list_fail.write(img_file)
+						f_img_list_fail.write(str(img_file))
 						f_img_list_fail.write('\n')
 						'''
 						img = cv2.imread(img_file)

@@ -81,6 +81,19 @@ def net_nvidia(fClassifier, nClass):
 	return net
 '''
 
+def mean_accuracy(y_true, y_pred):
+	
+	thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+
+	res_list = []
+	for thresh_hold in thresh_holds:
+		res_list.append(tf.math.reduce_mean(tf.to_float(keras.backend.abs(y_true-y_pred) > thresh_hold)))
+
+	MA = tf.math.reduce_mean(res_list)
+	
+	return MA
+	
+
 def net_nvidia_1(fClassifier, nClass, nChannel=3):
 	mainInput = Input(shape=(66,200,nChannel))
 	x1 = Lambda(lambda x: x/127.5 - 1.0)(mainInput)
@@ -113,7 +126,8 @@ def net_nvidia_1(fClassifier, nClass, nChannel=3):
 	else:
 		mainOutput = Dense(1)(z)
 		net = Model(inputs = mainInput, outputs = mainOutput)
-		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
+		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
+		#net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
 	#print(net.summary())
 	return net

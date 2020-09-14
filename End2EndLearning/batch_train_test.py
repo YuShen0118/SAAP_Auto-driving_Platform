@@ -12,7 +12,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 from train import train_network, train_network_multi, train_network_multi_factor_search
-from test import test_network, visualize_network_on_image
+from test import test_network, test_network_multi, visualize_network_on_image
 from library.fid_score import *
 
 DATASET_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB/"
@@ -260,11 +260,13 @@ def unit_test_for_style():
 	VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valB_fake_GAN", "valA_MUNIT_GAN", "valB_MUNIT_GAN", "valA_fake_color", "valB_fake_color"]
 	#VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valA_MUNIT_GAN"]
 
-	TRAIN_LIST = ["trainB_quality_adv"]
-	VAL_LIST = ["valB", "valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5"\
-				, "valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5"\
-				, "valB_distort_1", "valB_distort_2", "valB_distort_3", "valB_distort_4", "valB_distort_5"]
-
+	TRAIN_LIST = ["trainB_quality_channel"]
+	VAL_LIST = ["valB", "valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5", \
+				"valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5", \
+				"valB_distort_1", "valB_distort_2", "valB_distort_3", "valB_distort_4", "valB_distort_5", \
+				"valB_G_darker", "valB_G_lighter", \
+				"valB_S_darker", "valB_S_darker", \
+				"valB_Y_luma_darker", "valB_Y_luma_lighter"]
 
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
@@ -302,6 +304,8 @@ def unit_test_for_quality(subtask_id=-1):
 		TRAIN_LIST_LIST = [["trainB", "trainB_B_darker", "trainB_B_lighter", "trainB_G_darker", "trainB_G_lighter", "trainB_R_darker", "trainB_R_lighter"]]
 	elif subtask_id == '4':
 		TRAIN_LIST_LIST = [["trainB", "trainB_H_darker", "trainB_H_lighter", "trainB_S_darker", "trainB_S_lighter", "trainB_V_darker", "trainB_V_lighter"]]
+	elif subtask_id == '5':
+		TRAIN_LIST_LIST = [["trainB", "trainB_Y_luma_darker", "trainB_Y_luma_lighter", "trainB_U_blueproj_darker", "trainB_U_blueproj_lighter", "trainB_V_redproj_darker", "trainB_V_redproj_lighter"]]
 	else:	
 		return
 	
@@ -332,7 +336,7 @@ def combination_test_for_style(subtask_id):
 					["trainB", "trainA_fake_GAN"],
 					["trainB", "trainA_fake_color"],
 					["trainB", "trainA", "trainA_fake_GAN", "trainA_fake_color"]]
-	VAL_LIST = ["valB"]
+	VAL_LIST = [["valB", "valB_comb"]]
 	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1.0]
 	BN_flag = 0
 	pack_in_channel = False
@@ -492,15 +496,14 @@ def combination_test_for_style(subtask_id):
 	i = 0
 	for train_folder_list in TRAIN_FOLDER_LIST:
 		for train_ratio in TRAIN_RATIO_LIST:
-			imagePath_list = []
-			labelPath_list = []
 
 			trainOurputFolder = "combine_" + str(subtask_id) + suffix
-			#trainOurputFolder = "combine_" + str(train_folder_list) + "_" + str(train_ratio) + suffix
 			#trainOurputFolder = "combine_" + str(train_folder_list) + "_" + str(train_ratio) + suffix
 
 			trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
 
+			imagePath_list = []
+			labelPath_list = []
 			for train_folder in train_folder_list:
 				imagePath = DATASET_ROOT + train_folder + "/"
 				labelName = get_label_file_name(train_folder)
@@ -509,13 +512,19 @@ def combination_test_for_style(subtask_id):
 				labelPath_list.append(labelPath)
 			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio, pack_flag=pack_in_channel)
 
-			for val_folder in VAL_LIST:
-				modelPath = trainOutputPath + "model-final.h5"
-				imagePath = DATASET_ROOT + val_folder + "/"
-				labelName = get_label_file_name(val_folder)
-				labelPath = DATASET_ROOT + labelName
-				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + val_folder + ")/test_result.txt"
-				test_network(modelPath, imagePath, labelPath, valOutputPath, BN_flag=BN_flag)
+			modelPath = trainOutputPath + "model-final.h5"
+			for val_folder_list in VAL_LIST:
+				imagePath_list = []
+				labelPath_list = []
+				for val_folder in val_folder_list:
+					imagePath = DATASET_ROOT + val_folder + "/"
+					labelName = get_label_file_name(val_folder)
+					labelPath = DATASET_ROOT + labelName
+					imagePath_list.append(imagePath)
+					labelPath_list.append(labelPath)
+
+				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + str(val_folder_list) + ")/test_result.txt"
+				test_network_multi(modelPath, imagePath_list, labelPath_list, valOutputPath, BN_flag=BN_flag, pack_flag=pack_in_channel)
 
 		i += 1
 
