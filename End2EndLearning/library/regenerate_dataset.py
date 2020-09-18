@@ -503,20 +503,33 @@ def generate_RGB_dataset(originalDataset, channel, direction):
     
     color_str = color_str_dic.get(channel)
            
-    direction_str = "darker" if direction == 0 else "lighter"
-    
+    direction_str = ""
+    if direction == 0:
+        direction_str = "darker"
+    elif direction == 1:
+        direction_str = "lighter"
+    elif direction == 2:
+        direction_str = "darker_2"
+    else:
+        direction_str = "lighter_2"  
+
     saveDir = "_".join([originalDataset, color_str, direction_str])
     
     for i in glob.glob(os.path.join(originalDataset, "*.jpg")):
         temp = cv2.imread(str(i))
         image = temp.copy()
         
-        if direction == 0:
+        if direction == 0: # lower the channel value
             image[:, :, channel] = image[:, :, channel] * 0.5
-        elif direction == 1:
+        elif direction == 1: # raise the channel value
             image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+        elif direction == 2: # make channel value 0
+            # print(image[:, :, channel])
+            image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
+        else: # make channel value max value equal to 255
+            image[:, :, channel] = np.full(image[:, :, channel].shape, 255)
 
-        
+
         if not os.path.exists(saveDir):
             os.makedirs(saveDir)
             
@@ -534,8 +547,16 @@ def generate_HSV_datasets(originalDataset, channel, direction):
     
     color_str = color_str_dic.get(channel)
            
-    direction_str = "darker" if direction == 0 else "lighter"
-    
+    direction_str = ""
+    if direction == 0:
+        direction_str = "darker"
+    elif direction == 1:
+        direction_str = "lighter"
+    elif direction == 2:
+        direction_str = "darker_2"
+    else:
+        direction_str = "lighter_2"   
+
     saveDir = "_".join([originalDataset, color_str, direction_str])
     
     for i in glob.glob(os.path.join(originalDataset, "*.jpg")):
@@ -551,6 +572,13 @@ def generate_HSV_datasets(originalDataset, channel, direction):
                 image[:, :, channel] = (image[:, :, channel] * 0.5) + (180 * 0.5)
             else:
                 image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+        elif direction == 2:
+            image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
+        else:
+            max_val = 255
+            if channel == 0:
+                max_val = 180
+            image[:, :, channel] = np.full(image[:, :, channel].shape, max_val)
 
         image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
 
@@ -570,8 +598,16 @@ def generate_YUV_datasets(originalDataset, channel, direction):
     }
     
     color_str = color_str_dic.get(channel)
-           
-    direction_str = "darker" if direction == 0 else "lighter"
+    
+    direction_str = ""
+    if direction == 0:
+        direction_str = "darker"
+    elif direction == 1:
+        direction_str = "lighter"
+    elif direction == 2:
+        direction_str = "darker_2"
+    else:
+        direction_str = "lighter_2"
     
     saveDir = "_".join([originalDataset, color_str, direction_str])
     
@@ -587,6 +623,10 @@ def generate_YUV_datasets(originalDataset, channel, direction):
             image[:, :, channel] = image[:, :, channel] * 0.5
         elif direction == 1:
             image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+        elif direction == 2: # make channel value 0
+            image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
+        else: # make channel value max value == 255
+            image[:, :, channel] = np.full(image[:, :, channel].shape, 255)
 
         # image[:, :, 0] = image[:, :, 0]*0
         # image[:, :, 1] = image[:, :, 1]*0
@@ -649,40 +689,58 @@ if __name__ == '__main__':
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
     '''
     
-    dataFolder = os.path.join(dataset_path, "valB")
+    dataFolder = os.path.join(dataset_path, "trainB")
 
     # # Generating dataset modifying blue channel
     # generate_RGB_dataset(dataFolder, 0, 0)
     # generate_RGB_dataset(dataFolder, 0, 1)
+    # generate_RGB_dataset(dataFolder, 0, 2)
+    # generate_RGB_dataset(dataFolder, 0, 3)
 
     # # Generating dataset modifying green channel
     # generate_RGB_dataset(dataFolder, 1, 0)
     # generate_RGB_dataset(dataFolder, 1, 1)
+    # generate_RGB_dataset(dataFolder, 1, 2)
+    # generate_RGB_dataset(dataFolder, 1, 3)
 
     # # Generating dataset modifying red channel
     # generate_RGB_dataset(dataFolder, 2, 0)
     # generate_RGB_dataset(dataFolder, 2, 1)
+    # generate_RGB_dataset(dataFolder, 2, 2)
+    # generate_RGB_dataset(dataFolder, 2, 3)
             
     # # Generating dataset modifying hue
     # generate_HSV_datasets(dataFolder, 0, 0)
     # generate_HSV_datasets(dataFolder, 0, 1)
+    # generate_HSV_datasets(dataFolder, 0, 2)
+    # generate_HSV_datasets(dataFolder, 0, 3)
 
     # # Generating dataset modifying saturation
     # generate_HSV_datasets(dataFolder, 1, 0)
     # generate_HSV_datasets(dataFolder, 1, 1)
+    # generate_HSV_datasets(dataFolder, 1, 2)
+    # generate_HSV_datasets(dataFolder, 1, 3)
 
     # Generating dataset modifying value
-    generate_HSV_datasets(dataFolder, 2, 0)
-    generate_HSV_datasets(dataFolder, 2, 1)
+    # generate_HSV_datasets(dataFolder, 2, 0)
+    # generate_HSV_datasets(dataFolder, 2, 1)
+    # generate_HSV_datasets(dataFolder, 2, 2)
+    # generate_HSV_datasets(dataFolder, 2, 3)
 
     # Generating dataset modifying luma
-    generate_YUV_datasets(dataFolder, 0, 0)
-    generate_YUV_datasets(dataFolder, 0, 1)
+    # generate_YUV_datasets(dataFolder, 0, 0)
+    # generate_YUV_datasets(dataFolder, 0, 1)
+    # generate_YUV_datasets(dataFolder, 0, 2)
+    # generate_YUV_datasets(dataFolder, 0, 3)
 
     # Generating dataset modifying blue projection
-    generate_YUV_datasets(dataFolder, 1, 0)
-    generate_YUV_datasets(dataFolder, 1, 1)
+    # generate_YUV_datasets(dataFolder, 1, 0)
+    # generate_YUV_datasets(dataFolder, 1, 1)
+    # generate_YUV_datasets(dataFolder, 1, 2)
+    # generate_YUV_datasets(dataFolder, 1, 3)
 
     # Generating dataset modifying red projection
-    generate_YUV_datasets(dataFolder, 2, 0)
-    generate_YUV_datasets(dataFolder, 2, 1)
+    # generate_YUV_datasets(dataFolder, 2, 0)
+    # generate_YUV_datasets(dataFolder, 2, 1)
+    # generate_YUV_datasets(dataFolder, 2, 2)
+    # generate_YUV_datasets(dataFolder, 2, 3)
