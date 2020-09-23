@@ -573,7 +573,10 @@ def generate_HSV_datasets(originalDataset, channel, direction):
             else:
                 image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
         elif direction == 2:
-            image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
+            if channel == 2:
+                image[:, :, channel] = image[:, :, channel] * 0.1
+            else:
+                image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
         else:
             max_val = 255
             if channel == 0:
@@ -690,6 +693,7 @@ if __name__ == '__main__':
     '''
     
     dataFolder = os.path.join(dataset_path, "trainB")
+    dataFolderVal = os.path.join(dataset_path, "valB")
 
     # # Generating dataset modifying blue channel
     # generate_RGB_dataset(dataFolder, 0, 0)
@@ -724,7 +728,8 @@ if __name__ == '__main__':
     # Generating dataset modifying value
     # generate_HSV_datasets(dataFolder, 2, 0)
     # generate_HSV_datasets(dataFolder, 2, 1)
-    # generate_HSV_datasets(dataFolder, 2, 2)
+    generate_HSV_datasets(dataFolder, 2, 2)
+    generate_HSV_datasets(dataFolderVal, 2, 2)
     # generate_HSV_datasets(dataFolder, 2, 3)
 
     # Generating dataset modifying luma
