@@ -14,7 +14,7 @@ sys.path.insert(0, './library/')
 from learning import test_dnn_multi, test_dnn_visualize, visualize_dnn_on_image
 
 def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1):
-	test_network_multi(modelPath, [imagePath], [labelPath], outputPath, BN_flag, pathID, classification, visualize, radius, ratio)
+	return test_network_multi(modelPath, [imagePath], [labelPath], outputPath, BN_flag, pathID, classification, visualize, radius, ratio)
 
 def test_network_multi(modelPath, imagePath_list, labelPath_list, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1, pack_flag=False):
 	if modelPath:

@@ -2,6 +2,8 @@
 
 import sys
 import os
+import glob
+import cv2
 
 ROOT_DIR = os.path.abspath("../")
 print('PLATFORM_ROOT_DIR ', ROOT_DIR)

@@ -83,6 +83,8 @@ def gen_train_data_random(xList, yList, batchSize, fRandomDistort = False, fFlip
 			image_path = xList[i]
 			if not os.path.isfile(image_path):
 				image_path = image_path.replace(".jpg", "_fake.png")
+			if not os.path.isfile(image_path):
+				print(image_path)
 			img = resize_image(cv2.imread(image_path))
 			angle = yList[i]
 			if fRandomDistort:
@@ -279,7 +281,7 @@ def normalize_value(value_list):
 
 def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs, modelPath = "", 
 	trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imageDir_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, pack_flag=False):
+	BN_flag=0, imageDir_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, pack_flag=False, mid=0):
 	
 	## assigning variables
 	fRandomDistort = flags[0]
@@ -412,6 +414,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			cv2.imshow("output", imgs[0].eval(session=tf.compat.v1.Session())/255)
 			cv2.waitKey(0)
 
+	net.save(outputPath + 'model-final_' + str(mid) + '.h5')
 	net.save(outputPath + 'model-final.h5')
 	print(net.summary())
 	

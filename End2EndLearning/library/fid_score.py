@@ -331,17 +331,20 @@ def calculate_fid_given_multi_paths(paths, batch_size, cuda, dims):
 
     m_array = []
     s_array = []
+    print('start calculating statistics')
     for i in range(len(paths)):
         m, s = _compute_statistics_of_path(paths[i], model, batch_size, dims, cuda)
         print(paths[i], ' finished')
         m_array.append(m)
         s_array.append(s)
 
+    print('start calculating distance')
     fid_value_array = []
     for i in range(len(paths)):
         for j in range(len(paths)):
             fid_value = calculate_frechet_distance(m_array[i], s_array[i], m_array[j], s_array[j])
             fid_value_array.append(fid_value)
+            print(j, ' finished')
 
     return fid_value_array
 

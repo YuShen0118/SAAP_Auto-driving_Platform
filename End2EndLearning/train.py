@@ -50,6 +50,37 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 	train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
 		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag)
 
+def get_suffix(level_id):
+	'''
+	if level_id == 1:
+		return "_darker_2/"
+	if level_id == 2:
+		return "_darker/"
+	if level_id == 3:
+		return "_lighter/"
+	if level_id == 4:
+		return "_lighter_2/"
+	'''
+	if level_id <= 3:
+		return "_darker_"+str(7-level_id*2)+"/"
+	else:
+		return "_lighter_"+str(level_id*2-7)+"/"
+
+
+def get_new_level(channel_name, imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f):
+	f.write('\nchannel_name: ' + channel_name + '\n')
+	print('channel_name: ' + channel_name)
+	MA_min = 1
+	for new_level in range(1,7):
+		imagePath = imagePath0 + '_' + channel_name + get_suffix(new_level)
+		MA = test_network(modelPath, imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+		print(new_level, ': ', MA)
+		f.write(str(new_level) + ': ' + '{:.2f}'.format(MA) + '\n')
+		if MA_min > MA:
+			MA_min = MA
+			level = new_level
+
+	return level
 
 def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
 	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1):
@@ -79,109 +110,142 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 	noise_level = 1
 	distortion_level = 1
 
+	R_level = 1
 	G_level = 1
+	B_level = 1
+	H_level = 1
 	S_level = 1
+	V_level = 1
 	Y_level = 1
+	U_level = 1
+	V1_level = 1
 
 	imagePath0 = imagePath[0:-1]
 
 	val_ratio = 0.1
 	f = open(outputPath+"factor_level_choices.txt",'w')
 	for rid in range(nRound):
+		print("round no: "+str(rid)+"\n")
+		f.write("round no: "+str(rid)+"\n")
 		blur_imagePath = imagePath0+'_blur_'+str(blur_level)+'/'
 		noise_imagePath = imagePath0+'_noise_'+str(noise_level)+'/'
 		distortion_imagePath = imagePath0+'_distort_'+str(distortion_level)+'/'
-		G_imagePath = imagePath0+'_G_darker/' if G_level == 1 else imagePath0+'_G_lighter/'
-		S_imagePath = imagePath0+'_S_darker/' if S_level == 1 else imagePath0+'_S_lighter/'
-		Y_imagePath = imagePath0+'_Y_luma_darker/' if Y_level == 1 else imagePath0+'_Y_luma_lighter/'
+		#G_imagePath = imagePath0+'_G_darker/' if G_level == 1 else imagePath0+'_G_lighter/'
+		#S_imagePath = imagePath0+'_S_darker/' if S_level == 1 else imagePath0+'_S_lighter/'
+		#Y_imagePath = imagePath0+'_Y_luma_darker/' if Y_level == 1 else imagePath0+'_Y_luma_lighter/'
+		R_imagePath = imagePath0 + '_R' + get_suffix(R_level)
+		G_imagePath = imagePath0 + '_G' + get_suffix(G_level)
+		B_imagePath = imagePath0 + '_B' + get_suffix(B_level)
+		H_imagePath = imagePath0 + '_H' + get_suffix(H_level)
+		S_imagePath = imagePath0 + '_S' + get_suffix(S_level)
+		V_imagePath = imagePath0 + '_V' + get_suffix(V_level)
+		Y_imagePath = imagePath0 + '_Y_luma' + get_suffix(Y_level)
+		U_imagePath = imagePath0 + '_U_blueproj' + get_suffix(U_level)
+		V1_imagePath = imagePath0 + '_V_redproj' + get_suffix(V1_level)
 
-		imagePath_list = [imagePath, blur_imagePath, noise_imagePath, distortion_imagePath, G_imagePath, S_imagePath, Y_imagePath]
-		
-		labelPath_list = [labelPath] * len(imagePath_list)
+		#imagePath_list = [imagePath, blur_imagePath, noise_imagePath, distortion_imagePath, R_imagePath, G_imagePath, B_imagePath, \
+		#					H_imagePath, S_imagePath, V_imagePath, Y_imagePath, U_imagePath, V1_imagePath]
+
+		imagePath_list = [imagePath, blur_imagePath, noise_imagePath, distortion_imagePath, \
+							R_imagePath, G_imagePath, B_imagePath, H_imagePath, S_imagePath, V_imagePath]
+
+		#imagePath_list = [imagePath, blur_imagePath, noise_imagePath, distortion_imagePath, R_imagePath, G_imagePath, B_imagePath]
+		#imagePath_list = [imagePath, S_imagePath]
 
 		#Noise only
 		#imagePath_list = [imagePath, imagePath0+'_noise_'+str(noise_level)+'/']
-		#labelPath_list = [labelPath, labelPath]
+		#imagePath_list = [imagePath, distortion_imagePath]
+		
+		labelPath_list = [labelPath] * len(imagePath_list)
+
 
 		train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
-			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN)
+			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag=False, mid=rid)
 
 		modelPath = outputPath + "model-final.h5"
 		valOutputPath = ""
-
+		
+		
 		print('blur MAs:')
+		f.write('\nblur MAs:\n')
 		MA_min = 1
-		for new_blur_level in range(1,6):
-			blurImagePath = imagePath0+'_blur_'+str(new_blur_level)+'/'
+		for new_blur_level in range(1,4):
+			blurImagePath = imagePath0+'_blur_'+str(new_blur_level*2-1)+'/'
 			MA = test_network(modelPath, blurImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 			print(new_blur_level, ': ', MA)
+			f.write(str(new_blur_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 			if MA_min > MA:
 				MA_min = MA
 				blur_level = new_blur_level
 
 		print('noise MAs:')
+		f.write('\nnoise MAs:\n')
 		MA_min = 1
-		for new_noise_level in range(1,6):
-			noiseImagePath = imagePath0+'_noise_'+str(new_noise_level)+'/'
+		for new_noise_level in range(1,4):
+			noiseImagePath = imagePath0+'_noise_'+str(new_noise_level*2-1)+'/'
 			MA = test_network(modelPath, noiseImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 			print(new_noise_level, ': ', MA)
+			f.write(str(new_noise_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 			if MA_min > MA:
 				MA_min = MA
 				noise_level = new_noise_level
 
+
 		print('distort MAs:')
+		f.write('\ndistort MAs:\n')
 		MA_min = 1
-		for new_distort_level in range(1,6):
-			distortImagePath = imagePath0+'_distort_'+str(new_distort_level)+'/'
+		for new_distort_level in range(1,4):
+			distortImagePath = imagePath0+'_distort_'+str(new_distort_level*2-1)+'/'
 			MA = test_network(modelPath, distortImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 			print(new_distort_level, ': ', MA)
+			f.write(str(new_distort_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 			if MA_min > MA:
 				MA_min = MA
 				distortion_level = new_distort_level
+		
+		
+		R_level = get_new_level('R', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		G_level = get_new_level('G', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		B_level = get_new_level('B', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
 
-		print('G MAs:')
-		MA_min = 1
-		for new_G_level in range(1,3):
-			G_imagePath = imagePath0+'_G_darker/' if G_level == 1 else imagePath0+'_G_lighter/'
-			MA = test_network(modelPath, G_imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
-			print(new_G_level, ': ', MA)
-			if MA_min > MA:
-				MA_min = MA
-				G_level = new_G_level
+		H_level = get_new_level('H', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		S_level = get_new_level('S', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		V_level = get_new_level('V', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		
 
-		print('S MAs:')
-		MA_min = 1
-		for new_S_level in range(1,3):
-			S_imagePath = imagePath0+'_S_darker/' if S_level == 1 else imagePath0+'_S_lighter/'
-			MA = test_network(modelPath, S_imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
-			print(new_S_level, ': ', MA)
-			if MA_min > MA:
-				MA_min = MA
-				S_level = new_S_level
 
-		print('Y MAs:')
-		MA_min = 1
-		for new_Y_level in range(1,3):
-			Y_imagePath = imagePath0+'_Y_luma_darker/' if Y_level == 1 else imagePath0+'_Y_luma_lighter/'
-			MA = test_network(modelPath, Y_imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
-			print(new_Y_level, ': ', MA)
-			if MA_min > MA:
-				MA_min = MA
-				Y_level = new_Y_level
+		'''
+		Y_level = get_new_level('Y_luma', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		U_level = get_new_level('U_blueproj', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		V1_level = get_new_level('V_redproj', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		'''
 
 		print('new blur level: ', blur_level)
 		print('new noise level: ', noise_level)
 		print('new distort level: ', distortion_level)
+		print('new R channel level: ', R_level)
 		print('new G channel level: ', G_level)
+		print('new B channel level: ', B_level)
+		print('new H channel level: ', H_level)
 		print('new S channel level: ', S_level)
-		print('new Y channel level: ', Y_level)
-		f.write("round no: "+str(rid)+"\n")
+		print('new V channel level: ', V_level)
+		#print('new Y channel level: ', Y_level)
+		#print('new U channel level: ', U_level)
+		#print('new V1 channel level: ', V1_level)
+		f.write("\n")
 		f.write("new blur level: "+str(blur_level)+"\n")
 		f.write("new noise level: "+str(noise_level)+"\n")
-		f.write("new distort level: "+str(distortion_level)+"\n\n")
+		f.write("new distort level: "+str(distortion_level)+"\n")
+		f.write("new R channel level: "+str(R_level)+"\n")
 		f.write("new G channel level: "+str(G_level)+"\n")
+		f.write("new B channel level: "+str(B_level)+"\n")
+		f.write("new H channel level: "+str(H_level)+"\n")
 		f.write("new S channel level: "+str(S_level)+"\n")
-		f.write("new Y channel level: "+str(Y_level)+"\n\n")
+		f.write("new V channel level: "+str(V_level)+"\n")
+		#f.write("new Y channel level: "+str(Y_level)+"\n")
+		#f.write("new U channel level: "+str(U_level)+"\n")
+		#f.write("new V1 channel level: "+str(V1_level)+"\n\n")
+		f.write("\n")
 		f.flush()
 	f.close()
 
