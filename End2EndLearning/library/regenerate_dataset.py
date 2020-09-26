@@ -704,7 +704,7 @@ def generate_combined(originalDataset, id, csv_file='', dist_ratio=0.25, numData
     distort_level = 0
 
     for j in range(numDatasets):
-        saveDir = "_".join([originalDataset, "randomized", str(id), str(j)])
+        saveDir = "_".join([originalDataset, "combined", str(id), str(j)])
         if not os.path.exists(saveDir):
             os.makedirs(saveDir)
 
