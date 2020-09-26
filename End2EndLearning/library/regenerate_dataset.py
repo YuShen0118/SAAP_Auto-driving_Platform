@@ -9,7 +9,7 @@ import os
 import csv
 
 # Root directory of the project
-ROOT_DIR = os.path.abspath("../")
+ROOT_DIR = os.path.abspath("../../")
 print('Platform root: ', ROOT_DIR)
 #root = ROOT_DIR + '/Data/udacityA_nvidiaB/'
 #print('Dataset root: ', root)
@@ -17,6 +17,11 @@ print('Platform root: ', ROOT_DIR)
 dataset_path = os.path.join(ROOT_DIR, "Data/udacityA_nvidiaB/")
 #dataset_path = os.path.join("C:/projects/SAAP_Auto-driving_Platform/Data/nvidia/")
 #dataset_path = os.path.join("/media/yushen/workspace/projects/SAAP_Auto-driving_Platform/Data/nvidia/")
+
+RGB_MAX = 255
+HSV_H_MAX = 180
+HSV_SV_MAX = 255
+YUV_MAX = 255
 
 
 def calculate_cdf(histogram):
@@ -544,16 +549,16 @@ def generate_RGB_dataset(originalDataset, channel, direction, dist_ratio=0.25, s
         if direction == 0: # lower the channel value
             image[:, :, channel] = image[:, :, channel] * 0.5
         elif direction == 1: # raise the channel value
-            image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+            image[:, :, channel] = (image[:, :, channel] * 0.5) + (RGB_MAX * 0.5)
         elif direction == 2: # make channel value 0
             # print(image[:, :, channel])
             image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
         elif direction == 3: # make channel value max value equal to 255
-            image[:, :, channel] = np.full(image[:, :, channel].shape, 255)
+            image[:, :, channel] = np.full(image[:, :, channel].shape, RGB_MAX)
         elif direction == 4: # lower the channel value
             image[:, :, channel] = (image[:, :, channel] * (1-dist_ratio)) + (0 * dist_ratio)
         elif direction == 5: # raise the channel value
-            image[:, :, channel] = (image[:, :, channel] * (1-dist_ratio)) + (255 * dist_ratio)
+            image[:, :, channel] = (image[:, :, channel] * (1-dist_ratio)) + (RGB_MAX * dist_ratio)
 
         saveAsName = os.path.join(saveDir, os.path.basename(i))
         
@@ -590,9 +595,9 @@ def generate_HSV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
 
-    max_val = 255
+    max_val = HSV_SV_MAX
     if channel == 0:
-        max_val = 180
+        max_val = HSV_H_MAX
     
     image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
     if csv_file != '':
@@ -668,15 +673,15 @@ def generate_YUV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
         if direction == 0:
             image[:, :, channel] = image[:, :, channel] * 0.5
         elif direction == 1:
-            image[:, :, channel] = (image[:, :, channel] * 0.5) + (255 * 0.5)
+            image[:, :, channel] = (image[:, :, channel] * 0.5) + (YUV_MAX * 0.5)
         elif direction == 2: # make channel value 0
             image[:, :, channel] = np.full(image[:, :, channel].shape, 0)
         elif direction == 3: # make channel value max value == 255
-            image[:, :, channel] = np.full(image[:, :, channel].shape, 255)
+            image[:, :, channel] = np.full(image[:, :, channel].shape, YUV_MAX)
         elif direction == 4: # lower the channel value
             image[:, :, channel] = (image[:, :, channel] * (1-dist_ratio)) + (0 * dist_ratio)
         elif direction == 5: # raise the channel value
-            image[:, :, channel] = (image[:, :, channel] * (1-dist_ratio)) + (255 * dist_ratio)
+            image[:, :, channel] = (image[:, :, channel] * (1-dist_ratio)) + (YUV_MAX * dist_ratio)
 
         # image[:, :, 0] = image[:, :, 0]*0
         # image[:, :, 1] = image[:, :, 1]*0
@@ -689,6 +694,94 @@ def generate_YUV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
         # cv2.waitKey(0)
         # break # comment
         cv2.imwrite(saveAsName, image)
+
+# samples factors over a uniform distribution
+# factors: blur, noise, distortion, R, G, B, H, S, V
+def generate_combined(originalDataset, id, csv_file='', dist_ratio=0.25, numDatasets=1):
+    alpha = np.zeros(6)
+    gaussian_ksize = 0
+    noise_level = 0
+    distort_level = 0
+
+    for j in range(numDatasets):
+        saveDir = "_".join([originalDataset, "randomized", str(id), str(j)])
+        if not os.path.exists(saveDir):
+            os.makedirs(saveDir)
+
+        # sample parameters
+        alpha = np.random.normal(loc=0,scale=0.25,size=6)
+        gaussian_ksize = np.random.randint(3, high=11, size=1)[0]
+        
+        if gaussian_ksize % 2 == 0: # kernel size must be even
+            gaussian_ksize += 1
+
+        # noise_level = np.random.randint(0, high=200, size=1)[0]
+        noise_level = abs(int(np.random.normal(loc=0,scale=17,size=1)[0]))
+        distort_level = np.random.randint(0, high=50, size=1)[0]
+
+        # write parameters to parameters.txt in saveDir
+        f = open(os.path.join(saveDir,"parameters.txt"),"w+")
+        parameters_concat = np.concatenate((alpha, [gaussian_ksize], [noise_level], [distort_level]))
+        parameters_concat = [str(s) for s in parameters_concat]
+        write_str = ','.join(parameters_concat)
+        f.write("B,G,R,blur_ksize,noise_level,distort_level\n")
+        f.write(write_str + "\n")
+        f.close()
+
+        image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+        print(originalDataset)
+        if csv_file != '':
+            image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
+        
+        for i in image_name_list:
+            image_id = int(os.path.basename(i).replace('.jpg', ''))
+            img = cv2.imread(i).copy()
+            
+            # adding color channel distortion on RGB, HSV, 6 channels total
+
+            for channel in range(3):
+                if alpha[channel] < 0:
+                    img[:, :, channel] = (img[:, :, channel] * (1+alpha[channel]))
+                else:
+                    img[:, :, channel] = (img[:, :, channel] * (1-alpha[channel])) + (RGB_MAX * alpha[channel])
+            
+            for channel in range(3):
+                max_val = 255
+                if channel == 0:
+                    max_val = 180
+                
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                if alpha[channel+3] < 0:
+                    img[:, :, channel] = (img[:, :, channel] * (1+alpha[channel+3]))
+                else:
+                    img[:, :, channel] = (img[:, :, channel] * (1-alpha[channel+3])) + (max_val * alpha[channel+3])
+                img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+
+            # adding blur
+            img = cv2.GaussianBlur(img, (gaussian_ksize,gaussian_ksize), 0)
+            
+            # adding noise
+            img = add_noise(img, noise_level)
+
+            # adding distortion
+            K = np.eye(3)*1000
+            K[0,2] = img.shape[1]/2
+            K[1,2] = img.shape[0]/2
+            K[2,2] = 1
+
+            img = cv2.undistort(img, K, np.array([distort_level, distort_level, 0, 0]))
+
+            saveAsName = os.path.join(saveDir, os.path.basename(i))
+        
+            cv2.imwrite(saveAsName, img)
+
+            if image_id % 6000 == 0:
+                print(saveAsName, ' generated')
+
+                
+
+
+
 
 
 if __name__ == '__main__':
@@ -740,6 +833,8 @@ if __name__ == '__main__':
     csvFile = os.path.join(dataset_path, "labelsB_train.csv")
     dataFolderVal = os.path.join(dataset_path, "valB")
     csvFileVal = os.path.join(dataset_path, "labelsB_val.csv")
+
+    generate_combined(dataFolderVal, 0)
 
     # # Generating dataset modifying blue channel
     # generate_RGB_dataset(dataFolder, 0, 0)
@@ -818,9 +913,9 @@ if __name__ == '__main__':
     '''
 
 
+    # generate_RGB_dataset(dataFolder, 0, 3, csv_file=csvFile)
     
     '''
-    generate_RGB_dataset(dataFolder, 0, 3, csv_file=csvFile)
     generate_RGB_dataset(dataFolder, 0, 2, csv_file=csvFile)
     generate_RGB_dataset(dataFolder, 1, 2, csv_file=csvFile)
     generate_RGB_dataset(dataFolder, 2, 2, csv_file=csvFile)
@@ -895,7 +990,6 @@ if __name__ == '__main__':
 
 
     '''
-    '''
     generate_RGB_dataset(dataFolderVal, 0, 4, dist_ratio=0.02, suffix='1')
     generate_RGB_dataset(dataFolderVal, 0, 5, dist_ratio=0.02, suffix='1')
     generate_RGB_dataset(dataFolderVal, 1, 4, dist_ratio=0.02, suffix='1')
@@ -909,7 +1003,9 @@ if __name__ == '__main__':
     generate_HSV_datasets(dataFolderVal, 1, 5, dist_ratio=0.02, suffix='1')
     generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.02, suffix='1')
     generate_HSV_datasets(dataFolderVal, 2, 5, dist_ratio=0.02, suffix='1')
+    '''
 
+    '''
     generate_RGB_dataset(dataFolderVal, 0, 4, dist_ratio=0.2, suffix='2')
     generate_RGB_dataset(dataFolderVal, 0, 5, dist_ratio=0.2, suffix='2')
     generate_RGB_dataset(dataFolderVal, 1, 4, dist_ratio=0.2, suffix='2')
@@ -923,21 +1019,9 @@ if __name__ == '__main__':
     generate_HSV_datasets(dataFolderVal, 1, 5, dist_ratio=0.2, suffix='2')
     generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.2, suffix='2')
     generate_HSV_datasets(dataFolderVal, 2, 5, dist_ratio=0.2, suffix='2')
+    '''
 
-    generate_RGB_dataset(dataFolderVal, 0, 4, dist_ratio=0.5, suffix='3')
-    generate_RGB_dataset(dataFolderVal, 0, 5, dist_ratio=0.5, suffix='3')
-    generate_RGB_dataset(dataFolderVal, 1, 4, dist_ratio=0.5, suffix='3')
-    generate_RGB_dataset(dataFolderVal, 1, 5, dist_ratio=0.5, suffix='3')
-    generate_RGB_dataset(dataFolderVal, 2, 4, dist_ratio=0.5, suffix='3')
-    generate_RGB_dataset(dataFolderVal, 2, 5, dist_ratio=0.5, suffix='3')
-
-    generate_HSV_datasets(dataFolderVal, 0, 4, dist_ratio=0.5, suffix='3')
-    generate_HSV_datasets(dataFolderVal, 0, 5, dist_ratio=0.5, suffix='3')
-    generate_HSV_datasets(dataFolderVal, 1, 4, dist_ratio=0.5, suffix='3')
-    generate_HSV_datasets(dataFolderVal, 1, 5, dist_ratio=0.5, suffix='3')
-    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.5, suffix='3')
-    generate_HSV_datasets(dataFolderVal, 2, 5, dist_ratio=0.5, suffix='3')
-
+    '''
     generate_RGB_dataset(dataFolderVal, 0, 4, dist_ratio=0.65, suffix='4')
     generate_RGB_dataset(dataFolderVal, 0, 5, dist_ratio=0.65, suffix='4')
     generate_RGB_dataset(dataFolderVal, 1, 4, dist_ratio=0.65, suffix='4')
@@ -951,3 +1035,35 @@ if __name__ == '__main__':
     generate_HSV_datasets(dataFolderVal, 1, 5, dist_ratio=0.65, suffix='4')
     generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.65, suffix='4')
     generate_HSV_datasets(dataFolderVal, 2, 5, dist_ratio=0.65, suffix='4')
+
+    generate_RGB_dataset(dataFolder, 0, 4, dist_ratio=0.65, suffix='4')
+    generate_RGB_dataset(dataFolder, 0, 5, dist_ratio=0.65, suffix='4')
+    generate_RGB_dataset(dataFolder, 1, 4, dist_ratio=0.65, suffix='4')
+    generate_RGB_dataset(dataFolder, 1, 5, dist_ratio=0.65, suffix='4')
+    generate_RGB_dataset(dataFolder, 2, 4, dist_ratio=0.65, suffix='4')
+    generate_RGB_dataset(dataFolder, 2, 5, dist_ratio=0.65, suffix='4')
+
+    generate_HSV_datasets(dataFolder, 0, 4, dist_ratio=0.65, suffix='4')
+    generate_HSV_datasets(dataFolder, 0, 5, dist_ratio=0.65, suffix='4')
+    generate_HSV_datasets(dataFolder, 1, 4, dist_ratio=0.65, suffix='4')
+    generate_HSV_datasets(dataFolder, 1, 5, dist_ratio=0.65, suffix='4')
+    generate_HSV_datasets(dataFolder, 2, 4, dist_ratio=0.65, suffix='4')
+    generate_HSV_datasets(dataFolder, 2, 5, dist_ratio=0.65, suffix='4')
+    '''
+
+
+    '''
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.70, suffix='070')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.75, suffix='075')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.80, suffix='080')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.85, suffix='085')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.90, suffix='090')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.95, suffix='095')
+
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.65, suffix='065')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.60, suffix='060')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.55, suffix='055')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.50, suffix='050')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.45, suffix='045')
+    generate_HSV_datasets(dataFolderVal, 2, 4, dist_ratio=0.40, suffix='040')
+    '''
