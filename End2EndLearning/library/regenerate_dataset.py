@@ -23,6 +23,11 @@ HSV_H_MAX = 180
 HSV_SV_MAX = 255
 YUV_MAX = 255
 
+# level values
+BLUR_LVL = [15, 35, 67, 75, 107]
+NOISE_LVL = [20, 50, 100, 150, 200]
+DIST_LVL = [0.1, 1, 50, 200, 500]
+RGB_LVL = [0.02, 0.2, 0.5, 0.65]
 
 def calculate_cdf(histogram):
     """
@@ -710,14 +715,19 @@ def generate_combined(originalDataset, id, csv_file='', dist_ratio=0.25, numData
 
         # sample parameters
         alpha = np.random.normal(loc=0,scale=0.25,size=6)
-        gaussian_ksize = np.random.randint(3, high=11, size=1)[0]
+        # gaussian_ksize = np.random.randint(3, high=11, size=1)[0]
+        gaussian_ksize = int(np.exp(np.random.uniform(0.1, 4.20469261939, 1))[0])
         
         if gaussian_ksize % 2 == 0: # kernel size must be even
             gaussian_ksize += 1
 
         # noise_level = np.random.randint(0, high=200, size=1)[0]
-        noise_level = abs(int(np.random.normal(loc=0,scale=17,size=1)[0]))
-        distort_level = np.random.randint(0, high=50, size=1)[0]
+        # noise_level = abs(int(np.random.normal(loc=0,scale=17,size=1)[0]))
+        noise_level = int(np.exp(np.random.uniform(0.1, 3.91202300543, 1))[0])
+        # distort_level = np.random.randint(0, high=50, size=1)[0]
+
+        # log-uniform sampling, low = ln(0.1) < -2, and high = ln(500) < 7
+        distort_level = int(np.exp(np.random.uniform(-2.30258509299, 6.21460809842, 1))[0])
 
         # write parameters to parameters.txt in saveDir
         f = open(os.path.join(saveDir,"parameters.txt"),"w+")
@@ -777,11 +787,169 @@ def generate_combined(originalDataset, id, csv_file='', dist_ratio=0.25, numData
 
             if image_id % 6000 == 0:
                 print(saveAsName, ' generated')
+            
+            # break
 
-                
+# lvl can be 1, 2, 3, 4
+# factor can be "blur", "noise", "distort", "R", "G", "B", "H", "S", "V"
+def _generate_middle_level(originalDataset, lvl, lo, hi, factor, direction=0, csv_file=''):
+    
+    if factor in ["blur", "noise", "distort"]:
+        saveDir = "_".join([originalDataset, factor, str(lvl) + "-5"])
+    else:
+        if direction == 0:
+            saveDir = "_".join([originalDataset, factor, "darker", str(lvl) + "-5"])
+        elif direction == 1:
+            saveDir = "_".join([originalDataset, factor, "lighter", str(lvl) + "-5"])
+
+    if not os.path.exists(saveDir):
+        os.makedirs(saveDir)
+
+    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+    print(originalDataset)
+    if csv_file != '':
+        image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
+    
+    for i in image_name_list:
+        image_id = int(os.path.basename(i).replace('.jpg', ''))
+        img = cv2.imread(i).copy()
+
+        new_val = int((hi+lo)/2)
+
+        if factor == "blur":
+            if new_val % 2 == 0:
+                new_val += 1
+
+            img = cv2.GaussianBlur(img, (new_val,new_val), 0)
+        elif factor == "noise":
+            img = add_noise(img, new_val)
+        elif factor == "distort":
+            K = np.eye(3)*1000
+            K[0,2] = img.shape[1]/2
+            K[1,2] = img.shape[0]/2
+            K[2,2] = 1
+            img = cv2.undistort(img, K, np.array([new_val, new_val, 0, 0]))
+
+        elif factor in ["R", "G", "B", "H", "S", "V"]:
+            if factor in ["B", "H"]:
+                channel = 0
+            elif factor in ["G", "S"]:
+                channel = 1
+            else:
+                channel = 2
+
+            if lvl == 1:
+                alpha = 0.08
+            elif lvl == 2:
+                alpha = 0.3
+            elif lvl == 3:
+                alpha = 0.58
+            elif lvl == 4:
+                alpha = 0.8
+            
+            if factor in ["H", "S", "V"]:
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+            if direction == 0:
+                img[:, :, channel] = (img[:, :, channel] * (1-alpha))
+            else:
+                if factor == "H":
+                    img[:, :, channel] = (img[:, :, channel] * (1-alpha)) + (HSV_H_MAX * alpha)
+                else:
+                    img[:, :, channel] = (img[:, :, channel] * (1-alpha)) + (RGB_MAX * alpha)
+            
+            if factor in ["H", "S", "V"]:
+                img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+
+        saveAsName = os.path.join(saveDir, os.path.basename(i))
+    
+        cv2.imwrite(saveAsName, img)
+        if image_id % 6000 == 0:
+            print(saveAsName, ' generated')
 
 
+def generate_middle_blur(originalDataset):
+    _generate_middle_level(originalDataset, 1, BLUR_LVL[0], BLUR_LVL[1], "blur")
+    _generate_middle_level(originalDataset, 2, BLUR_LVL[1], BLUR_LVL[2], "blur")
+    _generate_middle_level(originalDataset, 3, BLUR_LVL[2], BLUR_LVL[3], "blur")
+    _generate_middle_level(originalDataset, 4, BLUR_LVL[3], BLUR_LVL[4], "blur")
 
+def generate_middle_noise(originalDataset):
+    _generate_middle_level(originalDataset, 1, NOISE_LVL[0], NOISE_LVL[1], "noise")
+    _generate_middle_level(originalDataset, 2, NOISE_LVL[1], NOISE_LVL[2], "noise")
+    _generate_middle_level(originalDataset, 3, NOISE_LVL[2], NOISE_LVL[3], "noise")
+    _generate_middle_level(originalDataset, 4, NOISE_LVL[3], NOISE_LVL[4], "noise")
+
+def generate_middle_distort(originalDataset):
+    _generate_middle_level(originalDataset, 1, DIST_LVL[0], DIST_LVL[1], "distort")
+    _generate_middle_level(originalDataset, 2, DIST_LVL[1], DIST_LVL[2], "distort")
+    _generate_middle_level(originalDataset, 3, DIST_LVL[2], DIST_LVL[3], "distort")
+    _generate_middle_level(originalDataset, 4, DIST_LVL[3], DIST_LVL[4], "distort")
+
+def generate_middle_colors(originalDataset):
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "R", direction = 0)
+    _generate_middle_level(originalDataset, 1, 0.2, 0.5, "R", direction = 1)
+    _generate_middle_level(originalDataset, 2, 0.02, 0.2, "R", direction = 0)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "R", direction = 1)
+    _generate_middle_level(originalDataset, 3, 0.02, 0.2, "R", direction = 0)
+    _generate_middle_level(originalDataset, 3, 0.2, 0.5, "R", direction = 1)
+    _generate_middle_level(originalDataset, 4, 0.02, 0.2, "R", direction = 0)
+    _generate_middle_level(originalDataset, 4, 0.2, 0.5, "R", direction = 1)
+
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "G", direction = 0)
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "G", direction = 1)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "G", direction = 0)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "G", direction = 1)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "G", direction = 0)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "G", direction = 1)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "G", direction = 0)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "G", direction = 1)
+
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "B", direction = 0)
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "B", direction = 1)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "B", direction = 0)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "B", direction = 1)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "B", direction = 0)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "B", direction = 1)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "B", direction = 0)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "B", direction = 1)
+
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "H", direction = 0)
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "H", direction = 1)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "H", direction = 0)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "H", direction = 1)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "H", direction = 0)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "H", direction = 1)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "H", direction = 0)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "H", direction = 1)
+
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "S", direction = 0)
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "S", direction = 1)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "S", direction = 0)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "S", direction = 1)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "S", direction = 0)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "S", direction = 1)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "S", direction = 0)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "S", direction = 1)
+
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "V", direction = 0)
+    _generate_middle_level(originalDataset, 1, 0.02, 0.2, "V", direction = 1)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "V", direction = 0)
+    _generate_middle_level(originalDataset, 2, 0.2, 0.5, "V", direction = 1)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "V", direction = 0)
+    _generate_middle_level(originalDataset, 3, 0.5, 0.65, "V", direction = 1)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "V", direction = 0)
+    _generate_middle_level(originalDataset, 4, 0.65, 1, "V", direction = 1)
+
+def generate_all_middle(originalDataset):
+    generate_middle_blur(originalDataset)
+    print('finished generating blur middle datasets')
+    generate_middle_noise(originalDataset)
+    print('finished generating noise middle datasets')
+    generate_middle_distort(originalDataset)
+    print('finished generating distort middle datasets')
+    generate_middle_colors(originalDataset)
+    print('finished generating color middle datasets')
 
 
 if __name__ == '__main__':
@@ -834,7 +1002,10 @@ if __name__ == '__main__':
     dataFolderVal = os.path.join(dataset_path, "valB")
     csvFileVal = os.path.join(dataset_path, "labelsB_val.csv")
 
-    generate_combined(dataFolderVal, 0)
+    # generate_combined(dataFolderVal, 1, numDatasets=15)
+    # print('15 combined dataset finished in ', dataFolderVal)
+    print(dataFolderVal)
+    generate_all_middle(dataFolderVal)
 
     # # Generating dataset modifying blue channel
     # generate_RGB_dataset(dataFolder, 0, 0)
