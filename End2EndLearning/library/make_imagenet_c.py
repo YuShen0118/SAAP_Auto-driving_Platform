@@ -129,8 +129,8 @@ class DistortImageFolder(data.Dataset):
 
         # save_path = '/share/data/vision-greg/DistortedImageNet/JPEG/' + self.method.__name__ + \
         #             '/' + str(self.severity) + '/' + self.idx_to_class[target]
-        save_path = os.path.join(PLATFORM_ROOT + 'Data/udacityA_nvidiaB/' + self.method.__name__ + \
-                    '/' + str(self.severity))
+        save_path = os.path.join(PLATFORM_ROOT,'Data/udacityA_nvidiaB',
+                        '_'.join(['valB','IMGC',self.method.__name__, str(self.severity)]))
 
         if os.path.exists(save_path) == False:
             os.makedirs(save_path, exist_ok=True)
