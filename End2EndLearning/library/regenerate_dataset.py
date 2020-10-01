@@ -700,95 +700,154 @@ def generate_YUV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
         # break # comment
         cv2.imwrite(saveAsName, image)
 
-# samples factors over a uniform distribution
-# factors: blur, noise, distortion, R, G, B, H, S, V
-def generate_combined(originalDataset, id, csv_file='', dist_ratio=0.25, numDatasets=1):
+
+KSIZE_MIN = 0.1
+KSIZE_MAX = 3.8
+NOISE_MIN = 0.1
+NOISE_MAX = 4.6
+DISTORT_MIN = -2.30258509299
+DISTORT_MAX = 5.3
+COLOR_SCALE = 0.25
+
+# generate the combined parameters, the max values for each parameter for a generation of one combination
+def get_combined_parameters():
     alpha = np.zeros(6)
     gaussian_ksize = 0
     noise_level = 0
     distort_level = 0
 
+    alpha = np.random.normal(loc=0,scale=0.6,size=6)
+
+    gaussian_ksize = int(np.exp(np.random.uniform(KSIZE_MIN, KSIZE_MAX, 1))[0])
+
+    if gaussian_ksize % 2 == 0: # kernel size must be even
+        gaussian_ksize += 1
+
+    noise_level = int(np.exp(np.random.uniform(NOISE_MIN, NOISE_MAX, 1))[0])
+    distort_level = int(np.random.uniform(0.1, 50, 1)[0])
+
+    return alpha, gaussian_ksize, noise_level, distort_level #distort_level
+
+# samples factors over a uniform distribution
+# factors: blur, noise, distortion, R, G, B, H, S, V
+def generate_combined(originalDataset, id, csv_file='', dist_ratio=0.25, numDatasets=1):
+
+    # the levels given for each type of corruption. used to scale & normalize for combination levels
+    dist_ranges = [1, 3, 10, 20, 40, 70]
+    noise_ranges = [2, 5, 8, 13, 20, 30]
+    blur_ranges = [2, 8, 15, 35, 50, 67]
+    alpha_ranges = [0.1, 0.2, 0.5, 0.65, 0.8, 1]
+
     for j in range(numDatasets):
-        saveDir = "_".join([originalDataset, "combined", str(id), str(j)])
-        if not os.path.exists(saveDir):
-            os.makedirs(saveDir)
 
-        # sample parameters
-        alpha = np.random.normal(loc=0,scale=0.25,size=6)
-        # gaussian_ksize = np.random.randint(3, high=11, size=1)[0]
-        gaussian_ksize = int(np.exp(np.random.uniform(0.1, 4.20469261939, 1))[0])
+        # the "level 5" parameters sampled once per dataset generated
+        alpha, gaussian_ksize, noise_level, distort_level = get_combined_parameters()
+
+        for l in range(0, 5):
         
-        if gaussian_ksize % 2 == 0: # kernel size must be even
-            gaussian_ksize += 1
+            saveDir = "_".join([originalDataset, "combined", str(id), str(j), "LVL"+str(l+1)])
+            if not os.path.exists(saveDir):
+                os.makedirs(saveDir)
 
-        # noise_level = np.random.randint(0, high=200, size=1)[0]
-        # noise_level = abs(int(np.random.normal(loc=0,scale=17,size=1)[0]))
-        noise_level = int(np.exp(np.random.uniform(0.1, 3.91202300543, 1))[0])
-        # distort_level = np.random.randint(0, high=50, size=1)[0]
+            alpha2 = alpha / alpha_ranges[5] * alpha_ranges[l]
 
-        # log-uniform sampling, low = ln(0.1) < -2, and high = ln(500) < 7
-        distort_level = int(np.exp(np.random.uniform(-2.30258509299, 6.21460809842, 1))[0])
-
-        # write parameters to parameters.txt in saveDir
-        f = open(os.path.join(saveDir,"parameters.txt"),"w+")
-        parameters_concat = np.concatenate((alpha, [gaussian_ksize], [noise_level], [distort_level]))
-        parameters_concat = [str(s) for s in parameters_concat]
-        write_str = ','.join(parameters_concat)
-        f.write("B,G,R,blur_ksize,noise_level,distort_level\n")
-        f.write(write_str + "\n")
-        f.close()
-
-        image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
-        print(originalDataset)
-        if csv_file != '':
-            image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
-        
-        for i in image_name_list:
-            image_id = int(os.path.basename(i).replace('.jpg', ''))
-            img = cv2.imread(i).copy()
+            # normalize and scale corruptions according to their levels 
+            gaussian2 = int(gaussian_ksize / blur_ranges[5] * blur_ranges[l])
+            if gaussian2 % 2 == 0: # kernel size must be even
+                gaussian2 += 1
             
-            # adding color channel distortion on RGB, HSV, 6 channels total
+            noise2 = int(noise_level / noise_ranges[5] * noise_ranges[l])
+            dist2 = int(distort_level / dist_ranges[5] * dist_ranges[l])
 
-            for channel in range(3):
-                if alpha[channel] < 0:
-                    img[:, :, channel] = (img[:, :, channel] * (1+alpha[channel]))
-                else:
-                    img[:, :, channel] = (img[:, :, channel] * (1-alpha[channel])) + (RGB_MAX * alpha[channel])
+            ########### COMMENTED OUT: alternative ways of sampling these values ###########
+            # gaussian2 = int(np.random.uniform(blur_ranges[l], blur_ranges[l+1]))
+            # if gaussian2 % 2 == 0: # kernel size must be even
+            #     gaussian2 += 1
+            # noise2 = int(np.random.uniform(noise_ranges[l], noise_ranges[l+1]))
+            # dist2 = int(np.random.uniform(dist_ranges[l], dist_ranges[l+1]))
             
-            for channel in range(3):
-                max_val = 255
-                if channel == 0:
-                    max_val = 180
+
+            # print(alpha, gaussian_ksize, noise_level, distort_level)
+            # # sample parameters
+            # alpha = np.random.normal(loc=0,scale=0.25,size=6)
+            # # gaussian_ksize = np.random.randint(3, high=11, size=1)[0]
+            # gaussian_ksize = int(np.exp(np.random.uniform(0.1, 4.20469261939, 1))[0])
+            
+            # if gaussian_ksize % 2 == 0: # kernel size must be even
+            #     gaussian_ksize += 1
+
+            # # noise_level = np.random.randint(0, high=200, size=1)[0]
+            # # noise_level = abs(int(np.random.normal(loc=0,scale=17,size=1)[0]))
+            # noise_level = int(np.exp(np.random.uniform(0.1, 3.91202300543, 1))[0])
+            # # distort_level = np.random.randint(0, high=50, size=1)[0]
+
+            # # log-uniform sampling, low = ln(0.1) < -2, and high = ln(500) < 7
+            # distort_level = int(np.exp(np.random.uniform(-2.30258509299, 6.21460809842, 1))[0])
+            ####################################################################################
+
+
+            # write parameters to parameters.txt in saveDir
+            f = open(os.path.join(saveDir,"parameters.txt"),"w+")
+            parameters_concat = np.concatenate((alpha2, [gaussian2], [noise2], [dist2]))
+            parameters_concat = [str(s) for s in parameters_concat]
+            write_str = ','.join(parameters_concat)
+            f.write("B,G,R,blur_ksize,noise_level,distort_level\n")
+            f.write(write_str + "\n")
+            f.close()
+
+            image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+            print(originalDataset)
+            if csv_file != '':
+                image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
+            
+            for i in image_name_list:
+                image_id = int(os.path.basename(i).replace('.jpg', ''))
+                img = cv2.imread(i).copy()
                 
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                if alpha[channel+3] < 0:
-                    img[:, :, channel] = (img[:, :, channel] * (1+alpha[channel+3]))
-                else:
-                    img[:, :, channel] = (img[:, :, channel] * (1-alpha[channel+3])) + (max_val * alpha[channel+3])
-                img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+                # adding color channel distortion on RGB, HSV, 6 channels total
 
-            # adding blur
-            img = cv2.GaussianBlur(img, (gaussian_ksize,gaussian_ksize), 0)
+                for channel in range(3):
+                    if alpha2[channel] < 0:
+                        img[:, :, channel] = (img[:, :, channel] * (1+alpha2[channel]))
+                    else:
+                        img[:, :, channel] = (img[:, :, channel] * (1-alpha2[channel])) + (RGB_MAX * alpha2[channel])
+                
+                for channel in range(3):
+                    max_val = 255
+                    if channel == 0:
+                        max_val = 180
+                    
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                    if alpha2[channel+3] < 0:
+                        img[:, :, channel] = (img[:, :, channel] * (1+alpha2[channel+3]))
+                    else:
+                        img[:, :, channel] = (img[:, :, channel] * (1-alpha2[channel+3])) + (max_val * alpha2[channel+3])
+                    img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+
+                # adding blur
+                img = cv2.GaussianBlur(img, (gaussian2,gaussian2), 0)
+                
+                # adding noise
+                img = add_noise(img, noise2)
+
+                # adding distortion
+                K = np.eye(3)*1000
+                K[0,2] = img.shape[1]/2
+                K[1,2] = img.shape[0]/2
+                K[2,2] = 1
+
+                img = cv2.undistort(img, K, np.array([dist2, dist2, 0, 0]))
+
+                saveAsName = os.path.join(saveDir, os.path.basename(i))
             
-            # adding noise
-            img = add_noise(img, noise_level)
+                cv2.imwrite(saveAsName, img)
 
-            # adding distortion
-            K = np.eye(3)*1000
-            K[0,2] = img.shape[1]/2
-            K[1,2] = img.shape[0]/2
-            K[2,2] = 1
-
-            img = cv2.undistort(img, K, np.array([distort_level, distort_level, 0, 0]))
-
-            saveAsName = os.path.join(saveDir, os.path.basename(i))
-        
-            cv2.imwrite(saveAsName, img)
-
-            if image_id % 6000 == 0:
-                print(saveAsName, ' generated')
+                # if image_id % 6000 == 0:
+                #     print(saveAsName, ' generated')
+                
+                # break
             
-            # break
+            print('generated at ', saveDir)
 
 # lvl can be 1, 2, 3, 4
 # factor can be "blur", "noise", "distort", "R", "G", "B", "H", "S", "V"
@@ -1002,10 +1061,10 @@ if __name__ == '__main__':
     dataFolderVal = os.path.join(dataset_path, "valB")
     csvFileVal = os.path.join(dataset_path, "labelsB_val.csv")
 
-    # generate_combined(dataFolderVal, 1, numDatasets=15)
+    generate_combined(dataFolderVal, 2, numDatasets=6) # all levels
+
     # print('15 combined dataset finished in ', dataFolderVal)
-    print(dataFolderVal)
-    generate_all_middle(dataFolderVal)
+    # generate_all_middle(dataFolderVal)
 
     # # Generating dataset modifying blue channel
     # generate_RGB_dataset(dataFolder, 0, 0)
