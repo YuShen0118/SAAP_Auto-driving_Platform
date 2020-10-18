@@ -290,9 +290,11 @@ def multi_factor_search_test():
 	labelName = get_label_file_name(train_folder)
 	labelPath = DATASET_ROOT + labelName
 
-	trainOurputFolder = train_folder + "_quality_channel"
+	trainOurputFolder = train_folder + "_all_rob_1epoch_retrain"
 	trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
-	train_network_multi_factor_search(imagePath, labelPath, trainOutputPath)
+	modelPath = ""
+	#modelPath = TRAIN_OUTPUT_ROOT + "trainB_quality_channelGSY/model-final.h5"
+	train_network_multi_factor_search(imagePath, labelPath, trainOutputPath, modelPath=modelPath)
 
 	modelPath = trainOutputPath + "/model-final.h5"
 

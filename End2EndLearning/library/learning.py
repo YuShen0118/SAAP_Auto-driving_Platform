@@ -611,8 +611,6 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			start = time.time()
 			running_loss = 0.0
 			net.train()
-			# zero the parameter gradients
-			optimizer.zero_grad()
 
 			for i, (inputs, labels) in enumerate(trainGenerator):
 				if BN_flag == 3:
@@ -626,9 +624,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 					inputs = np.transpose(inputs, (0, 3, 1, 2))
 					outputs = net(torch.Tensor(inputs).cuda())
 
-
 				# backward + optimize
-
 				if Maxup_flag:
 					m=4
 					prediction = outputs.cpu().detach().numpy().flatten().reshape((int(batchSize/m), m))
@@ -643,30 +639,18 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 
 				labels = labels.flatten()
 				labels_2d = labels.reshape((labels.shape[0], 1))
-				# print('labels_2d.shape')
-				# print(labels_2d.shape)
-				# print(labels)
-				# print(labels_2d)
 
-				#max_id = np.argmax(np.abs(outputs.cpu().detach().numpy()-labels))
-				#print(np.abs(outputs.detach().numpy()-labels))
-				#print(max_id)
-				# print(outputs[max_id])
-				# print(labels[max_id])
-
-				#loss = criterion(outputs[max_id], torch.Tensor(labels[max_id]))
+				# zero the parameter gradients
+				optimizer.zero_grad()
 
 				loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
-				#print(loss.grad)
+
 				loss.backward()
-				#print(loss.grad)
-				# for p in net.parameters():
-				# 	print(p.grad.norm())
+
 				optimizer.step()
 
 				# print statistics
 				running_loss += loss.item()
-				#print(running_loss)
 
 				prediction_error = np.abs(outputs.cpu().detach().numpy().flatten()-labels)
 				for j,thresh_hold in enumerate(thresh_holds):
