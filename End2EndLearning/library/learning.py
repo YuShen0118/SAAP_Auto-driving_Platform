@@ -15,8 +15,20 @@ from sklearn.model_selection import train_test_split
 
 from utilities import resize_image, random_distort, load_train_data, load_train_data_multi, load_train_data_multi_pack
 from networks import net_lstm, create_nvidia_network, GAN_Nvidia, mean_accuracy
+from networks_pytorch import create_nvidia_network_pytorch
 import time
 import ntpath
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+
+from numpy.random import default_rng
+
+
+
+#tf.enable_eager_execution()
 
 
 
@@ -74,27 +86,90 @@ def gen_train_data_lstm_m2o(xList, yList, batchSize, nFramesSample):
 				y = np.empty((batchSize, 1))
 				sampleCount = 0
 					
-						
-def gen_train_data_random(xList, yList, batchSize, fRandomDistort = False, fFlip = False):
+
+def load_data_all(xList, yList):
 	xList, yList = shuffle(xList, yList)
 	X,y = ([],[])
+	for i in range(len(yList)):
+		image_path = xList[i]
+		if not os.path.isfile(image_path):
+			image_path = image_path.replace(".jpg", "_fake.png")
+		if not os.path.isfile(image_path):
+			print(image_path)
+		img = resize_image(cv2.imread(image_path))
+
+		angle = yList[i]
+		X.append(img)
+		y.append(angle)
+
+	return (np.array(X), np.array(y))
+
+						
+def gen_train_data_random(xList, yList, batchSize, fRandomDistort = False, fFlip = False, Maxup_flag = False):
+	xList, yList = shuffle(xList, yList)
+	X,y = ([],[])
+
+	# For Maxup
+	rng = default_rng()
+	m=4 # TODO, currently fix m to 4
+	perturbations = np.array(["trainB", "trainB_R_darker_5", "trainB_R_darker_3", "trainB_R_lighter_3", "trainB_R_lighter_5", 
+					 "trainB_G_darker_5", "trainB_G_darker_3", "trainB_G_lighter_3", "trainB_G_lighter_5", 
+					 "trainB_B_darker_5", "trainB_B_darker_3", "trainB_B_lighter_3", "trainB_B_lighter_5", 
+					 "trainB_H_darker_5", "trainB_H_darker_3", "trainB_H_lighter_3", "trainB_H_lighter_5", 
+					 "trainB_S_darker_5", "trainB_S_darker_3", "trainB_S_lighter_3", "trainB_S_lighter_5", 
+					 "trainB_V_darker_5", "trainB_V_darker_3", "trainB_V_lighter_3", "trainB_V_lighter_5", 
+					 "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5",
+					 "trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5",
+					 "trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5"])
+	tot_p = len(perturbations)
+
 	while True:       
 		for i in range(len(yList)):
 			image_path = xList[i]
-			if not os.path.isfile(image_path):
-				image_path = image_path.replace(".jpg", "_fake.png")
-			if not os.path.isfile(image_path):
-				print(image_path)
-			img = resize_image(cv2.imread(image_path))
 			angle = yList[i]
-			if fRandomDistort:
-				print('######### Applying random distortion #########')
-				img, angle = random_distort(img, angle)
-			X.append(img)
-			y.append(angle)
+
+			if Maxup_flag:
+				#idx = random.randint(tot_p, size=(m))
+				idx = rng.choice(tot_p, size=m, replace=False)
+				#idx = [0]
+				for j in idx:
+					new_train_folder = perturbations[j]
+					new_image_path = image_path.replace("trainB", new_train_folder)
+					#print(new_image_path)
+					img = resize_image(cv2.imread(new_image_path))
+					X.append(img)
+					y.append(angle)
+
+
+			else:
+				if not os.path.isfile(image_path):
+					image_path = image_path.replace(".jpg", "_fake.png")
+				if not os.path.isfile(image_path):
+					print(image_path)
+				img = resize_image(cv2.imread(image_path))
+
+
+				#TODO, tmp shift code
+				# if "trainC1" in image_path:
+				# 	B_means = (np.array([-0.05958, 0.03200, -0.06430]) + 1 ) * 127.5
+				# 	B_stds = np.array([0.52423, 0.11046, 0.13780]) * 127.5
+				# 	C1_means = (np.array([-0.26482, 0.08651, -0.05964]) + 1 ) * 127.5
+				# 	C1_stds = np.array([0.47422, 0.10676, 0.10106]) * 127.5
+				# 	for cn in range(3):
+				# 		#img[:,:,cn] = (((img[:,:,cn] / 127.5 - 1) - C1_means[cn]) / C1_stds[cn] * B_stds[cn] + B_means[cn] + 1) * 127.5
+				# 		#img[:,:,cn] = img[:,:,cn] * (1 / 127.5 / C1_stds[cn] * B_stds[cn] * 127.5) + ((-1 - C1_means[cn]) / C1_stds[cn] * B_stds[cn] + B_means[cn] + 1) * 127.5
+				# 		#img[:,:,cn] = (img[:,:,cn]- C1_means[cn]) / C1_stds[cn] * B_stds[cn] + B_means[cn]
+				# 		img[:,:,cn] = img[:,:,cn] * (B_stds[cn] / C1_stds[cn]) + ((- C1_means[cn]) / C1_stds[cn] * B_stds[cn] + B_means[cn])
+
+				if fRandomDistort:
+					print('######### Applying random distortion #########')
+					img, angle = random_distort(img, angle)
+				X.append(img)
+				y.append(angle)
+
 			
 			## when a batch is ready, yield, and prepare for the next batch
-			if len(X) == batchSize:
+			if len(X) >= batchSize:
 				yield (np.array(X), np.array(y))
 				X, y = ([],[])
 				xList, yList = shuffle(xList, yList)
@@ -208,6 +283,44 @@ def gen_train_data_random_AdvProp(xList, yList, xList_advp, yList_advp, batchSiz
 						xList, yList = shuffle(xList, yList)
 
 
+def gen_train_data_random_featshift(xList, yList, xList_advp, yList_advp, batchSize):
+	xList, yList = shuffle(xList, yList)
+	X,y = ([],[])
+	X_advp, y_advp = ([],[])
+	while True:       
+		for i in range(max(len(yList), len(yList_advp))):
+			image_path = xList[i%len(xList)]
+			if not os.path.isfile(image_path):
+				image_path = image_path.replace(".jpg", "_fake.png")
+			img = resize_image(cv2.imread(image_path))
+			angle = yList[i%len(yList)]
+
+			image_path_advp = xList_advp[i%len(xList_advp)]
+			if not os.path.isfile(image_path_advp):
+				image_path_advp = image_path_advp.replace(".jpg", "_fake.png")
+			# img_advp = resize_image(cv2.imread(image_path_advp))
+			feat_path_advp = image_path_advp.replace('trainC1', 'trainC1_feat').replace('.jpg', '.npy')
+			feature = np.load(feat_path_advp)
+			angle_advp = yList_advp[i%len(yList_advp)]
+
+			#X.append([img, img_advp])
+			#y.append([angle, angle_advp])
+			X.append(img)
+			y.append(angle)
+			X_advp.append(feature)
+			y_advp.append(angle_advp)
+
+			## when a batch is ready, yield, and prepare for the next batch
+			if len(X) == batchSize:
+				#yield (np.array(X), np.array(y))
+				#yield (np.array([X, X_advp]), np.array([y, y_advp]))
+				yield [np.array(X), np.array(X_advp)], [np.array(y), np.array(y_advp)]
+				X, y = ([],[])
+				X_advp, y_advp = ([],[])
+				xList, yList = shuffle(xList, yList)
+				xList_advp, yList_advp = shuffle(xList_advp, yList_advp)
+				
+
 '''
 def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
 	
@@ -279,9 +392,44 @@ def normalize_value(value_list):
 	value_list = value_list + THRESH_HOLDS + 0.5
 	return value_list
 
+def get_mean_std():
+
+	mean2 = [-0.08302036,-0.20238686,0.4779597,-0.001428917,-1.0989053,0.11795678,0.4835723,0.17353112,\
+			-0.4888867,-0.057860363,-0.19815631,0.54467463,0.48134643,0.20496474,-0.31805158,-0.5533684,\
+			0.38188627,-0.4976213,-0.13837108,-0.899611,-0.47604445,0.20196259,-0.59547615,0.14284715,\
+			-0.16108884,0.29046857,-1.0335027,0.015435962,-0.55076504,0.06926734,-0.12838832,0.2616188,\
+			0.540464,-0.17048602,-0.10068798,-0.48923278,-0.057503913,-0.051794812,0.47316852,0.1445276,\
+			-0.020938095,-0.23620464,-0.016980559,0.2566837,-0.038310815,-0.038774405,-1.8071651,-0.115686394,\
+			-0.7175674,-0.97459745,-0.38946486,-0.3183761,-0.53616697,-0.21956977,0.41411576,-0.30640075,\
+			-0.45674223,-0.020145502,0.20598692,0.46789482,-0.5337459,-1.4274683,-0.05283879,-1.0345378]
+
+	std2 = [2.0937233,2.2896929,3.5013025,1.9630629,2.5071824,1.6628706,1.7510566,2.425439,\
+			2.0053973,1.4680599,1.855911,1.8895342,1.5442249,1.9109975,1.53864,2.2669528,\
+			2.3621962,2.3518426,2.1757283,2.2138484,1.9544407,1.2151252,2.1721957,1.4883112,\
+			1.953139,1.8143281,2.2361205,1.7194833,2.016445,1.8745058,1.3707753,1.4898472,\
+			1.9244006,1.7030011,0.8539401,1.7533897,1.708709,1.6200079,2.2226865,1.6120292,\
+			1.8885119,1.6399024,1.6098967,1.4447424,2.6011627,1.871935,3.2005286,2.4882145,\
+			2.1371593,3.0658402,1.9056149,2.107141,2.0150385,2.0149024,2.0458705,1.8512557,\
+			1.9597613,1.4950666,2.492967,2.2759092,2.3835964,3.5994263,2.2815502,2.1653445]
+
+	mean2_new = []
+	for v in range(len(mean2)):
+		mean_ext = np.full((128,1,18), mean2[v])
+		mean2_new.append(mean_ext)
+	mean2 = np.array(mean2_new).transpose((1,0,2,3))
+
+	std2_new = []
+	for v in range(len(std2)):
+		std_ext = np.full((128,1,18), std2[v])
+		std2_new.append(std_ext)
+	std2 = np.array(std2_new).transpose((1,0,2,3))
+
+	return torch.Tensor(mean2).cuda(), torch.Tensor(std2).cuda()
+
 def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs, modelPath = "", 
 	trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imageDir_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, pack_flag=False, mid=0):
+	BN_flag=0, imageDir_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, 
+	pack_flag=False, mid=0, Maxup_flag=False, pytorch_flag=False):
 	
 	## assigning variables
 	fRandomDistort = flags[0]
@@ -303,7 +451,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 
-	if BN_flag == 2:
+	if (BN_flag == 2) or (BN_flag == 3):
 		xList_advp, yList_advp = load_train_data_multi(imageDir_list_advp, labelPath_list_advp, nRep, fThreeCameras, trainRatio_advp)
 
 		xTrainList_advp, xValidList_advp = train_test_split(np.array(xList_advp), test_size=0.1, random_state=42)
@@ -324,41 +472,90 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	print('##############################\n')
 	
 	## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
-	if netType == 1:
-# 		outputPath = trainPath + 'trainedModels/models-cnn/';
+	if pytorch_flag:
 		nChannel = 3
-		if pack_flag:
-			nChannel = 3*len(imageDir_list)
-		net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
-		if BN_flag <= 1:
-			if not pack_flag:
-				trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize)
-				validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
-			else:
-				trainGenerator = gen_train_data_random_pack_channel(xTrainList, yTrainList, batchSize)
-				validGenerator = gen_train_data_random_pack_channel(xValidList, yValidList, batchSize)
-		elif BN_flag == 2:
-			trainGenerator = gen_train_data_random_AdvProp(xTrainList, yTrainList, xTrainList_advp, yTrainList_advp, batchSize)
-			validGenerator = gen_train_data_random_AdvProp(xValidList, yValidList, xValidList_advp, yValidList_advp, batchSize)
+		#net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
+		net = create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel)
+		if (BN_flag == 3):
+			trainGenerator = gen_train_data_random_featshift(xTrainList, yTrainList, xTrainList_advp, yTrainList_advp, batchSize)
+		else:
+			trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
+			validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
+		print(net)
+	else:
+		if netType == 1:
+	# 		outputPath = trainPath + 'trainedModels/models-cnn/';
+			nChannel = 3
+			if pack_flag:
+				nChannel = 3*len(imageDir_list)
 
-	elif netType == 2:
-# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
-		net = net_lstm(2, nFramesSample)
-		trainGenerator = gen_train_data_lstm_m2o(xTrainList, yTrainList, batchSize, nFramesSample)
-		validGenerator = gen_train_data_lstm_m2o(xValidList, yValidList, batchSize, nFramesSample)
-	elif netType == 3:
-# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
-		net = net_lstm(3, nFramesSample)
-		trainGenerator = gen_train_data_lstm_m2m(xTrainList, yTrainList, batchSize, nFramesSample)
-		validGenerator = gen_train_data_lstm_m2m(xValidList, yValidList, batchSize, nFramesSample)
-	elif netType == 5:
-		net = GAN_Nvidia()
-		trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize)
-		validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
+			if BN_flag == 3:
+				net, netI, netF = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
+			else:
+				net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
+
+			if BN_flag <= 1:
+				if not pack_flag:
+					trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
+					validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
+				else:
+					trainGenerator = gen_train_data_random_pack_channel(xTrainList, yTrainList, batchSize)
+					validGenerator = gen_train_data_random_pack_channel(xValidList, yValidList, batchSize)
+			elif (BN_flag == 2) or (BN_flag == 3):
+				trainGenerator = gen_train_data_random_AdvProp(xTrainList, yTrainList, xTrainList_advp, yTrainList_advp, batchSize)
+				validGenerator = gen_train_data_random_AdvProp(xValidList, yValidList, xValidList_advp, yValidList_advp, batchSize)
+
+		elif netType == 2:
+	# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+			net = net_lstm(2, nFramesSample)
+			trainGenerator = gen_train_data_lstm_m2o(xTrainList, yTrainList, batchSize, nFramesSample)
+			validGenerator = gen_train_data_lstm_m2o(xValidList, yValidList, batchSize, nFramesSample)
+		elif netType == 3:
+	# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+			net = net_lstm(3, nFramesSample)
+			trainGenerator = gen_train_data_lstm_m2m(xTrainList, yTrainList, batchSize, nFramesSample)
+			validGenerator = gen_train_data_lstm_m2m(xValidList, yValidList, batchSize, nFramesSample)
+		elif netType == 5:
+			net = GAN_Nvidia()
+			trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize)
+			validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
+
+		print(net.summary())
+
 
 	if modelPath != "":
 		print("pretrain modelPath: ", modelPath)
-		net.load_weights(modelPath)
+
+		#print(net.summary())
+		#print(net.layers[2].get_weights())
+		#print(net.layers[13].get_weights())
+
+		if (BN_flag == 3):
+			netF.load_weights(modelPath)
+			for id in range(len(netF.layers)):
+				netF.layers[id].trainable = False
+
+			net_untrain = create_nvidia_network(0, fClassifier, nClass)
+			for id in range(len(net_untrain.layers)):
+				netI.layers[id].set_weights(net_untrain.layers[id].get_weights())
+				netI.layers[id].trainable = True
+
+			# print('refreeze')
+			# for layer in net.layers:
+			# 	print(layer.trainable)
+		else:
+			net.load_weights(modelPath)
+
+		# net1 = create_nvidia_network(0, fClassifier, nClass, nChannel)
+		# print(net1.summary())
+		# net1.load_weights(modelPath)
+		# print(net1.layers[13].get_weights())
+
+		# #print(net.get_weights())
+		# #print(net.layers[2].get_weights())
+		# #print(net.layers[13].get_weights())
+		# print(net.layers[19].get_weights())
+
 		print(partialPreModel)
 		if partialPreModel:
 			print("partial PreModel activate")
@@ -391,32 +588,157 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	#	shutil.rmtree(outputPath)
 	#	os.makedirs(outputPath)
 
-	modelLog = ModelCheckpoint(outputPath + 'model{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
-	lossLog  = CSVLogger(outputPath + 'loss-log', append=True, separator=',')
-	#tensorboard_callback = keras.callbacks.TensorBoard(log_dir=outputPath+"logs/")
 
 	## train
-	if netType != 5:
-		nTrainStep = int(len(yTrainList)/batchSize) + 1
-		nValidStep = int(len(yValidList)/batchSize) + 1
-		net.fit_generator(trainGenerator, steps_per_epoch=nTrainStep, epochs=nEpoch, \
-		verbose=2, callbacks=[modelLog,lossLog], validation_data=validGenerator, validation_steps=nValidStep)
+	if pytorch_flag:
+		#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+		net = net.cuda()
+		criterion = nn.MSELoss()
+		#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+		#optimizer = optim.Adam(net.parameters(), lr=0.0001)
+		optimizer = optim.Adam(net.parameters(), lr=0.0001)
+		batch_num = int(len(yTrainList)/batchSize)
+		thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+		train_acc_list = [0,0,0,0,0,0]
+
+		#TODO, for shift
+		mean2, std2 = get_mean_std()
+
+		f_log = open(outputPath + 'loss-log', 'w')
+		f_log.write('epoch,loss,mean_accuracy,val_loss,val_mean_accuracy\n')
+		
+		for epoch in range(nEpoch):  # loop over the dataset multiple times
+			start = time.time()
+			running_loss = 0.0
+			net.train()
+			# zero the parameter gradients
+			optimizer.zero_grad()
+
+			for i, (inputs, labels) in enumerate(trainGenerator):
+				if BN_flag == 3:
+					image, feature = inputs
+					labels1, labels2 = labels
+					image = np.transpose(image, (0, 3, 1, 2))
+					inputs = [image, feature]
+					labels = np.concatenate((labels1, labels2))
+					outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+				else:
+					inputs = np.transpose(inputs, (0, 3, 1, 2))
+					outputs = net(torch.Tensor(inputs).cuda())
+
+
+				# backward + optimize
+
+				if Maxup_flag:
+					m=4
+					prediction = outputs.cpu().detach().numpy().flatten().reshape((int(batchSize/m), m))
+					labels = labels.reshape((int(batchSize/m), m))
+
+					error = np.abs( prediction - labels)
+
+					max_ids = np.argmax(error, axis=1)
+					b = np.zeros((max_ids.size, m))
+					b[np.arange(max_ids.size),max_ids] = True
+					labels = np.where(b < 0.5, prediction, labels)
+
+				labels = labels.flatten()
+				labels_2d = labels.reshape((labels.shape[0], 1))
+				# print('labels_2d.shape')
+				# print(labels_2d.shape)
+				# print(labels)
+				# print(labels_2d)
+
+				#max_id = np.argmax(np.abs(outputs.cpu().detach().numpy()-labels))
+				#print(np.abs(outputs.detach().numpy()-labels))
+				#print(max_id)
+				# print(outputs[max_id])
+				# print(labels[max_id])
+
+				#loss = criterion(outputs[max_id], torch.Tensor(labels[max_id]))
+
+				loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
+				#print(loss.grad)
+				loss.backward()
+				#print(loss.grad)
+				# for p in net.parameters():
+				# 	print(p.grad.norm())
+				optimizer.step()
+
+				# print statistics
+				running_loss += loss.item()
+				#print(running_loss)
+
+				prediction_error = np.abs(outputs.cpu().detach().numpy().flatten()-labels)
+				for j,thresh_hold in enumerate(thresh_holds):
+					acc_count = np.sum(prediction_error < thresh_hold)
+					train_acc_list[j] += acc_count
+
+				if i >= batch_num-1:
+					break
+
+			for j in range(len(train_acc_list)):
+				train_acc_list[j] = train_acc_list[j] / batch_num / len(labels)
+			train_acc = np.mean(train_acc_list)
+
+			net.eval()
+			(inputs, labels) = load_data_all(xValidList, yValidList)
+			inputs = np.transpose(inputs, (0, 3, 1, 2))
+			labels_2d = labels.reshape((labels.shape[0], 1))
+
+			if BN_flag == 3:
+				outputs = net(torch.Tensor(inputs).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+			else:
+				outputs = net(torch.Tensor(inputs).cuda())
+
+			outputs = outputs.cpu().detach().numpy().flatten()[0:len(labels)]
+			loss = criterion(torch.Tensor(outputs).cuda(), torch.Tensor(labels).cuda())
+			valid_loss = loss.item()
+
+			val_acc_list = []
+			prediction_error = np.abs(outputs-labels)
+			for thresh_hold in thresh_holds:
+				acc = np.sum(prediction_error < thresh_hold) / len(prediction_error)
+				val_acc_list.append(acc)
+
+			val_acc = np.mean(val_acc_list)
+
+
+			end = time.time()
+			print('[%d/%d][cost time %f] training loss: %.3f, training acc: %.3f, valid loss: %.3f, valid acc: %.3f' % \
+				(epoch+1, nEpoch, end-start, running_loss / batch_num, train_acc, valid_loss, val_acc))
+			f_log.write("{:d},{:.4f},{:.4f},{:.4f},{:.4f}\n".format(epoch+1, running_loss / batch_num, train_acc, valid_loss, val_acc))
+			f_log.flush()
+			if epoch % 100 == 0:
+				torch.save(net.state_dict(), outputPath + 'model_' + str(epoch) + '.pth')
+
+		f_log.close()
+		torch.save(net.state_dict(), outputPath + 'model-final.pth')
+		print('Finished Training')
 	else:
-		for [x_batch, y_batch] in trainGenerator:
-			print(x_batch.shape)
-			print(y_batch.shape)
-			print(y_batch[0])
-			input_img = tf.convert_to_tensor(x_batch, dtype=tf.float32)
-			print(input_img)
-			cv2.imshow("input", input_img[0].eval(session=tf.compat.v1.Session())/255)
-			imgs = net.g(input_img)
+		modelLog = ModelCheckpoint(outputPath + 'model{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
+		lossLog  = CSVLogger(outputPath + 'loss-log', append=True, separator=',')
+		#tensorboard_callback = keras.callbacks.TensorBoard(log_dir=outputPath+"logs/")
 
-			cv2.imshow("output", imgs[0].eval(session=tf.compat.v1.Session())/255)
-			cv2.waitKey(0)
+		if netType != 5:
+			nTrainStep = int(len(yTrainList)/batchSize) + 1
+			nValidStep = int(len(yValidList)/batchSize) + 1
+			net.fit_generator(trainGenerator, steps_per_epoch=nTrainStep, epochs=nEpoch, \
+			verbose=2, callbacks=[modelLog,lossLog], validation_data=validGenerator, validation_steps=nValidStep)
+		else:
+			for [x_batch, y_batch] in trainGenerator:
+				print(x_batch.shape)
+				print(y_batch.shape)
+				print(y_batch[0])
+				input_img = tf.convert_to_tensor(x_batch, dtype=tf.float32)
+				print(input_img)
+				cv2.imshow("input", input_img[0].eval(session=tf.compat.v1.Session())/255)
+				imgs = net.g(input_img)
 
-	net.save(outputPath + 'model-final_' + str(mid) + '.h5')
-	net.save(outputPath + 'model-final.h5')
-	print(net.summary())
+				cv2.imshow("output", imgs[0].eval(session=tf.compat.v1.Session())/255)
+				cv2.waitKey(0)
+
+		net.save(outputPath + 'model-final_' + str(mid) + '.h5')
+		net.save(outputPath + 'model-final.h5')
 	
 	
 '''
@@ -526,8 +848,74 @@ def train_dnn_overfitting(trainSpec, xTrainList, yTrainList, xValidList, yValidL
 
 '''
 
+def get_bin_id(v, bin_size=1, bin_amount=49):
+	return np.clip(int(v / bin_size + bin_amount / 2), 0, 48)
+
+def generate_bin_border_list():
+	step = 0.2
+	start_b = 0.1
+	current_b = start_b
+	bin_border_list_1 = [current_b]
+	while current_b < 25:
+		step *= 2
+		current_b = current_b + step
+		bin_border_list_1.append(current_b)
+		#print(current_b)
+
+	bin_border_list = []
+	m = len(bin_border_list_1)
+	for i in range(m-1):
+		bin_border_list.append(-bin_border_list_1[m-2-i])
+	for i in range(m-1):
+		bin_border_list.append(bin_border_list_1[i])
+
+	# for i in range(len(bin_border_list)):
+	# 	print(bin_border_list[i])
+
+	return bin_border_list
+
+def get_bin_id_ununiform(v, bin_border_list):
+
+	for i in range(len(bin_border_list)):
+		if v < bin_border_list[i]:
+			break
+
+	return i
+
+def bin_metric(predict_results, groundtruth_labels, uniform_bin=False, thresh_hold=0.2):
+	if uniform_bin:
+		bin_size = 1
+		bin_amount = 49
+	else:
+		bin_amount = 13
+	total_array = np.zeros(bin_amount)
+	correct_array = np.zeros(bin_amount)
+
+	bin_border_list = generate_bin_border_list()
+
+	for i in range(len(groundtruth_labels)):
+		v_gt = groundtruth_labels[i]
+		if uniform_bin:
+			bin_id = get_bin_id(v_gt, bin_size, bin_amount)
+		else:
+			bin_id = get_bin_id_ununiform(v_gt, bin_border_list)
+		total_array[bin_id] += 1
+
+		v_p = predict_results[i]
+		if (abs(v_p-v_gt) < thresh_hold):
+			correct_array[bin_id] += 1
+
+	for i in range(bin_amount):
+		print(i, ': ', int(correct_array[i]), ' / ', int(total_array[i]), '  {:.2f}'.format(correct_array[i]/total_array[i]*100), '%')
+		# if i == int(bin_amount/2):
+		# 	print('(', int(correct_array[i]), '/', int(total_array[i]), ')', end = ' ')
+		# else:
+		# 	print(int(correct_array[i]), '/', int(total_array[i]), end = ' ')
+
+
+
 	
-def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType, flags, specs, BN_flag=0, pathID=0, ratio=1, pack_flag=False):
+def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType, flags, specs, BN_flag=0, pathID=0, ratio=1, pack_flag=False, pytorch_flag=False):
 	
     ## assigning variables
 # 	fRandomDistort = flags[0]
@@ -549,12 +937,12 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 
 	### retrieve the test data
 	if not pack_flag:
-		testFeatures, testLabels = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
+		testImagePaths, testLabels = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
 	else:
-		testFeatures, testLabels = load_train_data_multi_pack(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
+		testImagePaths, testLabels = load_train_data_multi_pack(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
 
-	#testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras, ratio=ratio)
-	testFeatures = np.array(testFeatures)
+	#testImagePaths, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras, ratio=ratio)
+	testImagePaths = np.array(testImagePaths)
 	testLabels = np.array(testLabels)
 	if pack_flag:
 		testLabels = testLabels[:,0]
@@ -565,21 +953,21 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 		testLabels = normalize_value(testLabels)
 		testLabels = to_categorical(testLabels, num_classes = nClass)
     
-	print(testFeatures)
+	print(testImagePaths)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 	testData = []
 	if not pack_flag:
 		for i in range(len(testLabels)):
-			image_path = testFeatures[i]
+			image_path = testImagePaths[i]
 			if not os.path.isfile(image_path):
 				image_path = image_path.replace(".jpg", "_fake.png")
 			img = resize_image(cv2.imread(image_path))
 			testData.append(img)
 	else:
-		for i in range(len(testFeatures)):
-			for j in range(len(testFeatures[i])):
-				image_path = testFeatures[i][j]
+		for i in range(len(testImagePaths)):
+			for j in range(len(testImagePaths[i])):
+				image_path = testImagePaths[i][j]
 				if not os.path.isfile(image_path):
 					image_path = image_path.replace(".jpg", "_fake.png")
 				img_1 = resize_image(cv2.imread(image_path))
@@ -595,93 +983,147 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 	testData = np.array(testData)
 	nChannel=3
 	if pack_flag:
-		testFeatures = testFeatures[:,0]
+		testImagePaths = testImagePaths[:,0]
 		nChannel = 3*len(imageDir_list)
 
+	# redistribution
+	#testData = ((((testData / 127.5 - 1) - (-0.030626608) ) / 0.3224381 * 0.320617 + (-0.07968183)) + 1) * 127.5
+	# print(np.min(testData))
+	# print(np.max(testData))
 
-    ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
-	if netType == 1:
-# 		outputPath = trainPath + 'trainedModels/models-cnn/';
-		net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
-	elif netType == 2:
-# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
-		net = net_lstm(2, nFramesSample)
-	elif netType == 3:
-# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
-		net = net_lstm(3, nFramesSample)
+	## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	if pytorch_flag:
+		net = create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel)
+	else:
+		if netType == 1:
+	# 		outputPath = trainPath + 'trainedModels/models-cnn/';
+			net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
+			if BN_flag == 3:
+				net = net[0]
+		elif netType == 2:
+	# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+			net = net_lstm(2, nFramesSample)
+		elif netType == 3:
+	# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+			net = net_lstm(3, nFramesSample)
 
 	#print(net.layers[3].get_weights())
-	print(net.summary())
+	if pytorch_flag:
+		print(net)
+	else:
+		print(net.summary())
 	
     ## load model weights
 	if modelPath != "":
-		net.load_weights(modelPath)
-
-	inp = net.input                                           # input placeholder
-
-	if BN_flag == 0:
-		outputs = [layer.get_output_at(-1) for layer in net.layers]          # all layer outputs
-		outputs = outputs[1:]
-		last_conv_id = 10
-	elif BN_flag == 1:
-		outputs = [layer.get_output_at(-1) for layer in net.layers]          # all layer outputs
-		outputs = outputs[1:]
-		last_conv_id = 15
-	elif BN_flag == 2:
-		#independent_layer_ids = [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 24, 25, 28, 29, 32, 33]
-		BN_layer_ids = [4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 25, 26, 29, 30, 33, 34]
-		outputs = []
-		for i in range(len(net.layers)):
-			if i == 0 or i == 1:
-				continue
-			layer = net.layers[i]
-			if i in BN_layer_ids:
-				outputs.append(layer.get_output_at(0))
-			else:
-				outputs.append(layer.get_output_at(0))
-				outputs.append(layer.get_output_at(1))
-		last_conv_id = 22
-
-
-	functor = K.function([inp], outputs )   # evaluation function
-	
-	### predict and output
-	if BN_flag <= 1:
-		layer_outs = functor(testData)
-		predictResults = layer_outs[-1]
-	else:
-		layer_outs = functor([testData, testData])
-		predictResults = layer_outs[-2+pathID]
-	#predictResults = net.predict(testData)
-	#score, acc = net.evaluate(testData, testLabels)
-
-	BN_means = []
-	BN_stds = []
-	for layer_id in range(len(layer_outs)):
-		#if layer_id not in [1, 3, 5, 7, 9]:
-		#	continue
-
-		layer_out = layer_outs[layer_id]
-		#print(layer_out.shape)
-		if layer_id <= last_conv_id:
-			for i in range(layer_out.shape[3]):
-				BN_means.append(np.mean(layer_out[:,:,:,i]))
-				BN_stds.append(np.std(layer_out[:,:,:,i]))
+		if pytorch_flag:
+			net.load_state_dict(torch.load(modelPath))
+			net.eval()
+			net.cuda()
 		else:
-			BN_means.append(np.mean(layer_out[:,:]))
-			BN_stds.append(np.std(layer_out[:,:]))
+			net.load_weights(modelPath)
 
-	if outputPath != "":
-		f_BN = open(outputPath.replace(ntpath.basename(outputPath), "BN_means.txt"),'w')
-		#print(BN_means)
-		#print(BN_stds)
-		for mean in BN_means:
-			f_BN.write("{:.5f}\n".format(mean))
-		f_BN.close()
-		f_BN = open(outputPath.replace(ntpath.basename(outputPath), "BN_stds.txt"),'w')
-		for std in BN_stds:
-			f_BN.write("{:.5f}\n".format(std))
-		f_BN.close()
+
+
+	# inference
+	if pytorch_flag:
+		testData = np.transpose(testData, (0, 3, 1, 2))
+
+		predictResults = net(torch.Tensor(testData).cuda())
+		predictResults = predictResults.cpu().detach().numpy()
+		#predictResults = predictResults.reshape(testLabels.shape)
+	else:
+		inp = net.input                                           # input placeholder
+
+		if BN_flag == 0:
+			outputs = [layer.get_output_at(-1) for layer in net.layers]          # all layer outputs
+			outputs = outputs[1:]
+			last_conv_id = 10
+		elif BN_flag == 1:
+			outputs = [layer.get_output_at(-1) for layer in net.layers]          # all layer outputs
+			outputs = outputs[1:]
+			last_conv_id = 15
+		elif BN_flag == 2:
+			#independent_layer_ids = [3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 24, 25, 28, 29, 32, 33]
+			BN_layer_ids = [4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 25, 26, 29, 30, 33, 34]
+			outputs = []
+			for i in range(len(net.layers)):
+				if i == 0 or i == 1:
+					continue
+				layer = net.layers[i]
+				if i in BN_layer_ids:
+					outputs.append(layer.get_output_at(0))
+				else:
+					outputs.append(layer.get_output_at(0))
+					outputs.append(layer.get_output_at(1))
+			last_conv_id = 22
+
+
+		functor = K.function([inp], outputs )   # evaluation function
+		
+		### predict and output
+		if BN_flag <= 1:
+			layer_outs = functor(testData)
+			predictResults = layer_outs[-1]
+		else:
+			layer_outs = functor([testData, testData])
+			predictResults = layer_outs[-2+pathID]
+
+		# print('[')
+		# for c in range(layer_outs[9].shape[3]):
+		# 	print(np.mean(layer_outs[9][:,:,:,c]), end=',')
+		# print(']')
+
+		# print('[')
+		# for c in range(layer_outs[9].shape[3]):
+		# 	print(np.std(layer_outs[9][:,:,:,c]), end=',')
+		# print(']')
+
+		for j in range(len(testImagePaths)):
+			filename = os.path.basename(testImagePaths[j])
+			filename = filename.replace('.jpg', '.npy')
+			path = "../Data/udacityA_nvidiaB/trainC1_feat/" + filename
+			#print(layer_outs[9].shape)
+			np.save(path, layer_outs[9][j].transpose((2,0,1)))
+
+
+		#predictResults = net.predict(testData)
+		#score, acc = net.evaluate(testData, testLabels)
+
+	predictResults = predictResults.flatten()
+
+
+	if not pytorch_flag:
+		BN_means = []
+		BN_stds = []
+		for layer_id in range(len(layer_outs)):
+			#if layer_id not in [1, 3, 5, 7, 9]:
+			#	continue
+
+			layer_out = layer_outs[layer_id]
+			#print(layer_out.shape)
+			if layer_id <= last_conv_id:
+				for i in range(layer_out.shape[3]):
+					BN_means.append(np.mean(layer_out[:,:,:,i]))
+					BN_stds.append(np.std(layer_out[:,:,:,i]))
+			else:
+				BN_means.append(np.mean(layer_out[:,:]))
+				BN_stds.append(np.std(layer_out[:,:]))
+
+		# print('mean ', np.mean(layer_outs[0]))
+		# print('std ', np.std(layer_outs[0]))
+		# adf
+
+		if outputPath != "":
+			f_BN = open(outputPath.replace(ntpath.basename(outputPath), "BN_means.txt"),'w')
+			#print(BN_means)
+			#print(BN_stds)
+			for mean in BN_means:
+				f_BN.write("{:.5f}\n".format(mean))
+			f_BN.close()
+			f_BN = open(outputPath.replace(ntpath.basename(outputPath), "BN_stds.txt"),'w')
+			for std in BN_stds:
+				f_BN.write("{:.5f}\n".format(std))
+			f_BN.close()
 
 
 	if outputPath != "":
@@ -702,7 +1144,7 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 	#  			print(np.argmax(p))
 	# 		else: 
 	        # for regression
-			imgName = os.path.basename(testFeatures[p])
+			imgName = os.path.basename(testImagePaths[p])
 			prediction = predictResults[p]
 			groundTruth = testLabels[p]
 
@@ -710,7 +1152,9 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 				f.write("{:^12.0f} {:^12.0f} {:^12.0f} {:^12}".format(prediction, groundTruth, prediction-groundTruth, imgName))
 				f.write('\n')
 	else:
-		prediction_error = predictResults.flatten() - testLabels
+		bin_metric(predictResults, testLabels)
+
+		prediction_error = predictResults - testLabels
 		mse_loss = np.mean(np.square(prediction_error))
 		print("mse loss: " + str(mse_loss))
 
@@ -721,7 +1165,6 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 		thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
 		#thresh_holds = [1, 2, 4, 8]
 		acc_list = []
-
 
 		for thresh_hold in thresh_holds:
 			if outputPath != "":
@@ -736,34 +1179,36 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 			if outputPath != "":
 				f.write("accuracy (+-{:.3f}): {:.5f}\n".format(thresh_hold, acc))
 
-				f_img_list_succ = open(outputPath.replace(ntpath.basename(outputPath), "img_list_"+str(thresh_hold)+"_succ.txt"),'w')
-				f_img_list_fail = open(outputPath.replace(ntpath.basename(outputPath), "img_list_"+str(thresh_hold)+"_fail.txt"),'w')
-				img_list_succ = testFeatures[np.abs(prediction_error) < thresh_hold]
+				f_img_list_succ = open(outputPath.replace(ntpath.basename(outputPath), "img_list_"+str(thresh_hold)+"_succ_formal.txt"),'w')
+				f_img_list_fail = open(outputPath.replace(ntpath.basename(outputPath), "img_list_"+str(thresh_hold)+"_fail_formal.txt"),'w')
+				img_list_succ = testImagePaths[np.abs(prediction_error) < thresh_hold]
+				label_succ = testLabels[np.abs(prediction_error) < thresh_hold]
 
 				fail_flag = (np.abs(prediction_error) >= thresh_hold)
 
-				#img_list_fail = testFeatures[np.abs(prediction_error) >= thresh_hold]
+				#img_list_fail = testImagePaths[np.abs(prediction_error) >= thresh_hold]
 				#img_fail = testData[np.abs(prediction_error) >= thresh_hold]
 				#print(len(img_list_succ))
 				#print(len(img_list_fail))
-				for img_file in img_list_succ:
-					f_img_list_succ.write(str(img_file))
-					f_img_list_succ.write('\n')
+				for i in range(len(img_list_succ)):
+					f_img_list_succ.write(os.path.basename(img_list_succ[i]) + ",,," + str(label_succ[i]) +"\n")
+					#f_img_list_succ.write(str(img_file))
+					#f_img_list_succ.write('\n')
 
 				for i in range(len(fail_flag)):
 					if fail_flag[i] == True:
-						img_file = testFeatures[i]
-						f_img_list_fail.write(str(img_file))
-						f_img_list_fail.write('\n')
-						'''
-						img = cv2.imread(img_file)
-						#img_path = image_fail_cases_folder + "/gt_" + str(testLabels[i]) + "_pred_" + str(predictResults.flatten()[i]) + "_diff_" + str(prediction_error[i]) + "_" + os.path.basename(img_file)
-						img_path = image_fail_cases_folder + "/gt_" + "{:.3f}".format(testLabels[i]) + \
-							"_pred_" + "{:.3f}".format(predictResults.flatten()[i]) + \
-							"_diff_" + "{:.3f}".format(prediction_error[i]) + \
-							"_" + os.path.basename(img_file)
-						cv2.imwrite(img_path, img)
-						'''
+						f_img_list_fail.write(os.path.basename(testImagePaths[i]) + ",,," + str(testLabels[i]) +"\n")
+						#f_img_list_fail.write(str(img_file))
+						#f_img_list_fail.write('\n')
+						
+						# img = cv2.imread(img_file)
+						# #img_path = image_fail_cases_folder + "/gt_" + str(testLabels[i]) + "_pred_" + str(predictResults.flatten()[i]) + "_diff_" + str(prediction_error[i]) + "_" + os.path.basename(img_file)
+						# img_path = image_fail_cases_folder + "/gt_" + "{:.3f}".format(testLabels[i]) + \
+						# 	"_pred_" + "{:.3f}".format(predictResults.flatten()[i]) + \
+						# 	"_diff_" + "{:.3f}".format(prediction_error[i]) + \
+						# 	"_" + os.path.basename(img_file)
+						# cv2.imwrite(img_path, img)
+						
 
 
 				f_img_list_succ.close()
@@ -771,7 +1216,7 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 
 		print("mean accuracy: " + str(np.mean(acc_list)))
 		if outputPath != "":
-			f.write("mean accuracy: {:.5f}\n\n".format(np.mean(acc_list)))
+			f.write("mean accuracy: {:.5f} {:.2f}\n\n".format(np.mean(acc_list), np.mean(acc_list)*100))
 
 	    
 			f.write("{:^12} {:^12} {:^12} {:^12}\n".format("prediction", "groundtruth", "difference", "input"))
@@ -782,8 +1227,8 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 		#  			print(np.argmax(p))
 		# 		else: 
 		        # for regression
-				imgName = os.path.basename(testFeatures[p])
-				prediction = predictResults[p][0]
+				imgName = os.path.basename(testImagePaths[p])
+				prediction = predictResults[p]
 				groundTruth = testLabels[p]
 				f.write("{:^12.3f} {:^12.3f} {:^12.3f} {:^12}".format(prediction, groundTruth, prediction-groundTruth, imgName))
 				f.write('\n')
@@ -827,8 +1272,8 @@ def test_dnn_visualize(modelPath, imageDir, labelPath, outputPath, netType, flag
 		print('Regression......')
 
 	### retrieve the test data
-	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
-	testFeatures = np.array(testFeatures)
+	testImagePaths, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
+	testImagePaths = np.array(testImagePaths)
 	testLabels = np.array(testLabels)
 	n = len(testLabels)
 
@@ -837,7 +1282,7 @@ def test_dnn_visualize(modelPath, imageDir, labelPath, outputPath, netType, flag
 		testLabels = normalize_value(testLabels)
 		testLabels = to_categorical(testLabels, num_classes = nClass)
     
-	print(testFeatures)
+	print(testImagePaths)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 
@@ -888,7 +1333,7 @@ def test_dnn_visualize(modelPath, imageDir, labelPath, outputPath, netType, flag
 	functor = K.function([inp], outputs )   # evaluation function
 	
 	for i in range(len(testLabels)):
-		image_path = testFeatures[i]
+		image_path = testImagePaths[i]
 		label = testLabels[i]
 		if not os.path.isfile(image_path):
 			image_path = image_path.replace(".jpg", "_fake.png")
@@ -1150,8 +1595,8 @@ def filter_dataset(modelPath, imageDir, labelPath, outputPath, netType, flags, s
 		print('Regression......')
 
 	### retrieve the test data
-	testFeatures, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
-	testFeatures = np.array(testFeatures)
+	testImagePaths, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras)
+	testImagePaths = np.array(testImagePaths)
 	testLabels = np.array(testLabels)
 
     ## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
@@ -1201,14 +1646,16 @@ def filter_dataset(modelPath, imageDir, labelPath, outputPath, netType, flags, s
 	functor = K.function([inp], outputs )   # evaluation function
 		
 
-	print(testFeatures)
+	print(testImagePaths)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
 	f = open(outputPath,'w')
 	similar_img_count = 0
 	diff_score_list = []
 	for id in range(len(testLabels)):
-		image_path = testFeatures[id]
+		print(id)
+
+		image_path = testImagePaths[id]
 		label_value = testLabels[id]
 		if not os.path.isfile(image_path):
 			image_path = image_path.replace(".jpg", "_fake.png")
@@ -1301,7 +1748,8 @@ def filter_dataset(modelPath, imageDir, labelPath, outputPath, netType, flags, s
 		diff_score = np.linalg.norm(BN_mean_diff) + mean_std_ratio * np.linalg.norm(BN_std_diff)
 		#print("mean diff: ", np.linalg.norm(BN_mean_diff), "  std diff: ", np.linalg.norm(BN_std_diff), "  total: ", diff_score)
 		#print("mean: ", np.linalg.norm(BN_means), "  std: ", np.linalg.norm(BN_stds))
-		diff_score_list.append((id, diff_score, np.linalg.norm(BN_means), np.linalg.norm(BN_stds)))
+		#diff_score_list.append((id, diff_score, np.linalg.norm(BN_means), np.linalg.norm(BN_stds)))
+		diff_score_list.append((id, diff_score, np.linalg.norm(BN_mean_diff), np.linalg.norm(BN_std_diff)))
 
 	f.close()
 		
@@ -1312,7 +1760,7 @@ def filter_dataset(modelPath, imageDir, labelPath, outputPath, netType, flags, s
 	f = open(outputPath,'w')
 	for i in range(int(len(testLabels)*filter_percent)):
 		id = diff_score_list[i][0]
-		image_path = testFeatures[id]
+		image_path = testImagePaths[id]
 		label_value = testLabels[id]
 		#f.write(os.path.basename(image_path) + ",,," + str(label_value) + "\n")
 		f.write(os.path.basename(image_path) + ",,," + str(label_value) + "," +str(diff_score_list[i][2]) + "," +str(diff_score_list[i][3])+"\n")

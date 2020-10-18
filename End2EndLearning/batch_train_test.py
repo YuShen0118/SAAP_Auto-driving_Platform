@@ -91,6 +91,8 @@ def single_test_with_config(subtask_id=-1):
 	classification = False
 	visualize = False
 	radius = 10 #only valid when visualize = True
+	Maxup_flag = False
+	pytorch_flag = False
 
 	if subtask_id == '0':
 		train_folder = "trainB"
@@ -113,6 +115,12 @@ def single_test_with_config(subtask_id=-1):
 	elif subtask_id == '6':
 		train_folder = "trainB"
 		val_folder = "valA"
+	elif subtask_id == '7':
+		# pytorch baseline
+		pytorch_flag = True
+	elif subtask_id == '8':
+		Maxup_flag = True
+		pytorch_flag = True
 
 
 	train_suffix = train_label_suffix
@@ -122,15 +130,23 @@ def single_test_with_config(subtask_id=-1):
 		train_suffix = train_suffix + "_classify"
 	if net_type == 5:
 		train_suffix = train_suffix + "_GAN"
+	if Maxup_flag:
+		train_suffix = train_suffix + "_Maxup"
+	if pytorch_flag:
+		train_suffix = train_suffix + "_pytorch"
+
+	train_suffix = train_suffix + "_test"
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder, train_label_suffix)
 	labelPath = DATASET_ROOT + labelName
 
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + train_suffix + "/"
-	train_network(imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, netType=net_type)
+	train_network(imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, netType=net_type, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
 
 	modelPath = outputPath + "/model-final.h5"
+	if pytorch_flag:
+		modelPath = outputPath + "/model-final.pth"
 
 	imagePath = DATASET_ROOT + val_folder + "/"
 	labelName = get_label_file_name(val_folder, val_label_suffix)
@@ -143,7 +159,7 @@ def single_test_with_config(subtask_id=-1):
 		outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + train_suffix + ")_(" + val_folder + ")/test_result.txt"
 
 	#modelPath = ""
-	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, visualize=visualize, radius=radius)
+	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, visualize=visualize, radius=radius, pytorch_flag=pytorch_flag)
 
 
 def single_test_AdvProp():
@@ -175,6 +191,40 @@ def single_test_AdvProp():
 	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + train_folder_advp + suffix + "_advp)_(" + val_folder + ")/test_result.txt"
 	#modelPath = ""
 	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=2, pathID=pathID)
+
+
+def single_test_ImgAndFeature():
+	train_folder = "trainB"
+	val_folder = "valB"
+	train_folder_add = "trainC1"
+	val_folder_add = "valC1"
+	#suffix = "_similarBN40"
+	suffix = ""
+	pathID = 0
+	modelPath = ""
+	pytorch_flag = True
+
+	imagePath = DATASET_ROOT + train_folder + "/"
+	labelName = get_label_file_name(train_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	imagePath_add = DATASET_ROOT + train_folder_add + "/"
+	labelName_add = get_label_file_name(train_folder_add, suffix)
+	labelPath_add = DATASET_ROOT + labelName_add
+
+	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + train_folder_add + suffix + "_add/"
+	#modelPath = TRAIN_OUTPUT_ROOT + train_folder_add + "/model-final.h5"
+	train_network(imagePath, labelPath, outputPath, modelPath = modelPath, BN_flag=3, imagePath_advp=imagePath_add, labelPath_advp=labelPath_add, pytorch_flag=pytorch_flag)
+
+	modelPath = outputPath + "/model-final.h5"
+
+	imagePath = DATASET_ROOT + val_folder + "/"
+	labelName = get_label_file_name(val_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + train_folder_add + suffix + "_add)_(" + val_folder + ")/test_result.txt"
+	#modelPath = ""
+	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=3, pathID=pathID, pytorch_flag=pytorch_flag)
 
 
 def test_AdvProp(subtask_id=-1):
@@ -308,6 +358,13 @@ def unit_test_for_quality(subtask_id=-1):
 		TRAIN_LIST_LIST = [["trainB", "trainB_H_darker", "trainB_H_lighter", "trainB_S_darker", "trainB_S_lighter", "trainB_V_darker", "trainB_V_lighter"]]
 	elif subtask_id == '5':
 		TRAIN_LIST_LIST = [["trainB", "trainB_Y_luma_darker", "trainB_Y_luma_lighter", "trainB_U_blueproj_darker", "trainB_U_blueproj_lighter", "trainB_V_redproj_darker", "trainB_V_redproj_lighter"]]
+	elif subtask_id == '6':
+		TRAIN_LIST_LIST = [["trainB_B_darker_2", "trainB_B_lighter_2", "trainB_G_darker_2", "trainB_G_lighter_2", "trainB_R_darker_2", "trainB_R_lighter_2"]]
+	elif subtask_id == '7':
+		TRAIN_LIST_LIST = [["trainB_H_darker", "trainB_H_lighter", "trainB_S_darker", "trainB_S_lighter", "trainB_V_darker", "trainB_V_lighter", \
+							"trainB_H_darker_2", "trainB_H_lighter_2", "trainB_S_darker_2", "trainB_S_lighter_2", "trainB_V_darker_2", "trainB_V_lighter_2", "trainB"]]
+	elif subtask_id == '8':
+		TRAIN_LIST_LIST = [["trainB_Y_luma_darker_2", "trainB_Y_luma_lighter_2", "trainB_U_blueproj_darker_2", "trainB_U_blueproj_lighter_2", "trainB_V_redproj_darker_2", "trainB_V_redproj_lighter_2"]]
 	else:	
 		return
 	
@@ -481,6 +538,63 @@ def combination_test_for_style(subtask_id):
 		TRAIN_RATIO_LIST = [1]*len(TRAIN_FOLDER_LIST[0])
 		TRAIN_RATIO_LIST = [TRAIN_RATIO_LIST]
 		BN_flag = 0
+	elif subtask_id == '30':
+		TRAIN_FOLDER_LIST = [["trainB_Y_luma_darker", "trainB_Y_luma_lighter", "trainB"]]
+		TRAIN_RATIO_LIST = [[1,1,1]]
+		BN_flag = 0
+	elif subtask_id == '31':
+		TRAIN_FOLDER_LIST = [["trainB_U_blueproj_darker", "trainB_U_blueproj_lighter", "trainB"]]
+		TRAIN_RATIO_LIST = [[1,1,1]]
+		BN_flag = 0
+	elif subtask_id == '32':
+		TRAIN_FOLDER_LIST = [["trainB_V_redproj_darker", "trainB_V_redproj_lighter", "trainB"]]
+		TRAIN_RATIO_LIST = [[1,1,1]]
+		BN_flag = 0
+	elif subtask_id == '33':
+		TRAIN_FOLDER_LIST = [["trainB"]]
+		TRAIN_RATIO_LIST = [[1]]
+		BN_flag = 0
+		pack_in_channel = True
+	elif subtask_id == '34':
+		TRAIN_FOLDER_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5", \
+		"trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5",\
+		"trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5",\
+		"trainB_R_darker_2", "trainB_R_darker", "trainB_R_lighter", "trainB_R_lighter_2",\
+		"trainB_G_darker_2", "trainB_G_darker", "trainB_G_lighter", "trainB_G_lighter_2",\
+		"trainB_B_darker_2", "trainB_B_darker", "trainB_B_lighter", "trainB_B_lighter_2",\
+		"trainB_H_darker_2", "trainB_H_darker", "trainB_H_lighter", "trainB_H_lighter_2",\
+		"trainB_S_darker_2", "trainB_S_darker", "trainB_S_lighter", "trainB_S_lighter_2",\
+		"trainB_V_darker_2", "trainB_V_darker", "trainB_V_lighter", "trainB_V_lighter_2"
+		]]
+		TRAIN_RATIO_LIST = [1]*len(TRAIN_FOLDER_LIST[0])
+		TRAIN_RATIO_LIST = [TRAIN_RATIO_LIST]
+	elif subtask_id == '35':
+		TRAIN_FOLDER_LIST = [["trainB", "trainB_blur_1", "trainB_blur_3", "trainB_blur_5", \
+		"trainB_noise_1", "trainB_noise_3", "trainB_noise_5",\
+		"trainB_distort_1", "trainB_distort_3", "trainB_distort_5",\
+		"trainB_R_darker_1", "trainB_R_darker_3", "trainB_R_darker_5", \
+		"trainB_R_lighter_1", "trainB_R_lighter_3", "trainB_R_lighter_5", \
+		"trainB_G_darker_1", "trainB_G_darker_3", "trainB_G_darker_5", \
+		"trainB_G_lighter_1", "trainB_G_lighter_3", "trainB_G_lighter_5", \
+		"trainB_B_darker_1", "trainB_B_darker_3", "trainB_B_darker_5", \
+		"trainB_B_lighter_1", "trainB_B_lighter_3", "trainB_B_lighter_5", \
+		"trainB_H_darker_1", "trainB_H_darker_3", "trainB_H_darker_5", \
+		"trainB_H_lighter_1", "trainB_H_lighter_3", "trainB_H_lighter_5", \
+		"trainB_S_darker_1", "trainB_S_darker_3", "trainB_S_darker_5", \
+		"trainB_S_lighter_1", "trainB_S_lighter_3", "trainB_S_lighter_5", \
+		"trainB_V_darker_1", "trainB_V_darker_3", "trainB_V_darker_5", \
+		"trainB_V_lighter_1", "trainB_V_lighter_3", "trainB_V_lighter_5"
+		]]
+		TRAIN_RATIO_LIST = [1]*len(TRAIN_FOLDER_LIST[0])
+		TRAIN_RATIO_LIST = [TRAIN_RATIO_LIST]
+	elif subtask_id == '36':
+		TRAIN_FOLDER_LIST = [["trainC1", "trainB"]]
+		TRAIN_RATIO_LIST = [[1,1]]
+	elif subtask_id == '100':
+		#For test
+		TRAIN_FOLDER_LIST = [["trainB_blur"]]
+		TRAIN_RATIO_LIST = [[1]]
+		VAL_LIST = [["valB", "valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5"]]
 	else:
 		print('invalid subtask_id!!!')
 		return
@@ -646,6 +760,55 @@ def calculate_FID_folder(subtask_id=-1):
 	elif subtask_id == '3':
 		datasets = ["trainB", "trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5"]
 		outputFile = "distortion_fid.txt"
+	elif subtask_id == '4':
+		datasets = ["valB", "valB_R_darker", "valB_R_lighter", "valB_R_darker_2", "valB_R_lighter_2"]
+		outputFile = "R_fid.txt"
+	elif subtask_id == '5':
+		datasets = ["valB", "valB_G_darker", "valB_G_lighter", "valB_G_darker_2", "valB_G_lighter_2"]
+		outputFile = "G_fid.txt"
+	elif subtask_id == '6':
+		datasets = ["valB", "valB_B_darker", "valB_B_lighter", "valB_B_darker_2", "valB_B_lighter_2"]
+		outputFile = "B_fid.txt"
+	elif subtask_id == '7':
+		datasets = ["valB", "valB_H_darker", "valB_H_lighter", "valB_H_darker_2", "valB_H_lighter_2"]
+		outputFile = "H_fid.txt"
+	elif subtask_id == '8':
+		datasets = ["valB", "valB_S_darker", "valB_S_lighter", "valB_S_darker_2", "valB_S_lighter_2"]
+		outputFile = "S_fid.txt"
+	elif subtask_id == '9':
+		datasets = ["valB", "valB_V_darker", "valB_V_lighter", "valB_V_darker_2", "valB_V_lighter_2"]
+		outputFile = "V_fid.txt"
+	elif subtask_id == '10':
+		datasets = ["valB", "valB_R_darker_1", "valB_R_darker_2", "valB_R_darker_3", "valB_R_darker_4", \
+							"valB_R_lighter_1", "valB_R_lighter_2", "valB_R_lighter_3", "valB_R_lighter_4", \
+							"valB_G_darker_1", "valB_G_darker_2", "valB_G_darker_3", "valB_G_darker_4", \
+							"valB_G_lighter_1", "valB_G_lighter_2", "valB_G_lighter_3", "valB_G_lighter_4", \
+							"valB_B_darker_1", "valB_B_darker_2", "valB_B_darker_3", "valB_B_darker_4", \
+							"valB_B_lighter_1", "valB_B_lighter_2", "valB_B_lighter_3", "valB_B_lighter_4", \
+							"valB_H_darker_1", "valB_H_darker_2", "valB_H_darker_3", "valB_H_darker_4", \
+							"valB_H_lighter_1", "valB_H_lighter_2", "valB_H_lighter_3", "valB_H_lighter_4", \
+							"valB_S_darker_1", "valB_S_darker_2", "valB_S_darker_3", "valB_S_darker_4", \
+							"valB_S_lighter_1", "valB_S_lighter_2", "valB_S_lighter_3", "valB_S_lighter_4", \
+							"valB_V_darker_1", "valB_V_darker_2", "valB_V_darker_3", "valB_V_darker_4", \
+							"valB_V_lighter_1", "valB_V_lighter_2", "valB_V_lighter_3", "valB_V_lighter_4", \
+					]
+		outputFile = "RGB_HSV_fid.txt"
+	elif subtask_id == '11':
+		datasets = ["valB", "valB_R_darker_5", \
+							"valB_R_lighter_5", \
+							"valB_G_darker_5", \
+							"valB_G_lighter_5", \
+							"valB_B_darker_5", \
+							"valB_B_lighter_5", \
+							"valB_H_darker_5", \
+							"valB_H_lighter_5", \
+							"valB_S_darker_5", \
+							"valB_S_lighter_5", \
+							"valB_V_darker_5", \
+							"valB_V_lighter_5", \
+					]
+		outputFile = "RGB_HSV_fid_065.txt"
+
 
 
 	paths = []
@@ -659,7 +822,7 @@ def calculate_FID_folder(subtask_id=-1):
 	for i in range(n_dataset):
 		one_line = ""
 		for j in range(n_dataset):
-			one_line = one_line + " & " + str(fid_value_array[i*n_dataset + j])
+			one_line = one_line + " & " + "{:.2f}".format(fid_value_array[i*n_dataset + j])
 		one_line = one_line + '\n'
 		f.write(one_line)
 		f.flush()
@@ -719,6 +882,42 @@ def calculate_FID_list_files(subtask_id=-1):
 	f.write(one_line)
 
 	f.close()
+
+
+def calculate_L2D():
+	base_folders = ["valB"]
+	
+	comparison_folders =  [	"valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5", \
+							"valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5", \
+							"valB_distort_1", "valB_distort_2", "valB_distort_3", "valB_distort_4", "valB_distort_5", \
+							"valB_R_darker_1", "valB_R_darker_2", "valB_R_darker_3", "valB_R_darker_4", "valB_R_darker_5", \
+							"valB_R_lighter_1", "valB_R_lighter_2", "valB_R_lighter_3", "valB_R_lighter_4", "valB_R_lighter_5", \
+							"valB_G_darker_1", "valB_G_darker_2", "valB_G_darker_3", "valB_G_darker_4", "valB_G_darker_5", \
+							"valB_G_lighter_1", "valB_G_lighter_2", "valB_G_lighter_3", "valB_G_lighter_4", "valB_G_lighter_5", \
+							"valB_B_darker_1", "valB_B_darker_2", "valB_B_darker_3", "valB_B_darker_4", "valB_B_darker_5", \
+							"valB_B_lighter_1", "valB_B_lighter_2", "valB_B_lighter_3", "valB_B_lighter_4", "valB_B_lighter_5", \
+							"valB_H_darker_1", "valB_H_darker_2", "valB_H_darker_3", "valB_H_darker_4", "valB_H_darker_5", \
+							"valB_H_lighter_1", "valB_H_lighter_2", "valB_H_lighter_3", "valB_H_lighter_4", "valB_H_lighter_5", \
+							"valB_S_darker_1", "valB_S_darker_2", "valB_S_darker_3", "valB_S_darker_4", "valB_S_darker_5", \
+							"valB_S_lighter_1", "valB_S_lighter_2", "valB_S_lighter_3", "valB_S_lighter_4", "valB_S_lighter_5", \
+							"valB_V_darker_1", "valB_V_darker_2", "valB_V_darker_3", "valB_V_darker_4", "valB_V_darker_5", \
+							"valB_V_lighter_1", "valB_V_lighter_2", "valB_V_lighter_3", "valB_V_lighter_4", "valB_V_lighter_5", \
+					]
+	
+	#comparison_folders =  [	"valB_R_lighter_1", "valB_R_lighter_2", "valB_R_lighter_3", "valB_R_lighter_4", "valB_R_lighter_5" ]
+
+	for folderA in base_folders:
+		for folderB in comparison_folders:
+			#print(glob.glob(os.path.join(DATASET_ROOT, folderA, "*.jpg")))
+			dist_list = []
+			for image_path in glob.glob(os.path.join(DATASET_ROOT, folderA, "*.jpg")):
+				img1 = np.array(cv2.imread(image_path)).astype(float)
+				image_path2 = image_path.replace(folderA, folderB)
+				img2 = np.array(cv2.imread(image_path2)).astype(float)
+				dist = np.linalg.norm(img1-img2)
+				dist_list.append(dist)
+
+			print("{:.2f}\t".format(np.mean(dist_list)))
 
 
 def visualize_model_on_image():
@@ -791,19 +990,25 @@ if __name__ == "__main__":
 			calculate_FID(args.subtask_id)
 		elif args.task_id == '8':
 			multi_factor_search_test()
+		elif args.task_id == '9':
+			calculate_FID_folder(args.subtask_id)
+		elif args.task_id == '10':
+			single_test_ImgAndFeature()
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
-		single_test()
-		#single_test_with_config()
+		#single_test()
+		single_test_with_config()
 		#single_test_AdvProp()
+		#single_test_ImgAndFeature()
 		#multi_factor_search_test()
 		#unit_test_for_style()
 		#unit_test_for_quality()
-		#combination_test_for_style()
+		#combination_test_for_style('36')
 		#combination_test_for_style_pretrain()
 		#test_AdvProp()
-		#calculate_FID_folder()
+		#calculate_FID_folder('11')
 		#calculate_FID_list_files_succ_fail('1')
 		#calculate_FID_list_files()
 		#visualize_model_on_image()
+		#calculate_L2D()

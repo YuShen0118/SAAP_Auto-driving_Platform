@@ -16,12 +16,12 @@ from learning import train_dnn_multi
 
 
 def train_network(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1):
+	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, Maxup_flag=False, pytorch_flag=False):
 	train_network_multi([imagePath], [labelPath], outputPath, modelPath, trainRatio, partialPreModel, reinitHeader, BN_flag, 
-		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification, netType)
+		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification, netType, pack_flag=False, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
 
 def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, pack_flag=False):
+	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, pack_flag=False, Maxup_flag=False, pytorch_flag=False):
 	print('Image folder: ' + str(imagePath_list))
 	print('Label file: ' + str(labelPath_list))
 	print('Output folder: ' + outputPath)
@@ -48,7 +48,7 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
     
 	#netType = netType        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
 	train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
-		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag)
+		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
 
 def get_suffix(level_id):
 	'''
@@ -67,11 +67,19 @@ def get_suffix(level_id):
 		return "_lighter_"+str(level_id*2-7)+"/"
 
 
+def get_suffix(level_id):
+	if level_id <= 5:
+		return "_darker_"+str(6-level_id)+"/"
+	else:
+		return "_lighter_"+str(level_id-5)+"/"
+
+
 def get_new_level(channel_name, imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f):
 	f.write('\nchannel_name: ' + channel_name + '\n')
 	print('channel_name: ' + channel_name)
 	MA_min = 1
-	for new_level in range(1,7):
+	#for new_level in range(1,7):
+	for new_level in range(1,11):
 		imagePath = imagePath0 + '_' + channel_name + get_suffix(new_level)
 		MA = test_network(modelPath, imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 		print(new_level, ': ', MA)
@@ -98,8 +106,8 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 	flags = [fRandomDistort, fThreeCameras, fClassifier]
 	
 	## parameters
-	nRound = 20
-	nEpoch = 50
+	nRound = 1000
+	nEpoch = 1
 	batchSize = 128
 	nClass = 49        # only used if fClassifier = True
 	nFramesSample = 5  # only used for LSTMs
@@ -169,8 +177,10 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		print('blur MAs:')
 		f.write('\nblur MAs:\n')
 		MA_min = 1
-		for new_blur_level in range(1,4):
-			blurImagePath = imagePath0+'_blur_'+str(new_blur_level*2-1)+'/'
+		#for new_blur_level in range(1,4):
+		for new_blur_level in range(1,6):
+			#blurImagePath = imagePath0+'_blur_'+str(new_blur_level*2-1)+'/'
+			blurImagePath = imagePath0+'_blur_'+str(new_blur_level)+'/'
 			MA = test_network(modelPath, blurImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 			print(new_blur_level, ': ', MA)
 			f.write(str(new_blur_level) + ': ' + '{:.2f}'.format(MA) + '\n')
@@ -181,8 +191,10 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		print('noise MAs:')
 		f.write('\nnoise MAs:\n')
 		MA_min = 1
-		for new_noise_level in range(1,4):
-			noiseImagePath = imagePath0+'_noise_'+str(new_noise_level*2-1)+'/'
+		#for new_noise_level in range(1,4):
+		for new_noise_level in range(1,6):
+			#noiseImagePath = imagePath0+'_noise_'+str(new_noise_level*2-1)+'/'
+			noiseImagePath = imagePath0+'_noise_'+str(new_noise_level)+'/'
 			MA = test_network(modelPath, noiseImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 			print(new_noise_level, ': ', MA)
 			f.write(str(new_noise_level) + ': ' + '{:.2f}'.format(MA) + '\n')
@@ -194,8 +206,10 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		print('distort MAs:')
 		f.write('\ndistort MAs:\n')
 		MA_min = 1
-		for new_distort_level in range(1,4):
-			distortImagePath = imagePath0+'_distort_'+str(new_distort_level*2-1)+'/'
+		#for new_distort_level in range(1,4):
+		for new_distort_level in range(1,6):
+			#distortImagePath = imagePath0+'_distort_'+str(new_distort_level*2-1)+'/'
+			distortImagePath = imagePath0+'_distort_'+str(new_distort_level)+'/'
 			MA = test_network(modelPath, distortImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
 			print(new_distort_level, ': ', MA)
 			f.write(str(new_distort_level) + ': ' + '{:.2f}'.format(MA) + '\n')

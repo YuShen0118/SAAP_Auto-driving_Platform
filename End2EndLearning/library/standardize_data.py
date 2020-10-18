@@ -82,8 +82,8 @@ def convert_UDACITY(input_file, output_file):
         angle = float(row[3]) * UDACITY_MAX_STEERING_ANGLE
         angles.append(angle)
 
-    #angles_filtered = gaussian_filter1d(angles, 2)
-    angles_filtered = angles
+    angles_filtered = gaussian_filter1d(angles, 2)
+    #angles_filtered = angles
     
     i=0
     for row in trainLog:

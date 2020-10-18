@@ -42,14 +42,18 @@ def net_lstm(netType, nFramesSample):
 	return net
 
 
-def create_nvidia_network(BN_flag, fClassifier, nClass, nChannel=3):
+def create_nvidia_network(BN_flag, fClassifier, nClass, nChannel=3, Maxup_flag=False):
 	if BN_flag == 0:
-		net = net_nvidia_1(fClassifier, nClass, nChannel)
+		return net_nvidia_1(fClassifier, nClass, nChannel, Maxup_flag)
 	elif BN_flag == 1:
-		net = net_nvidia_BN(fClassifier, nClass)
+		return net_nvidia_BN(fClassifier, nClass)
 	elif BN_flag == 2:
-		net = net_nvidia_AdvProp(fClassifier, nClass)
-	return net
+		return net_nvidia_AdvProp(fClassifier, nClass)
+	elif BN_flag == 3:
+		return net_nvidia_Add(fClassifier, nClass)
+
+	#default
+	return net_nvidia_1(fClassifier, nClass, nChannel)
 
 		
 '''
@@ -87,14 +91,43 @@ def mean_accuracy(y_true, y_pred):
 
 	res_list = []
 	for thresh_hold in thresh_holds:
-		res_list.append(tf.math.reduce_mean(tf.to_float(keras.backend.abs(y_true-y_pred) > thresh_hold)))
+		res_list.append(tf.math.reduce_mean(tf.cast(keras.backend.abs(y_true-y_pred) > thresh_hold, tf.float32)))
 
 	MA = tf.math.reduce_mean(res_list)
 	
 	return MA
 	
 
-def net_nvidia_1(fClassifier, nClass, nChannel=3):
+class MaxupModel(keras.Model):
+
+	def train_step(self, data):
+        # Unpack the data. Its structure depends on your model and
+        # on what you pass to `fit()`.
+		x, y = data
+		adsf
+
+		with tf.GradientTape() as tape:
+			y_pred = self(x, training=True)  # Forward pass
+            # Compute the loss value
+            # (the loss function is configured in `compile()`)
+			id = np.argmax(np.abs(y_pred-y), axis=-1)
+			print(np.abs(y_pred-y))
+			print(id)
+			asdf
+			loss = self.compiled_loss(y[id], y_pred[id], regularization_losses=self.losses)
+
+        # Compute gradients
+		trainable_vars = self.trainable_variables
+		gradients = tape.gradient(loss, trainable_vars)
+        # Update weights
+		self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+        # Update metrics (includes the metric that tracks the loss)
+		self.compiled_metrics.update_state(y, y_pred)
+        # Return a dict mapping metric names to current value
+		return {m.name: m.result() for m in self.metrics}
+
+
+def net_nvidia_1(fClassifier, nClass, nChannel=3, Maxup_flag=False):
 	mainInput = Input(shape=(66,200,nChannel))
 	x1 = Lambda(lambda x: x/127.5 - 1.0)(mainInput)
 	x1 = Conv2D(24, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))(x1)
@@ -125,11 +158,14 @@ def net_nvidia_1(fClassifier, nClass, nChannel=3):
 			net.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
 	else:
 		mainOutput = Dense(1)(z)
-		net = Model(inputs = mainInput, outputs = mainOutput)
+		if Maxup_flag:
+			net = MaxupModel(inputs = mainInput, outputs = mainOutput)
+		else:
+			net = Model(inputs = mainInput, outputs = mainOutput)
 		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
 		#net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
-	#print(net.summary())
+	print(net.summary())
 	return net
 
 
@@ -266,6 +302,153 @@ def net_nvidia_AdvProp(fClassifier, nClass):
 				  loss=["mse", 'mse'],
 				  loss_weights=[1, 1], metrics=['accuracy'])
 	return net
+
+
+class ShiftLayer(keras.layers.Layer):
+	def __init__(self):
+		super(ShiftLayer, self).__init__()
+
+	def call(self, inputs):
+		#x, mean1, std1, mean2, std2 = inputs
+		x1, x2 = inputs
+		mean1 = keras.backend.mean(x1)
+		std1 = keras.backend.std(x1)
+
+		mean2 = keras.backend.mean(x2)
+		std2 = keras.backend.std(x2)
+
+		x2 = tf.math.subtract(x2, mean2)
+		x2 = tf.math.divide(x2, std2)
+		x2 = tf.math.multiply(x2, std1)
+		x2 = tf.math.add(x2, mean1)
+		return x2
+
+# class MeanLayer(keras.layers.Layer):
+# 	def __init__(self):
+# 		super(MeanLayer, self).__init__()
+
+# 	def call(self, inputs):
+# 		return keras.backend.mean(inputs)
+
+
+# class StdLayer(keras.layers.Layer):
+# 	def __init__(self):
+# 		super(StdLayer, self).__init__()
+
+# 	def call(self, inputs):
+# 		return keras.backend.std(inputs)
+
+def net_nvidia_Add(fClassifier, nClass):
+	image_input_1 = Input(shape=(66,200,3), name='images_1')  # Variable-length sequence of ints
+	image_input_2 = Input(shape=(66,200,3), name='images_2')  # Variable-length sequence of ints
+
+
+	lambda0 = Lambda(lambda x: x/127.5 - 1.0)
+
+	conv11 = Conv2D(24, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))
+	conv12 = Conv2D(36, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))
+	conv13 = Conv2D(48, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))
+	conv14 = Conv2D(64, (3, 3), padding='valid', kernel_regularizer=l2(0.001))
+	conv15 = Conv2D(64, (3, 3), padding='valid', kernel_regularizer=l2(0.001))
+
+	elu1 = layers.Activation(activations.elu)
+	elu2 = layers.Activation(activations.elu)
+	elu3 = layers.Activation(activations.elu)
+	elu4 = layers.Activation(activations.elu)
+	elu5 = layers.Activation(activations.elu)
+
+	conv21 = Conv2D(24, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))
+	conv22 = Conv2D(36, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))
+	conv23 = Conv2D(48, (5, 5), strides=(2,2), padding='valid', kernel_regularizer=l2(0.001))
+	conv24 = Conv2D(64, (3, 3), padding='valid', kernel_regularizer=l2(0.001))
+	conv25 = Conv2D(64, (3, 3), padding='valid', kernel_regularizer=l2(0.001))
+
+	flat = Flatten()
+
+	dense1 = Dense(100, kernel_regularizer=l2(0.001))
+	dense2 = Dense(50,  kernel_regularizer=l2(0.001))
+	dense3 = Dense(10,  kernel_regularizer=l2(0.001))
+	dense4 = Dense(1)
+
+	elu6 = layers.Activation(activations.elu)
+	elu7 = layers.Activation(activations.elu)
+	elu8 = layers.Activation(activations.elu)
+
+	shift = ShiftLayer()
+	# mean = MeanLayer()
+	# std = StdLayer()
+
+
+
+	x1 = lambda0(image_input_1)
+	x1 = elu1(conv11(x1))
+	x1 = elu2(conv12(x1))
+	x1 = elu3(conv13(x1))
+	x1 = elu4(conv14(x1))
+	x1 = elu5(conv15(x1))
+
+	# mean1 = keras.backend.mean(x1)
+	# std1 = keras.backend.std(x1)
+	# mean1 = mean(x1)
+	# std1 = std(x1)
+
+
+
+	x2 = lambda0(image_input_2)
+	x2 = elu1(conv21(x2))
+	x2 = elu2(conv22(x2))
+	x2 = elu3(conv23(x2))
+	x2 = elu4(conv24(x2))
+	x2 = elu5(conv25(x2))
+
+	# mean2 = keras.backend.mean(x2)
+	# std2 = keras.backend.std(x2)
+	# mean2 = mean(x2)
+	# std2 = std(x2)
+	# x2 = tf.math.subtract(x2, mean2)
+	# x2 = tf.math.divide(x2, std2)
+	# x2 = tf.math.multiply(x2, std1)
+	# x2 = tf.math.add(x2, mean1)
+	#x3 = shift([x2, mean1, std1, mean2, std2])
+	x2 = shift([x1, x2])
+	#x2 = shift_layer([x2, x2])
+	#x2 = shift_layer(x2)
+
+	x1 = flat(x1)
+
+	x1 = elu6(dense1(x1))
+	x1 = elu7(dense2(x1))
+	x1 = elu8(dense3(x1))
+	output1 = dense4(x1)
+
+	x2 = flat(x2)
+
+	x2 = elu6(dense1(x2))
+	x2 = elu7(dense2(x2))
+	x2 = elu8(dense3(x2))
+	output2 = dense4(x2)
+
+	# from keras.utils import plot_model 
+	# plot_model(model, to_file='model.png')
+
+	net = Model(inputs=[image_input_1, image_input_2], outputs=[output1, output2], name='Nvidia_ImageAndFeature')
+	netI = Model(inputs=image_input_1, outputs=output1, name='Nvidia_ImageOnly')
+	netF = Model(inputs=image_input_2, outputs=output2, name='Nvidia_FeatureOnly')
+
+	from keras.utils import plot_model 
+	plot_model(net, to_file='model.png')
+
+	net.compile(optimizer=Adam(lr=1e-4),
+				  loss=['mse', 'mse'],
+				  loss_weights=[1, 1], metrics=['accuracy'])
+	netI.compile(optimizer=Adam(lr=1e-4),
+				  loss='mse', metrics=['accuracy'])
+	netF.compile(optimizer=Adam(lr=1e-4),
+				  loss='mse', metrics=['accuracy'])
+	return net, netI, netF
+
+
+
 
 '''
 class Gaussian_noise_layer(layers.Layer):
