@@ -23,6 +23,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+
+import skimage.io
+import matplotlib.pyplot as plt
 
 from numpy.random import default_rng
 
@@ -320,6 +325,55 @@ def gen_train_data_random_featshift(xList, yList, xList_advp, yList_advp, batchS
 				xList, yList = shuffle(xList, yList)
 				xList_advp, yList_advp = shuffle(xList_advp, yList_advp)
 				
+class ToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+        image, labels = sample
+
+        # swap color axis because
+        # numpy image: H x W x C
+        # torch image: C X H X W
+        #image = image.transpose((2, 0, 1))
+        return (torch.Tensor(image), torch.Tensor(labels))
+
+class DrivingDataset_pytorch(torch.utils.data.Dataset):
+    """Face Landmarks dataset."""
+
+    def __init__(self, xTrainList, yTrainList, transform=None):
+        """
+        Args:
+            csv_file (string): Path to the csv file with annotations.
+            root_dir (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.xTrainList = xTrainList
+        self.yTrainList = yTrainList
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.yTrainList)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = self.xTrainList[idx]
+        image = cv2.imread(img_name)
+
+        image = cv2.resize(image,(200, 66), interpolation = cv2.INTER_AREA)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+
+        labels = self.yTrainList[idx]
+        labels = np.array([labels])
+        labels = labels.astype('float')
+        sample = (image, labels)
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
 
 '''
 def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
@@ -479,7 +533,10 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		if (BN_flag == 3):
 			trainGenerator = gen_train_data_random_featshift(xTrainList, yTrainList, xTrainList_advp, yTrainList_advp, batchSize)
 		else:
-			trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
+			dataset = DrivingDataset_pytorch(xTrainList, yTrainList, transform=transforms.Compose([ToTensor()]))
+			#dataset = DrivingDataset_pytorch(xTrainList, yTrainList)
+			trainGenerator = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=8)
+			#trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
 			validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 		print(net)
 	else:
@@ -530,21 +587,24 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		#print(net.layers[2].get_weights())
 		#print(net.layers[13].get_weights())
 
-		if (BN_flag == 3):
-			netF.load_weights(modelPath)
-			for id in range(len(netF.layers)):
-				netF.layers[id].trainable = False
-
-			net_untrain = create_nvidia_network(0, fClassifier, nClass)
-			for id in range(len(net_untrain.layers)):
-				netI.layers[id].set_weights(net_untrain.layers[id].get_weights())
-				netI.layers[id].trainable = True
-
-			# print('refreeze')
-			# for layer in net.layers:
-			# 	print(layer.trainable)
+		if pytorch_flag:
+			net.load_state_dict(torch.load(modelPath))
 		else:
-			net.load_weights(modelPath)
+			if (BN_flag == 3):
+				netF.load_weights(modelPath)
+				for id in range(len(netF.layers)):
+					netF.layers[id].trainable = False
+
+				net_untrain = create_nvidia_network(0, fClassifier, nClass)
+				for id in range(len(net_untrain.layers)):
+					netI.layers[id].set_weights(net_untrain.layers[id].get_weights())
+					netI.layers[id].trainable = True
+
+				# print('refreeze')
+				# for layer in net.layers:
+				# 	print(layer.trainable)
+			else:
+				net.load_weights(modelPath)
 
 		# net1 = create_nvidia_network(0, fClassifier, nClass, nChannel)
 		# print(net1.summary())

@@ -68,7 +68,10 @@ def single_test():
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
 	#train_network(imagePath, labelPath, outputPath)
 
-	modelPath = outputPath + "/model-final.h5"
+	if pytorch_flag:
+		modelPath = outputPath + "/model-final.pth"
+	else:
+		modelPath = outputPath + "/model-final.h5"
 
 	imagePath = DATASET_ROOT + val_folder + "/"
 	labelName = get_label_file_name(val_folder, "")
@@ -77,7 +80,7 @@ def single_test():
 
 	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
 	#modelPath = ""
-	test_network(modelPath, imagePath, labelPath, outputPath)
+	test_network(modelPath, imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag)
 
 def single_test_with_config(subtask_id=-1):
 	train_folder = "trainB"
@@ -93,6 +96,7 @@ def single_test_with_config(subtask_id=-1):
 	radius = 10 #only valid when visualize = True
 	Maxup_flag = False
 	pytorch_flag = False
+	modelPath = ""
 
 	if subtask_id == '0':
 		train_folder = "trainB"
@@ -121,6 +125,10 @@ def single_test_with_config(subtask_id=-1):
 	elif subtask_id == '8':
 		Maxup_flag = True
 		pytorch_flag = True
+	elif subtask_id == '9':
+		Maxup_flag = True
+		pytorch_flag = True
+		modelPath = TRAIN_OUTPUT_ROOT + "trainB_Maxup_pytorch/model-final.pth"
 
 
 	train_suffix = train_label_suffix
@@ -134,15 +142,17 @@ def single_test_with_config(subtask_id=-1):
 		train_suffix = train_suffix + "_Maxup"
 	if pytorch_flag:
 		train_suffix = train_suffix + "_pytorch"
+	if modelPath != "":
+		train_suffix = train_suffix + "_retrain"
 
-	train_suffix = train_suffix + "_test"
+	#train_suffix = train_suffix + "_test"
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder, train_label_suffix)
 	labelPath = DATASET_ROOT + labelName
 
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + train_suffix + "/"
-	train_network(imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, netType=net_type, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
+	train_network(imagePath, labelPath, outputPath, modelPath=modelPath, BN_flag=BN_flag, classification=classification, netType=net_type, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
 
 	modelPath = outputPath + "/model-final.h5"
 	if pytorch_flag:
