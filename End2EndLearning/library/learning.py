@@ -5,16 +5,11 @@ import os
 import shutil
 import numpy as np
 
-import keras
-import tensorflow as tf
-from keras.utils.np_utils import to_categorical
-from keras.callbacks import ModelCheckpoint, CSVLogger
-from keras import backend as K
+
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
 from utilities import resize_image, random_distort, load_train_data, load_train_data_multi, load_train_data_multi_pack
-from networks import net_lstm, create_nvidia_network, GAN_Nvidia, mean_accuracy
 from networks_pytorch import create_nvidia_network_pytorch
 import time
 import ntpath
@@ -30,6 +25,17 @@ import skimage.io
 import matplotlib.pyplot as plt
 
 from numpy.random import default_rng
+
+from sys import platform
+
+USE_KERAS = True
+if USE_KERAS:
+	import keras
+	import tensorflow as tf
+	from keras.utils.np_utils import to_categorical
+	from keras.callbacks import ModelCheckpoint, CSVLogger
+	from keras import backend as K
+	from networks import net_lstm, create_nvidia_network, GAN_Nvidia, mean_accuracy
 
 
 
@@ -535,7 +541,10 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		else:
 			dataset = DrivingDataset_pytorch(xTrainList, yTrainList, transform=transforms.Compose([ToTensor()]))
 			#dataset = DrivingDataset_pytorch(xTrainList, yTrainList)
-			trainGenerator = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=8)
+			if platform == "win32":
+				trainGenerator = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=0)
+			else:
+				trainGenerator = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=16)
 			#trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
 			validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 		print(net)
@@ -673,6 +682,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			net.train()
 
 			for i, (inputs, labels) in enumerate(trainGenerator):
+				labels = labels.numpy().flatten()
 				if BN_flag == 3:
 					image, feature = inputs
 					labels1, labels2 = labels

@@ -28,16 +28,16 @@ class net_nvidia_pytorch(nn.Module):
 		self.fc4 = nn.Linear(10, 1)
 
 	def forward(self, x):
-		x = F.relu(self.conv1(x))
-		x = F.relu(self.conv2(x))
-		x = F.relu(self.conv3(x))
-		x = F.relu(self.conv4(x))
-		x = F.relu(self.conv5(x))
+		x = F.elu(self.conv1(x))
+		x = F.elu(self.conv2(x))
+		x = F.elu(self.conv3(x))
+		x = F.elu(self.conv4(x))
+		x = F.elu(self.conv5(x))
 		#print(x.shape)
 		x = x.reshape(-1, 64 * 1 * 18)
-		x = F.relu(self.fc1(x))
-		x = F.relu(self.fc2(x))
-		x = F.relu(self.fc3(x))
+		x = F.elu(self.fc1(x))
+		x = F.elu(self.fc2(x))
+		x = F.elu(self.fc3(x))
 		x = self.fc4(x)
 		return x
 
@@ -67,10 +67,10 @@ class net_nvidia_featshift_pytorch(nn.Module):
 		# print(std2.cpu().detach().numpy())
 
 
-		x = F.relu(self.conv1(img))
-		x = F.relu(self.conv2(x))
-		x = F.relu(self.conv3(x))
-		x = F.relu(self.conv4(x))
+		x = F.elu(self.conv1(img))
+		x = F.elu(self.conv2(x))
+		x = F.elu(self.conv3(x))
+		x = F.elu(self.conv4(x))
 		x = self.conv5(x)
 
 		#print(x.cpu().detach().numpy())
@@ -89,22 +89,22 @@ class net_nvidia_featshift_pytorch(nn.Module):
 		f = torch.mul(f, std1)
 		f = torch.add(f, mean1)
 
-		x = F.relu(x)
+		x = F.elu(x)
 		#print(x.shape)
 		x = x.view(-1, 64 * 1 * 18)
-		x = F.relu(self.fc1(x))
-		x = F.relu(self.fc2(x))
-		x = F.relu(self.fc3(x))
+		x = F.elu(self.fc1(x))
+		x = F.elu(self.fc2(x))
+		x = F.elu(self.fc3(x))
 		x = self.fc4(x)
 
 		#print(x.cpu().detach().numpy())
 
-		f = F.relu(f)
+		f = F.elu(f)
 		#print(x.shape)
 		f = f.view(-1, 64 * 1 * 18)
-		f = F.relu(self.fc1(f))
-		f = F.relu(self.fc2(f))
-		f = F.relu(self.fc3(f))
+		f = F.elu(self.fc1(f))
+		f = F.elu(self.fc2(f))
+		f = F.elu(self.fc3(f))
 		f = self.fc4(f)
 
 		#print(f.cpu().detach().numpy())
