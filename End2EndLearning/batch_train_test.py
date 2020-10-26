@@ -309,28 +309,54 @@ def multi_factor_search_test():
 
 
 def unit_test_for_style():
-	TRAIN_LIST = ["trainA", "trainB", "trainA_fake_GAN", "trainB_fake_GAN", "trainA_MUNIT_GAN", "trainB_MUNIT_GAN", "trainA_fake_color", "trainB_fake_color"]
-	#TRAIN_LIST = ["trainA_1", "trainB", "trainA_fake_GAN_1", "trainA_MUNIT_GAN_1"]
-	VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valB_fake_GAN", "valA_MUNIT_GAN", "valB_MUNIT_GAN", "valA_fake_color", "valB_fake_color"]
-	#VAL_LIST = ["valA", "valB", "valA_fake_GAN", "valA_MUNIT_GAN"]
-
-	TRAIN_LIST = ["trainB_quality_channel"]
-	VAL_LIST = ["valB", "valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5", \
+	pytorch_flag = True
+	TRAIN_LIST = ["trainB_Maxup_pytorch_no_distortion"]
+	VAL_LIST = ["valB", \
 				"valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5", \
+				"valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5", \
 				"valB_distort_1", "valB_distort_2", "valB_distort_3", "valB_distort_4", "valB_distort_5", \
-				"valB_G_darker", "valB_G_lighter", \
-				"valB_S_darker", "valB_S_darker", \
-				"valB_Y_luma_darker", "valB_Y_luma_lighter"]
+				"valB_R_darker_1", "valB_R_darker_2", "valB_R_darker_3", "valB_R_darker_4", "valB_R_darker_5", \
+				"valB_R_lighter_1", "valB_R_lighter_2", "valB_R_lighter_3", "valB_R_lighter_4", "valB_R_lighter_5", \
+				"valB_G_darker_1", "valB_G_darker_2", "valB_G_darker_3", "valB_G_darker_4", "valB_G_darker_5", \
+				"valB_G_lighter_1", "valB_G_lighter_2", "valB_G_lighter_3", "valB_G_lighter_4", "valB_G_lighter_5", \
+				"valB_B_darker_1", "valB_B_darker_2", "valB_B_darker_3", "valB_B_darker_4", "valB_B_darker_5", \
+				"valB_B_lighter_1", "valB_B_lighter_2", "valB_B_lighter_3", "valB_B_lighter_4", "valB_B_lighter_5", \
+				"valB_H_darker_1", "valB_H_darker_2", "valB_H_darker_3", "valB_H_darker_4", "valB_H_darker_5", \
+				"valB_H_lighter_1", "valB_H_lighter_2", "valB_H_lighter_3", "valB_H_lighter_4", "valB_H_lighter_5", \
+				"valB_S_darker_1", "valB_S_darker_2", "valB_S_darker_3", "valB_S_darker_4", "valB_S_darker_5", \
+				"valB_S_lighter_1", "valB_S_lighter_2", "valB_S_lighter_3", "valB_S_lighter_4", "valB_S_lighter_5", \
+				"valB_V_darker_1", "valB_V_darker_2", "valB_V_darker_3", "valB_V_darker_4", "valB_V_darker_5", \
+				"valB_V_lighter_1", "valB_V_lighter_2", "valB_V_lighter_3", "valB_V_lighter_4", "valB_V_lighter_5", \
+				"valB_combined_1_3", "valB_combined_1_4", "valB_combined_1_7", \
+				"valB_combined_1_8", "valB_combined_1_9", "valB_combined_1_10", \
+				"valB_IMGC_motion_blur_1", "valB_IMGC_motion_blur_2", "valB_IMGC_motion_blur_3", \
+				"valB_IMGC_motion_blur_4", "valB_IMGC_motion_blur_5", \
+				"valB_IMGC_zoom_blur_1", "valB_IMGC_zoom_blur_2", "valB_IMGC_zoom_blur_3", \
+				"valB_IMGC_zoom_blur_4", "valB_IMGC_zoom_blur_5", \
+				"valB_IMGC_pixelate_1", "valB_IMGC_pixelate_2", "valB_IMGC_pixelate_3", \
+				"valB_IMGC_pixelate_4", "valB_IMGC_pixelate_5", \
+				"valB_IMGC_jpeg_compression_1", "valB_IMGC_jpeg_compression_2", "valB_IMGC_jpeg_compression_3", \
+				"valB_IMGC_jpeg_compression_4", "valB_IMGC_jpeg_compression_5", \
+				"valB_IMGC_snow_1", "valB_IMGC_snow_2", "valB_IMGC_snow_3", \
+				"valB_IMGC_snow_4", "valB_IMGC_snow_5", \
+				"valB_IMGC_frost_1", "valB_IMGC_frost_2", "valB_IMGC_frost_3", \
+				"valB_IMGC_frost_4", "valB_IMGC_frost_5", \
+				"valB_IMGC_fog_1", "valB_IMGC_fog_2", "valB_IMGC_fog_3", \
+				"valB_IMGC_fog_4", "valB_IMGC_fog_5"
+				]
 
+	MA_list = []
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
 		labelName = get_label_file_name(train_folder)
 		labelPath = DATASET_ROOT + labelName
 		outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
-		#train_network(imagePath, labelPath, outputPath)
+		#train_network(imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag)
 
 		for val_folder in VAL_LIST:
 			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
+			if pytorch_flag:
+				modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.pth"
 			val_folder = val_folder.replace("train", "val")
 
 			#if not (train_folder == "trainA_MUNIT_GAN_1" or val_folder == "valA_MUNIT_GAN"):
@@ -340,7 +366,11 @@ def unit_test_for_style():
 			labelName = get_label_file_name(val_folder)
 			labelPath = DATASET_ROOT + labelName
 			outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
-			test_network(modelPath, imagePath, labelPath, outputPath)
+			MA = test_network(modelPath, imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag) #, visualize=True
+			MA_list.append(MA)
+
+		for MA in MA_list:
+			print("{:.2f}\t".format(MA*100))
 
 def unit_test_for_quality(subtask_id=-1):
 	TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5"],
