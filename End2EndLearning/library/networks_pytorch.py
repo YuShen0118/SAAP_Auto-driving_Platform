@@ -34,7 +34,7 @@ class net_nvidia_pytorch(nn.Module):
 		x = F.relu(self.conv4(x))
 		x = F.relu(self.conv5(x))
 		#print(x.shape)
-		x = x.view(-1, 64 * 1 * 18)
+		x = x.reshape(-1, 64 * 1 * 18)
 		x = F.relu(self.fc1(x))
 		x = F.relu(self.fc2(x))
 		x = F.relu(self.fc3(x))
