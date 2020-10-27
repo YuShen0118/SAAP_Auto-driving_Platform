@@ -547,8 +547,8 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=0)
 				#validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 			else:
-				trainGenerator = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=16)
-				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=16)
+				trainGenerator = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=8)
+				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=8)
 			#trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
 			#validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 		print(net)
@@ -700,7 +700,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 					outputs = net(torch.Tensor(inputs).cuda())
 
 				# backward + optimize
-				if Maxup_flag:
+				if Maxup_flag and epoch >= 5:
 					m=4
 					prediction = outputs.cpu().detach().numpy().flatten().reshape((int(batchSize/m), m))
 					labels = labels.reshape((int(batchSize/m), m))
@@ -740,66 +740,68 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			train_acc = np.mean(train_acc_list)
 
 
-			valid_loss = 0.0
-			valid_acc_list = [0,0,0,0,0,0]
-			net.eval()
+			# valid_loss = 0.0
+			# valid_acc_list = [0,0,0,0,0,0]
+			# net.eval()
 
-			for i, (inputs, labels) in enumerate(validGenerator):
-				labels = labels.numpy().flatten()
-				if BN_flag == 3:
-					image, feature = inputs
-					labels1, labels2 = labels
-					image = np.transpose(image, (0, 3, 1, 2))
-					inputs = [image, feature]
-					labels = np.concatenate((labels1, labels2))
-					outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
-				else:
-					inputs = np.transpose(inputs, (0, 3, 1, 2))
-					outputs = net(torch.Tensor(inputs).cuda())
+			# for i, (inputs, labels) in enumerate(validGenerator):
+			# 	labels = labels.numpy().flatten()
+			# 	if BN_flag == 3:
+			# 		image, feature = inputs
+			# 		labels1, labels2 = labels
+			# 		image = np.transpose(image, (0, 3, 1, 2))
+			# 		inputs = [image, feature]
+			# 		labels = np.concatenate((labels1, labels2))
+			# 		outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+			# 	else:
+			# 		inputs = np.transpose(inputs, (0, 3, 1, 2))
+			# 		outputs = net(torch.Tensor(inputs).cuda())
 
-				labels = labels.flatten()
-				labels_2d = labels.reshape((labels.shape[0], 1))
+			# 	labels = labels.flatten()
+			# 	labels_2d = labels.reshape((labels.shape[0], 1))
 
-				# zero the parameter gradients
-				optimizer.zero_grad()
+			# 	# zero the parameter gradients
+			# 	optimizer.zero_grad()
 
-				loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
+			# 	loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
 
-				# print statistics
-				valid_loss += loss.item()
+			# 	# print statistics
+			# 	valid_loss += loss.item()
 
-				prediction_error = np.abs(outputs.cpu().detach().numpy().flatten()-labels)
-				for j,thresh_hold in enumerate(thresh_holds):
-					acc_count = np.sum(prediction_error < thresh_hold)
-					valid_acc_list[j] += acc_count
+			# 	prediction_error = np.abs(outputs.cpu().detach().numpy().flatten()-labels)
+			# 	for j,thresh_hold in enumerate(thresh_holds):
+			# 		acc_count = np.sum(prediction_error < thresh_hold)
+			# 		valid_acc_list[j] += acc_count
 
-				if i >= valid_batch_num-1:
-					break
+			# 	if i >= valid_batch_num-1:
+			# 		break
 
-			for j in range(len(valid_acc_list)):
-				valid_acc_list[j] = valid_acc_list[j] / valid_batch_num / len(labels)
-			val_acc = np.mean(valid_acc_list)
+			# for j in range(len(valid_acc_list)):
+			# 	valid_acc_list[j] = valid_acc_list[j] / valid_batch_num / len(labels)
+			# val_acc = np.mean(valid_acc_list)
 
-			# (inputs, labels) = load_data_all(xValidList, yValidList)
-			# inputs = np.transpose(inputs, (0, 3, 1, 2))
-			# labels_2d = labels.reshape((labels.shape[0], 1))
 
-			# if BN_flag == 3:
-			# 	outputs = net(torch.Tensor(inputs).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
-			# else:
-			# 	outputs = net(torch.Tensor(inputs).cuda())
 
-			# outputs = outputs.cpu().detach().numpy().flatten()[0:len(labels)]
-			# loss = criterion(torch.Tensor(outputs).cuda(), torch.Tensor(labels).cuda())
-			# valid_loss = loss.item()
+			(inputs, labels) = load_data_all(xValidList, yValidList)
+			inputs = np.transpose(inputs, (0, 3, 1, 2))
+			labels_2d = labels.reshape((labels.shape[0], 1))
 
-			# val_acc_list = []
-			# prediction_error = np.abs(outputs-labels)
-			# for thresh_hold in thresh_holds:
-			# 	acc = np.sum(prediction_error < thresh_hold) / len(prediction_error)
-			# 	val_acc_list.append(acc)
+			if BN_flag == 3:
+				outputs = net(torch.Tensor(inputs).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+			else:
+				outputs = net(torch.Tensor(inputs).cuda())
 
-			# val_acc = np.mean(val_acc_list)
+			outputs = outputs.cpu().detach().numpy().flatten()[0:len(labels)]
+			loss = criterion(torch.Tensor(outputs).cuda(), torch.Tensor(labels).cuda())
+			valid_loss = loss.item()
+
+			val_acc_list = []
+			prediction_error = np.abs(outputs-labels)
+			for thresh_hold in thresh_holds:
+				acc = np.sum(prediction_error < thresh_hold) / len(prediction_error)
+				val_acc_list.append(acc)
+
+			val_acc = np.mean(val_acc_list)
 
 
 			end = time.time()
