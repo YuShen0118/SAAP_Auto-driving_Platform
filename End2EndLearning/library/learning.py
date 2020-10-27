@@ -539,14 +539,18 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		if (BN_flag == 3):
 			trainGenerator = gen_train_data_random_featshift(xTrainList, yTrainList, xTrainList_advp, yTrainList_advp, batchSize)
 		else:
-			dataset = DrivingDataset_pytorch(xTrainList, yTrainList, transform=transforms.Compose([ToTensor()]))
+			train_dataset = DrivingDataset_pytorch(xTrainList, yTrainList, transform=transforms.Compose([ToTensor()]))
+			valid_dataset = DrivingDataset_pytorch(xValidList, yValidList, transform=transforms.Compose([ToTensor()]))
 			#dataset = DrivingDataset_pytorch(xTrainList, yTrainList)
 			if platform == "win32":
-				trainGenerator = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=0)
+				trainGenerator = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=0)
+				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=0)
+				#validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 			else:
-				trainGenerator = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=16)
+				trainGenerator = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=16)
+				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=16)
 			#trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
-			validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
+			#validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 		print(net)
 	else:
 		if netType == 1:
@@ -666,9 +670,9 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 		#optimizer = optim.Adam(net.parameters(), lr=0.0001)
 		optimizer = optim.Adam(net.parameters(), lr=0.0001)
-		batch_num = int(len(yTrainList)/batchSize)
+		train_batch_num = int(len(yTrainList)/batchSize)
+		valid_batch_num = int(len(yValidList)/batchSize)
 		thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
-		train_acc_list = [0,0,0,0,0,0]
 
 		#TODO, for shift
 		mean2, std2 = get_mean_std()
@@ -679,6 +683,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		for epoch in range(nEpoch):  # loop over the dataset multiple times
 			start = time.time()
 			running_loss = 0.0
+			train_acc_list = [0,0,0,0,0,0]
 			net.train()
 
 			for i, (inputs, labels) in enumerate(trainGenerator):
@@ -727,40 +732,80 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 					acc_count = np.sum(prediction_error < thresh_hold)
 					train_acc_list[j] += acc_count
 
-				if i >= batch_num-1:
+				if i >= train_batch_num-1:
 					break
 
 			for j in range(len(train_acc_list)):
-				train_acc_list[j] = train_acc_list[j] / batch_num / len(labels)
+				train_acc_list[j] = train_acc_list[j] / train_batch_num / len(labels)
 			train_acc = np.mean(train_acc_list)
 
+
+			valid_loss = 0.0
+			valid_acc_list = [0,0,0,0,0,0]
 			net.eval()
-			(inputs, labels) = load_data_all(xValidList, yValidList)
-			inputs = np.transpose(inputs, (0, 3, 1, 2))
-			labels_2d = labels.reshape((labels.shape[0], 1))
 
-			if BN_flag == 3:
-				outputs = net(torch.Tensor(inputs).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
-			else:
-				outputs = net(torch.Tensor(inputs).cuda())
+			for i, (inputs, labels) in enumerate(validGenerator):
+				labels = labels.numpy().flatten()
+				if BN_flag == 3:
+					image, feature = inputs
+					labels1, labels2 = labels
+					image = np.transpose(image, (0, 3, 1, 2))
+					inputs = [image, feature]
+					labels = np.concatenate((labels1, labels2))
+					outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+				else:
+					inputs = np.transpose(inputs, (0, 3, 1, 2))
+					outputs = net(torch.Tensor(inputs).cuda())
 
-			outputs = outputs.cpu().detach().numpy().flatten()[0:len(labels)]
-			loss = criterion(torch.Tensor(outputs).cuda(), torch.Tensor(labels).cuda())
-			valid_loss = loss.item()
+				labels = labels.flatten()
+				labels_2d = labels.reshape((labels.shape[0], 1))
 
-			val_acc_list = []
-			prediction_error = np.abs(outputs-labels)
-			for thresh_hold in thresh_holds:
-				acc = np.sum(prediction_error < thresh_hold) / len(prediction_error)
-				val_acc_list.append(acc)
+				# zero the parameter gradients
+				optimizer.zero_grad()
 
-			val_acc = np.mean(val_acc_list)
+				loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
+
+				# print statistics
+				valid_loss += loss.item()
+
+				prediction_error = np.abs(outputs.cpu().detach().numpy().flatten()-labels)
+				for j,thresh_hold in enumerate(thresh_holds):
+					acc_count = np.sum(prediction_error < thresh_hold)
+					valid_acc_list[j] += acc_count
+
+				if i >= valid_batch_num-1:
+					break
+
+			for j in range(len(valid_acc_list)):
+				valid_acc_list[j] = valid_acc_list[j] / valid_batch_num / len(labels)
+			val_acc = np.mean(valid_acc_list)
+
+			# (inputs, labels) = load_data_all(xValidList, yValidList)
+			# inputs = np.transpose(inputs, (0, 3, 1, 2))
+			# labels_2d = labels.reshape((labels.shape[0], 1))
+
+			# if BN_flag == 3:
+			# 	outputs = net(torch.Tensor(inputs).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+			# else:
+			# 	outputs = net(torch.Tensor(inputs).cuda())
+
+			# outputs = outputs.cpu().detach().numpy().flatten()[0:len(labels)]
+			# loss = criterion(torch.Tensor(outputs).cuda(), torch.Tensor(labels).cuda())
+			# valid_loss = loss.item()
+
+			# val_acc_list = []
+			# prediction_error = np.abs(outputs-labels)
+			# for thresh_hold in thresh_holds:
+			# 	acc = np.sum(prediction_error < thresh_hold) / len(prediction_error)
+			# 	val_acc_list.append(acc)
+
+			# val_acc = np.mean(val_acc_list)
 
 
 			end = time.time()
 			print('[%d/%d][cost time %f] training loss: %.3f, training acc: %.3f, valid loss: %.3f, valid acc: %.3f' % \
-				(epoch+1, nEpoch, end-start, running_loss / batch_num, train_acc, valid_loss, val_acc))
-			f_log.write("{:d},{:.4f},{:.4f},{:.4f},{:.4f}\n".format(epoch+1, running_loss / batch_num, train_acc, valid_loss, val_acc))
+				(epoch+1, nEpoch, end-start, running_loss / train_batch_num, train_acc, valid_loss / valid_batch_num, val_acc))
+			f_log.write("{:d},{:.4f},{:.4f},{:.4f},{:.4f}\n".format(epoch+1, running_loss / train_batch_num, train_acc, valid_loss / valid_batch_num, val_acc))
 			f_log.flush()
 			if epoch % 100 == 0:
 				torch.save(net.state_dict(), outputPath + 'model_' + str(epoch) + '.pth')
@@ -1297,7 +1342,8 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 	print('********************************************')
 	print('\n\n\n')
 
-	K.clear_session()
+	if not pytorch_flag:
+		K.clear_session()
 
 	return np.mean(acc_list)
 

@@ -97,6 +97,7 @@ def single_test_with_config(subtask_id=-1):
 	Maxup_flag = False
 	pytorch_flag = False
 	modelPath = ""
+	suffix = ""
 
 	if subtask_id == '0':
 		train_folder = "trainB"
@@ -122,6 +123,7 @@ def single_test_with_config(subtask_id=-1):
 	elif subtask_id == '7':
 		# pytorch baseline
 		pytorch_flag = True
+		suffix = "_norm"
 	elif subtask_id == '8':
 		Maxup_flag = True
 		pytorch_flag = True
@@ -145,7 +147,7 @@ def single_test_with_config(subtask_id=-1):
 	if modelPath != "":
 		train_suffix = train_suffix + "_retrain"
 
-	#train_suffix = train_suffix + "_test"
+	train_suffix = train_suffix + suffix
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder, train_label_suffix)
@@ -441,6 +443,7 @@ def combination_test_for_style(subtask_id):
 	#TRAIN_RATIO_LIST = [0.25, 0.5, 0.75, 1.0]
 	BN_flag = 0
 	pack_in_channel = False
+	pytorch_flag = False
 
 	if subtask_id == '0':
 		TRAIN_FOLDER_LIST = [["trainA"]]
@@ -632,6 +635,26 @@ def combination_test_for_style(subtask_id):
 	elif subtask_id == '36':
 		TRAIN_FOLDER_LIST = [["trainC1", "trainB"]]
 		TRAIN_RATIO_LIST = [[1,1]]
+	elif subtask_id == '37':
+		TRAIN_FOLDER_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5", \
+		"trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5",\
+		#"trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5",\
+		"trainB_R_darker_1", "trainB_R_darker_2", "trainB_R_darker_3", "trainB_R_darker_4", "trainB_R_darker_5", \
+		"trainB_R_lighter_1", "trainB_R_lighter_2", "trainB_R_lighter_3", "trainB_R_lighter_4", "trainB_R_lighter_5", \
+		"trainB_G_darker_1", "trainB_G_darker_2", "trainB_G_darker_3", "trainB_G_darker_4", "trainB_G_darker_5", \
+		"trainB_G_lighter_1", "trainB_G_lighter_2", "trainB_G_lighter_3", "trainB_G_lighter_4", "trainB_G_lighter_5", \
+		"trainB_B_darker_1", "trainB_B_darker_2", "trainB_B_darker_3", "trainB_B_darker_4", "trainB_B_darker_5", \
+		"trainB_B_lighter_1", "trainB_B_lighter_2", "trainB_B_lighter_3", "trainB_B_lighter_4", "trainB_B_lighter_5", \
+		"trainB_H_darker_1", "trainB_H_darker_2", "trainB_H_darker_3", "trainB_H_darker_4", "trainB_H_darker_5", \
+		"trainB_H_lighter_1", "trainB_H_lighter_2", "trainB_H_lighter_3", "trainB_H_lighter_4", "trainB_H_lighter_5", \
+		"trainB_S_darker_1", "trainB_S_darker_2", "trainB_S_darker_3", "trainB_S_darker_4", "trainB_S_darker_5", \
+		"trainB_S_lighter_1", "trainB_S_lighter_2", "trainB_S_lighter_3", "trainB_S_lighter_4", "trainB_S_lighter_5", \
+		"trainB_V_darker_1", "trainB_V_darker_2", "trainB_V_darker_3", "trainB_V_darker_4", "trainB_V_darker_5", \
+		"trainB_V_lighter_1", "trainB_V_lighter_2", "trainB_V_lighter_3", "trainB_V_lighter_4", "trainB_V_lighter_5"
+		]]
+		TRAIN_RATIO_LIST = [1]*len(TRAIN_FOLDER_LIST[0])
+		TRAIN_RATIO_LIST = [TRAIN_RATIO_LIST]
+		pytorch_flag = True
 	elif subtask_id == '100':
 		#For test
 		TRAIN_FOLDER_LIST = [["trainB_blur"]]
@@ -649,7 +672,8 @@ def combination_test_for_style(subtask_id):
 		suffix = suffix + "_BN" + str(BN_flag)
 	if pack_in_channel:
 		suffix = suffix + "_pack_channel"
-
+	if pytorch_flag:
+		suffix = suffix + "_pytorch"
 
 	i = 0
 	for train_folder_list in TRAIN_FOLDER_LIST:
@@ -668,7 +692,7 @@ def combination_test_for_style(subtask_id):
 				labelPath = DATASET_ROOT + labelName
 				imagePath_list.append(imagePath)
 				labelPath_list.append(labelPath)
-			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio, pack_flag=pack_in_channel)
+			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio, pack_flag=pack_in_channel, pytorch_flag=pytorch_flag)
 
 			modelPath = trainOutputPath + "model-final.h5"
 			for val_folder_list in VAL_LIST:
@@ -682,7 +706,7 @@ def combination_test_for_style(subtask_id):
 					labelPath_list.append(labelPath)
 
 				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + str(val_folder_list) + ")/test_result.txt"
-				test_network_multi(modelPath, imagePath_list, labelPath_list, valOutputPath, BN_flag=BN_flag, pack_flag=pack_in_channel)
+				test_network_multi(modelPath, imagePath_list, labelPath_list, valOutputPath, BN_flag=BN_flag, pack_flag=pack_in_channel, pytorch_flag=pytorch_flag)
 
 		i += 1
 

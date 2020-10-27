@@ -13,6 +13,12 @@ def create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel=3, Maxu
 		
 	return net_nvidia_pytorch()
 
+class LambdaLayer(nn.Module):
+    def __init__(self, lambd):
+        super(LambdaLayer, self).__init__()
+        self.lambd = lambd
+    def forward(self, x):
+        return self.lambd(x)
 
 class net_nvidia_pytorch(nn.Module):
 	def __init__(self):
@@ -28,6 +34,7 @@ class net_nvidia_pytorch(nn.Module):
 		self.fc4 = nn.Linear(10, 1)
 
 	def forward(self, x):
+		x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
 		x = F.elu(self.conv1(x))
 		x = F.elu(self.conv2(x))
 		x = F.elu(self.conv3(x))
@@ -67,7 +74,8 @@ class net_nvidia_featshift_pytorch(nn.Module):
 		# print(std2.cpu().detach().numpy())
 
 
-		x = F.elu(self.conv1(img))
+		x = LambdaLayer(lambda x: x/127.5 - 1.0)(img)
+		x = F.elu(self.conv1(x))
 		x = F.elu(self.conv2(x))
 		x = F.elu(self.conv3(x))
 		x = F.elu(self.conv4(x))
