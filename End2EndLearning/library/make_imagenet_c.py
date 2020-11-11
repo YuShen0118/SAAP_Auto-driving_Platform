@@ -22,9 +22,11 @@ from PIL import Image
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
 # added by Laura 
-PLATFORM_ROOT = "/Users/laurazheng/projects/SAAP_Auto-driving_Platform/"
+PLATFORM_ROOT = "/media/yushen/workspace2/projects/SAAP_Auto-driving_Platform/"
 IMAGEW = 455
 IMAGEH = 256
+RESIZE_W = 200
+RESIZE_H = 66
 
 def is_image_file(filename):
     """Checks if a file is an image.
@@ -140,7 +142,7 @@ class DistortImageFolder(data.Dataset):
 
         save_path += path[path.rindex('/'):]
 
-        Image.fromarray(np.uint8(img)).save(save_path, quality=85, optimize=True)
+        Image.fromarray(np.uint8(img)).resize((RESIZE_W,RESIZE_H)).save(save_path, quality=85, optimize=True)
 
         return 0  # we do not care about returning the data
 
@@ -608,7 +610,19 @@ def save_distorted(method=gaussian_noise):
     for severity in range(1, 6):
         print(method.__name__, severity)
         distorted_dataset = DistortImageFolder(
-            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valB"),
+            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valHm"),
+            method=method, severity=severity,
+            transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
+        distorted_dataset_loader = torch.utils.data.DataLoader(
+            distorted_dataset, batch_size=100, shuffle=False, num_workers=4)
+
+        for _ in distorted_dataset_loader: continue
+    
+    # delete later
+    for severity in range(1, 6):
+        print(method.__name__, severity)
+        distorted_dataset = DistortImageFolder(
+            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valAds"),
             method=method, severity=severity,
             transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
         distorted_dataset_loader = torch.utils.data.DataLoader(
