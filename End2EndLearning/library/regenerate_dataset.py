@@ -224,7 +224,7 @@ def generate_dataset_diff_quality(dataset_path, folder):
             os.mkdir(noise_folder)
 
     #image_paths = glob.glob(dataset_path + folder + "/*_leftImg8bit.png")
-    image_paths = glob.glob(dataset_path + folder + "/*.jpg")
+    image_paths = glob.glob(os.path.join(dataset_path, folder, "/*.png")) + glob.glob(os.path.join(dataset_path, folder, "/*.jpg"))
 
     for image_path in image_paths:
         print(image_path)
@@ -287,7 +287,7 @@ def generate_dataset_distort(dataset_path, folder):
         image_paths = glob.glob(dataset_path + folder + "/*_gtFine_color.png")
     else:
         #image_paths = glob.glob(dataset_path + folder + "/*_leftImg8bit.png")
-        image_paths = glob.glob(dataset_path + folder + "/*.jpg")
+        image_paths = glob.glob(os.path.join(dataset_path, folder, "/*.png")) + glob.glob(os.path.join(dataset_path, folder, "/*.jpg"))
 
     for image_path in image_paths:
         print(image_path)
@@ -552,12 +552,12 @@ def generate_RGB_dataset(originalDataset, channel, direction, dist_ratio=0.25, s
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
 
-    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg")) + glob.glob(os.path.join(originalDataset, "*.png"))
     if csv_file != '':
         image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
 
     for i in image_name_list:
-        image_id = int(os.path.basename(i).replace('.jpg', ''))
+        # image_id = int(os.path.basename(i).replace('.jpg', ''))
 
         image = cv2.imread(str(i))
         
@@ -582,8 +582,8 @@ def generate_RGB_dataset(originalDataset, channel, direction, dist_ratio=0.25, s
 
         cv2.imwrite(saveAsName, image)
 
-        if image_id % 6000 == 0:
-            print(saveAsName, ' generated')
+        # if image_id % 6000 == 0:
+        #     print(saveAsName, ' generated')
 
 def generate_HSV_datasets(originalDataset, channel, direction, dist_ratio=0.25, suffix='', csv_file=''):
     
@@ -617,12 +617,12 @@ def generate_HSV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
     if channel == 0:
         max_val = HSV_H_MAX
     
-    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg")) + glob.glob(os.path.join(originalDataset, "*.png"))
     if csv_file != '':
         image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
 
     for i in image_name_list:
-        image_id = int(os.path.basename(i).replace('.jpg', ''))
+        # image_id = int(os.path.basename(i).replace('.jpg', ''))
 
         image_ori = cv2.imread(i)
         image = cv2.cvtColor(image_ori, cv2.COLOR_BGR2HSV)
@@ -651,8 +651,8 @@ def generate_HSV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
         image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))
         cv2.imwrite(saveAsName, image)
 
-        if image_id % 6000 == 0:
-            print(saveAsName, ' generated')
+        # if image_id % 6000 == 0:
+        #     print(saveAsName, ' generated')
 
 def generate_YUV_datasets(originalDataset, channel, direction, dist_ratio=0.25, suffix=''):
     
@@ -682,7 +682,8 @@ def generate_YUV_datasets(originalDataset, channel, direction, dist_ratio=0.25, 
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
     
-    for i in glob.glob(os.path.join(originalDataset, "*.jpg")):
+    img_list = glob.glob(os.path.join(originalDataset, "*.jpg")) + glob.glob(os.path.join(originalDataset, "*.png"))
+    for i in img_list:
         temp = cv2.imread(i)
         image = temp.copy()
 
@@ -819,13 +820,13 @@ def generate_combined(originalDataset, id, parameter_file='', csv_file='', dist_
         f.write(write_str + "\n")
         f.close()
 
-        image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+        image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg")) + glob.glob(os.path.join(originalDataset, "*.png"))
         print(originalDataset)
         if csv_file != '':
             image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
         
         for i in image_name_list:
-            image_id = int(os.path.basename(i).replace('.jpg', ''))
+            # image_id = int(os.path.basename(i).replace('.jpg', ''))
             img = cv2.imread(i).copy()
             
             # adding color channel distortion on RGB, HSV, 6 channels total
@@ -887,13 +888,13 @@ def _generate_middle_level(originalDataset, lvl, lo, hi, factor, direction=0, cs
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
 
-    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg"))
+    image_name_list = glob.glob(os.path.join(originalDataset, "*.jpg")) + glob.glob(os.path.join(originalDataset, "*.png"))
     print(originalDataset)
     if csv_file != '':
         image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
     
     for i in image_name_list:
-        image_id = int(os.path.basename(i).replace('.jpg', ''))
+        # image_id = int(os.path.basename(i).replace('.jpg', ''))
         img = cv2.imread(i).copy()
 
         new_val = int((hi+lo)/2)
@@ -946,8 +947,8 @@ def _generate_middle_level(originalDataset, lvl, lo, hi, factor, direction=0, cs
         saveAsName = os.path.join(saveDir, os.path.basename(i))
     
         cv2.imwrite(saveAsName, img)
-        if image_id % 6000 == 0:
-            print(saveAsName, ' generated')
+        # if image_id % 6000 == 0:
+        #     print(saveAsName, ' generated')
 
 
 def generate_middle_blur(originalDataset):
@@ -1207,16 +1208,13 @@ if __name__ == '__main__':
     '''
     folderA = os.path.join(dataset_path, "trainA")
     folderB = os.path.join(dataset_path, "trainB")
-
     #generate_dataset_transfer_color(folderA, folderB)
-
     
     #folder = "trainB_small"
     folder = "trainB"
     generate_dataset_diff_quality(dataset_path, folder)
     folder = "valB"
     generate_dataset_diff_quality(dataset_path, folder)
-
     
     folder = "trainB"
     generate_dataset_distort(dataset_path, folder)
@@ -1230,22 +1228,17 @@ if __name__ == '__main__':
     '''
     folder = "valB"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
-
     folder = "valA"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
-
     folder = "valC1"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
-
     folder = "trainB"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
-
     folder = "trainA"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
-
     folder = "trainC1"
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
     '''
     
-    generate_all("Hm")
-    generate_all("Ads")
+    generate_all("Hc")
+    # generate_all("Ads")
