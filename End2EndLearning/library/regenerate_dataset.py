@@ -307,30 +307,30 @@ def generate_dataset_distort(dataset_path, folder):
 
         #new_image = cv2.undistort(src_image, K, np.array([0.1,0.1,0,0]))
         new_image = cv2.undistort(src_image, K, np.array([1,1,0,0]))
-        new_image_path = image_path.replace(folder, folder+'_distort_2')
+        new_image_path = image_path.replace(folder, folder+'_distort_1')
         cv2.imwrite(new_image_path, new_image)
 
         #new_image = cv2.undistort(src_image, K, np.array([1,1,0,0]))
         new_image = cv2.undistort(src_image, K, np.array([10,10,0,0]))
-        new_image_path = image_path.replace(folder, folder+'_distort_3')
+        new_image_path = image_path.replace(folder, folder+'_distort_2')
         # added nov 10
         new_image = cv2.resize(new_image, (IMG_WIDTH, IMG_HEIGHT))
         cv2.imwrite(new_image_path, new_image)
         
         new_image = cv2.undistort(src_image, K, np.array([50,50,0,0]))
-        new_image_path = image_path.replace(folder, folder+'_distort_4')
+        new_image_path = image_path.replace(folder, folder+'_distort_3')
         # added nov 10
         new_image = cv2.resize(new_image, (IMG_WIDTH, IMG_HEIGHT))
         cv2.imwrite(new_image_path, new_image)
 
         new_image = cv2.undistort(src_image, K, np.array([200,200,0,0]))
-        new_image_path = image_path.replace(folder, folder+'_distort_5')
+        new_image_path = image_path.replace(folder, folder+'_distort_4')
         # added nov 10
         new_image = cv2.resize(new_image, (IMG_WIDTH, IMG_HEIGHT))
         cv2.imwrite(new_image_path, new_image)
 
         new_image = cv2.undistort(src_image, K, np.array([500,500,0,0]))
-        new_image_path = image_path.replace(folder, folder+'_distort_6')
+        new_image_path = image_path.replace(folder, folder+'_distort_5')
         # added nov 10
         new_image = cv2.resize(new_image, (IMG_WIDTH, IMG_HEIGHT))
         cv2.imwrite(new_image_path, new_image)
