@@ -224,7 +224,7 @@ def generate_dataset_diff_quality(dataset_path, folder):
             os.mkdir(noise_folder)
 
     #image_paths = glob.glob(dataset_path + folder + "/*_leftImg8bit.png")
-    image_paths = glob.glob(os.path.join(dataset_path, folder, "/*.png")) + glob.glob(os.path.join(dataset_path, folder, "/*.jpg"))
+    image_paths = glob.glob(os.path.join(dataset_path, folder, "*.png")) + glob.glob(os.path.join(dataset_path, folder, "*.jpg"))
 
     for image_path in image_paths:
         print(image_path)
@@ -287,7 +287,7 @@ def generate_dataset_distort(dataset_path, folder):
         image_paths = glob.glob(dataset_path + folder + "/*_gtFine_color.png")
     else:
         #image_paths = glob.glob(dataset_path + folder + "/*_leftImg8bit.png")
-        image_paths = glob.glob(os.path.join(dataset_path, folder, "/*.png")) + glob.glob(os.path.join(dataset_path, folder, "/*.jpg"))
+        image_paths = glob.glob(os.path.join(dataset_path, folder, "*.png")) + glob.glob(os.path.join(dataset_path, folder, "*.jpg"))
 
     for image_path in image_paths:
         print(image_path)
