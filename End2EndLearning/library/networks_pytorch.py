@@ -10,6 +10,8 @@ def create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel=3, Maxu
 		return net_nvidia_pytorch()
 	elif BN_flag == 3:
 		return net_nvidia_featshift_pytorch()
+	elif BN_flag == 4:
+		return net_nvidia_pytorch_DANN()
 		
 	return net_nvidia_pytorch()
 
@@ -123,3 +125,65 @@ class net_nvidia_featshift_pytorch(nn.Module):
 		#print(x.shape)
 
 		return x
+
+
+from torch.autograd import Function
+class ReverseLayerF(Function):
+
+	@staticmethod
+	def forward(ctx, x, alpha):
+		ctx.alpha = alpha
+
+		return x.view_as(x)
+
+	@staticmethod
+	def backward(ctx, grad_output):
+		output = grad_output.neg() * ctx.alpha
+
+		return output, None
+
+
+
+
+class net_nvidia_pytorch_DANN(nn.Module):
+	# implementation of "Unsupervised Domain Adaptation by Backpropagation"
+	def __init__(self):
+		super(net_nvidia_pytorch_DANN, self).__init__()
+
+		self.conv1 = nn.Conv2d(3, 24, 5, 2)
+		self.conv2 = nn.Conv2d(24, 36, 5, 2)
+		self.conv3 = nn.Conv2d(36, 48, 5, 2)
+		self.conv4 = nn.Conv2d(48, 64, 3)
+		self.conv5 = nn.Conv2d(64, 64, 3)
+
+		self.fc1 = nn.Linear(64 * 1 * 18, 100)
+		self.fc2 = nn.Linear(100, 50)
+		self.fc3 = nn.Linear(50, 10)
+		self.fc4 = nn.Linear(10, 1)
+
+		self.fc21 = nn.Linear(64 * 1 * 18, 100)
+		self.fc22 = nn.Linear(100, 10)
+		self.fc23 = nn.Linear(10, 2)
+
+	def forward(self, input_data, alpha=1.0):
+		x = LambdaLayer(lambda x: x/127.5 - 1.0)(input_data)
+		x = F.elu(self.conv1(x))
+		x = F.elu(self.conv2(x))
+		x = F.elu(self.conv3(x))
+		x = F.elu(self.conv4(x))
+		x = F.elu(self.conv5(x))
+		#print(x.shape)
+		x = x.reshape(-1, 64 * 1 * 18)
+
+		reverse_feature = ReverseLayerF.apply(x, alpha)
+
+		x = F.elu(self.fc1(x))
+		x = F.elu(self.fc2(x))
+		x = F.elu(self.fc3(x))
+		regression_output = self.fc4(x)
+
+		y = F.elu(self.fc1(reverse_feature))
+		y = F.elu(self.fc2(y))
+		domain_output = nn.LogSoftmax(dim=1)(self.fc3(y))
+
+		return regression_output, domain_output

@@ -18,8 +18,10 @@ root = ROOT_DIR + '/Data/udacityA_nvidiaB/'
 print('Dataset root: ', root)
 
 #### CHANGE THESE AS NEEDED ####
-NVIDIA = True
-Udacity = True
+NVIDIA = False
+Udacity = False
+Honda = False
+Audi = False
 SPLIT = True
 
 
@@ -98,6 +100,61 @@ def convert_UDACITY(input_file, output_file):
         f.write(output + '\n')
         i+=1
     f.close()
+
+def convert_HONDA(input_file, output_file):
+    ''' Converts NVIDIA format to custom format readable by end 2 end model.
+        Writes to a csv file named "formatted_labels.csv" in NVIDIA data directory.
+        Original format:
+            [img path] [steering angle],[YYYY-MM-DD] [HH:MM:SS:MS]
+        Resulting format:
+            [img pth],,,[steering angle]
+    '''
+    
+    if not os.path.exists(input_file):
+        sys.exit('Error: the HONDA labels file is missing.')
+    
+    with open(input_file, newline='') as f:
+        trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
+    
+    f = open(output_file, "w")
+    
+    for row in trainLog:
+        image = row[0]
+        angle = str(float(row[3]) / NVIDIA_STEERING_RATIO)
+        
+        output = ','.join([image,"","",angle])
+        
+        # print(output)
+        f.write(output + '\n')
+    f.close()
+    
+def convert_AUDI(input_file, output_file):
+    ''' Converts NVIDIA format to custom format readable by end 2 end model.
+        Writes to a csv file named "formatted_labels.csv" in NVIDIA data directory.
+        Original format:
+            [img path] [steering angle],[YYYY-MM-DD] [HH:MM:SS:MS]
+        Resulting format:
+            [img pth],,,[steering angle]
+    '''
+    
+    if not os.path.exists(input_file):
+        sys.exit('Error: the Audi labels file is missing.')
+    
+    with open(input_file, newline='') as f:
+        trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
+    
+    f = open(output_file, "w")
+    
+    for row in trainLog:
+        image = row[0]
+        angle = str(float(row[3]) / NVIDIA_STEERING_RATIO)
+        
+        output = ','.join([image,"","",angle])
+        
+        # print(output)
+        f.write(output + '\n')
+    f.close()
+    
     
 #split the trainval labels into train labels and val labels, according to the images in the train folder
 def split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename, step_size=1):
@@ -159,18 +216,47 @@ if NVIDIA:
     convert_NVIDIA(input_file, output_file)
     print("convert nvidia labels successfully!")
 
+if Honda:
+    input_file = root + "labelsHc_ori.csv"
+    output_file = root + "labelsHc_trainval.csv"
+    convert_HONDA(input_file, output_file)
+    print("convert honda labels successfully!")
+
+if Audi:
+    input_file = root + "labelsAds_ori.csv"
+    output_file = root + "labelsAds_trainval.csv"
+    convert_AUDI(input_file, output_file)
+    print("convert audi labels successfully!")
     
 if SPLIT:
-    imgs_train_folder = root + 'trainA/'
-    lables_trainval_filename = root + 'labelsA_trainval.csv'
-    lables_train_filename = root + 'labelsA_train.csv'
-    lables_val_filename = root + 'labelsA_val.csv'
-    split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename)
-    print("split udacity labels successfully!")
+    if Udacity:
+        imgs_train_folder = root + 'trainA/'
+        lables_trainval_filename = root + 'labelsA_trainval.csv'
+        lables_train_filename = root + 'labelsA_train.csv'
+        lables_val_filename = root + 'labelsA_val.csv'
+        split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename)
+        print("split udacity labels successfully!")
 
-    imgs_train_folder = root + 'trainB/'
-    lables_trainval_filename = root + 'labelsB_trainval.csv'
-    lables_train_filename = root + 'labelsB_train.csv'
-    lables_val_filename = root + 'labelsB_val.csv'
-    split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename, step_size=6)
-    print("split nvidia labels successfully!")
+    if NVIDIA:
+        imgs_train_folder = root + 'trainB/'
+        lables_trainval_filename = root + 'labelsB_trainval.csv'
+        lables_train_filename = root + 'labelsB_train.csv'
+        lables_val_filename = root + 'labelsB_val.csv'
+        split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename, step_size=6)
+        print("split nvidia labels successfully!")
+
+    if Honda:
+        imgs_train_folder = root + 'trainHc/'
+        lables_trainval_filename = root + 'labelsHc_trainval.csv'
+        lables_train_filename = root + 'labelsHc_train.csv'
+        lables_val_filename = root + 'labelsHc_val.csv'
+        split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename)
+        print("split Honda labels successfully!")
+
+    if Audi:
+        imgs_train_folder = root + 'trainAds/'
+        lables_trainval_filename = root + 'labelsAds_trainval.csv'
+        lables_train_filename = root + 'labelsAds_train.csv'
+        lables_val_filename = root + 'labelsAds_val.csv'
+        split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename, step_size=2)
+        print("split Audi labels successfully!")

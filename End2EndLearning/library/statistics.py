@@ -206,5 +206,5 @@ def show_BN_statistics_difference():
 
 
 if __name__ == "__main__":
-    #draw_label_distribution()
-    show_BN_statistics_difference()
+    draw_label_distribution()
+    #show_BN_statistics_difference()

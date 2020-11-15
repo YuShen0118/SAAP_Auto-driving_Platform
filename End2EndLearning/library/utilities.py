@@ -6,6 +6,7 @@ import csv
 import math
 import random
 import cv2    
+# cv2.setNumThreads(0)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle

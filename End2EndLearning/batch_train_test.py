@@ -4,6 +4,7 @@ import sys
 import os
 import glob
 import cv2
+# cv2.setNumThreads(0)
 
 ROOT_DIR = os.path.abspath("../")
 print('PLATFORM_ROOT_DIR ', ROOT_DIR)
@@ -16,6 +17,8 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 from train import train_network, train_network_multi, train_network_multi_factor_search
 from test import test_network, test_network_multi, visualize_network_on_image
 from library.fid_score import *
+from networks_pytorch import create_nvidia_network_pytorch
+from networks import create_nvidia_network
 
 DATASET_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB/"
 OUTPUT_ROOT = ROOT_DIR + "/Data/udacityA_nvidiaB_results/"
@@ -32,26 +35,16 @@ if not os.path.exists(TEST_OUTPUT_ROOT):
 	os.mkdir(TEST_OUTPUT_ROOT)
 
 def get_label_file_name(folder_name, suffix=""):
-	if "valA" in folder_name:
-		labelName = "labelsA_val"
-	elif "valB" in folder_name:
-		labelName = "labelsB_val"
-	elif "valC1" in folder_name:
-		labelName = "labelsC1_val"
-	elif "valC2" in folder_name:
-		labelName = "labelsC2_val"
-	elif "valN" in folder_name:
-		labelName = "labelsN_val"
-	elif "trainA" in folder_name:
-		labelName = "labelsA_train"
-	elif "trainB" in folder_name:
-		labelName = "labelsB_train"
-	elif "trainC1" in folder_name:
-		labelName = "labelsC1_train"
-	elif "trainC2" in folder_name:
-		labelName = "labelsC2_train"
-	elif "trainN" in folder_name:
-		labelName = "labelsN_train"
+	pos = folder_name.find('_')
+	if pos == -1:
+		main_name = folder_name
+	else:
+		main_name = folder_name[0:pos]
+
+	if "train" in folder_name:
+		labelName = main_name.replace("train","labels") + "_train"
+	elif "val" in folder_name:
+		labelName = main_name.replace("val","labels") + "_val"
 
 	labelName = labelName + suffix
 	labelName = labelName + ".csv"
@@ -60,6 +53,7 @@ def get_label_file_name(folder_name, suffix=""):
 def single_test():
 	train_folder = "trainB"
 	val_folder = "valB"
+	pytorch_flag = False
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder)
@@ -127,10 +121,52 @@ def single_test_with_config(subtask_id=-1):
 	elif subtask_id == '8':
 		Maxup_flag = True
 		pytorch_flag = True
+		suffix = "_5aug"
 	elif subtask_id == '9':
 		Maxup_flag = True
 		pytorch_flag = True
 		modelPath = TRAIN_OUTPUT_ROOT + "trainB_Maxup_pytorch/model-final.pth"
+		#suffix = "_test"
+	elif subtask_id == '10':
+		train_folder = "trainH"
+		val_folder = "valH"
+		pytorch_flag = True
+		# modelPath = TRAIN_OUTPUT_ROOT + "trainB_Maxup_pytorch/model-final.pth"
+		#suffix = "_test"
+	elif subtask_id == '11':
+		train_folder = "trainH"
+		val_folder = "valH"
+		pytorch_flag = True
+		modelPath = TRAIN_OUTPUT_ROOT + "trainH_pytorch/model-final.pth"
+		#suffix = "_test"
+	elif subtask_id == '12':
+		train_folder = "trainB"
+		val_folder = "valB"
+		pytorch_flag = True
+		modelPath = TRAIN_OUTPUT_ROOT + "trainH_pytorch/model-final.pth"
+		#suffix = "_test"
+	elif subtask_id == '13':
+		train_folder = "trainB0.1"
+		val_folder = "valB0.1"
+		pytorch_flag = True
+		#modelPath = TRAIN_OUTPUT_ROOT + "trainH_pytorch/model-final.pth"
+		#suffix = "_test"
+	elif subtask_id == '14':
+		train_folder = "trainHs"
+		val_folder = "valHs"
+		pytorch_flag = False
+	elif subtask_id == '15':
+		train_folder = "trainHcs"
+		val_folder = "valHcs"
+		pytorch_flag = True
+	elif subtask_id == '16':
+		train_folder = "trainAds"
+		val_folder = "valAds"
+		pytorch_flag = False
+	elif subtask_id == '17':
+		train_folder = "trainAds"
+		val_folder = "valAds"
+		pytorch_flag = True
 
 
 	train_suffix = train_label_suffix
@@ -238,6 +274,41 @@ def single_test_ImgAndFeature():
 	#modelPath = ""
 	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=3, pathID=pathID, pytorch_flag=pytorch_flag)
 
+def single_test_DANN():
+	train_folder = "valB"
+	val_folder = "valB"
+	train_folder_add = "trainH"
+	val_folder_add = "valH"
+	#suffix = "_similarBN40"
+	suffix = ""
+	pathID = 0
+	modelPath = ""
+	pytorch_flag = True
+
+	imagePath = DATASET_ROOT + train_folder + "/"
+	labelName = get_label_file_name(train_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	imagePath_add = DATASET_ROOT + train_folder_add + "/"
+	labelName_add = get_label_file_name(train_folder_add, suffix)
+	labelPath_add = DATASET_ROOT + labelName_add
+
+	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + train_folder_add + suffix + "_dann/"
+	#modelPath = TRAIN_OUTPUT_ROOT + train_folder_add + "/model-final.h5"
+	train_network(imagePath, labelPath, outputPath, modelPath = modelPath, BN_flag=4, imagePath_advp=imagePath_add, labelPath_advp=labelPath_add, pytorch_flag=pytorch_flag)
+
+	modelPath = outputPath + "/model-final.h5"
+	if pytorch_flag:
+		modelPath = outputPath + "/model-final.pth"
+
+	imagePath = DATASET_ROOT + val_folder + "/"
+	labelName = get_label_file_name(val_folder)
+	labelPath = DATASET_ROOT + labelName
+
+	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + train_folder_add + suffix + "_dann)_(" + val_folder + ")/test_result.txt"
+	#modelPath = ""
+	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=4, pathID=pathID, pytorch_flag=pytorch_flag)
+
 
 def test_AdvProp(subtask_id=-1):
 	train_folder = "trainB"
@@ -294,17 +365,39 @@ def test_AdvProp(subtask_id=-1):
 		test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=2, pathID=test_pathID)
 
 
-def multi_factor_search_test():
+def multi_factor_search_test(subtask_id=-1):
 	train_folder = "trainB"
 	val_folder = "valB"
+	modelPath = ""
+
+	if subtask_id == '0':
+		train_folder = "trainB"
+		val_folder = "valB"
+	elif subtask_id == '1':	
+		train_folder = "trainHm"
+		val_folder = "valHm"
+	elif subtask_id == '2':	
+		train_folder = "trainAds"
+		val_folder = "valAds"
+		# modelPath = TRAIN_OUTPUT_ROOT + "trainAds_all_rob_20epoch_retrain/model-final.h5"
+		# modelPath = TRAIN_OUTPUT_ROOT + "trainAds_all_rob_20epoch_retrain/model-final.h5"
+		modelPath = TRAIN_OUTPUT_ROOT + "trainAds_all_rob_20epoch_single_retrain/model-final.h5"
+	elif subtask_id == '3':	
+		train_folder = "trainHc"
+		val_folder = "valHc"
+		# modelPath = TRAIN_OUTPUT_ROOT + "trainHc_all_rob_20epoch_retrain/model-final.h5"
+		# modelPath = TRAIN_OUTPUT_ROOT + "trainHc_all_rob_20epoch_multi_retrain/model-final.h5"
+		modelPath = TRAIN_OUTPUT_ROOT + "trainHc_all_rob_20epoch_single_retrain/model-final.h5"
+	else:	
+		return
 
 	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder)
 	labelPath = DATASET_ROOT + labelName
 
-	trainOurputFolder = train_folder + "_all_rob_1epoch_retrain"
+	trainOurputFolder = train_folder + "_all_rob_20epoch_single_retrain"
+	# trainOurputFolder = train_folder + "_all_rob_20epoch_multi_retrain"
 	trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
-	modelPath = ""
 	#modelPath = TRAIN_OUTPUT_ROOT + "trainB_quality_channelGSY/model-final.h5"
 	train_network_multi_factor_search(imagePath, labelPath, trainOutputPath, modelPath=modelPath)
 
@@ -321,8 +414,19 @@ def multi_factor_search_test():
 
 
 def unit_test_for_style():
-	pytorch_flag = True
-	TRAIN_LIST = ["trainB_Maxup_pytorch_no_distortion"]
+	TRAIN_LIST = ["trainB_Maxup_pytorch"]
+	TRAIN_LIST = ["trainAds_pytorch"]
+	TRAIN_LIST = ["trainB"]
+	TRAIN_LIST = ["trainHs"]
+
+	TRAIN_LIST = ["trainHcs_pytorch"]
+	TRAIN_LIST = ["trainHc_all_rob_50epoch_retrain"]
+	TRAIN_LIST = ["trainHc_all_rob_20epoch_single_retrain"]
+
+	TRAIN_LIST = ["trainAds_pytorch"]
+	TRAIN_LIST = ["trainAds_all_rob_20epoch_retrain"]
+	TRAIN_LIST = ["trainAds_all_rob_20epoch_single_retrain"]
+
 	VAL_LIST = ["valB", \
 				"valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5", \
 				"valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5", \
@@ -339,8 +443,10 @@ def unit_test_for_style():
 				"valB_S_lighter_1", "valB_S_lighter_2", "valB_S_lighter_3", "valB_S_lighter_4", "valB_S_lighter_5", \
 				"valB_V_darker_1", "valB_V_darker_2", "valB_V_darker_3", "valB_V_darker_4", "valB_V_darker_5", \
 				"valB_V_lighter_1", "valB_V_lighter_2", "valB_V_lighter_3", "valB_V_lighter_4", "valB_V_lighter_5", \
-				"valB_combined_1_3", "valB_combined_1_4", "valB_combined_1_7", \
-				"valB_combined_1_8", "valB_combined_1_9", "valB_combined_1_10", \
+				# "valB_combined_1_3", "valB_combined_1_4", "valB_combined_1_7", \
+				# "valB_combined_1_8", "valB_combined_1_9", "valB_combined_1_10", \
+				"valB_combined_1_0", "valB_combined_2_0", "valB_combined_3_0", \
+				"valB_combined_4_0", "valB_combined_5_0", "valB_combined_6_0", \
 				"valB_IMGC_motion_blur_1", "valB_IMGC_motion_blur_2", "valB_IMGC_motion_blur_3", \
 				"valB_IMGC_motion_blur_4", "valB_IMGC_motion_blur_5", \
 				"valB_IMGC_zoom_blur_1", "valB_IMGC_zoom_blur_2", "valB_IMGC_zoom_blur_3", \
@@ -357,19 +463,40 @@ def unit_test_for_style():
 				"valB_IMGC_fog_4", "valB_IMGC_fog_5"
 				]
 
+	for i in range(len(VAL_LIST)):
+		# VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valHc')
+		VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valAds')
+
 	MA_list = []
 	for train_folder in TRAIN_LIST:
 		imagePath = DATASET_ROOT + train_folder + "/"
 		labelName = get_label_file_name(train_folder)
 		labelPath = DATASET_ROOT + labelName
 		outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
+		if "_pytorch" in train_folder:
+			pytorch_flag = True
+		else:
+			pytorch_flag = False
+
 		#train_network(imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag)
 
-		for val_folder in VAL_LIST:
-			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
+		modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
+		if pytorch_flag:
+			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.pth"
+
+		net=""
+		if modelPath != "":
 			if pytorch_flag:
-				modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.pth"
-			val_folder = val_folder.replace("train", "val")
+				net = create_nvidia_network_pytorch(0, False, 0, 3)
+				net.load_state_dict(torch.load(modelPath))
+				net.eval()
+				net.cuda()
+			else:
+				net = create_nvidia_network(0, False, 0, 3)
+				net.load_weights(modelPath)
+
+		for val_folder in VAL_LIST:
+			# val_folder = val_folder.replace("train", "val")
 
 			#if not (train_folder == "trainA_MUNIT_GAN_1" or val_folder == "valA_MUNIT_GAN"):
 			#	continue
@@ -378,11 +505,24 @@ def unit_test_for_style():
 			labelName = get_label_file_name(val_folder)
 			labelPath = DATASET_ROOT + labelName
 			outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
-			MA = test_network(modelPath, imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag) #, visualize=True
+			MA = test_network(modelPath, imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag, net=net) #, visualize=True
 			MA_list.append(MA)
 
 		for MA in MA_list:
 			print("{:.2f}\t".format(MA*100))
+
+
+		MA_list = np.array(MA_list) * 100
+
+		res_scene1 = MA_list[0]
+		res_scene2 = MA_list[1:76]
+		res_scene3 = MA_list[76:82]
+		res_scene4 = MA_list[82:117]
+
+		print("scene1\t{:.2f}".format(res_scene1))
+		print("scene2\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene2), np.min(res_scene2), np.max(res_scene2)))
+		print("scene3\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene3), np.min(res_scene3), np.max(res_scene3)))
+		print("scene4\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene4), np.min(res_scene4), np.max(res_scene4)))
 
 def unit_test_for_quality(subtask_id=-1):
 	TRAIN_LIST_LIST = [["trainB", "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5"],
@@ -1037,6 +1177,12 @@ if __name__ == "__main__":
 		os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
 	print("CUDA_VISIBLE_DEVICES " + os.environ["CUDA_VISIBLE_DEVICES"])
 
+	# from torch.multiprocessing import Pool, Process, set_start_method
+	# try:
+	# 	set_start_method('spawn')
+	# except RuntimeError:
+	# 	pass
+
 	if args.task_id:
 		if args.task_id == '0':
 			single_test()
@@ -1055,20 +1201,23 @@ if __name__ == "__main__":
 		elif args.task_id == '7':
 			calculate_FID(args.subtask_id)
 		elif args.task_id == '8':
-			multi_factor_search_test()
+			multi_factor_search_test(args.subtask_id)
 		elif args.task_id == '9':
 			calculate_FID_folder(args.subtask_id)
 		elif args.task_id == '10':
 			single_test_ImgAndFeature()
+		elif args.task_id == '11':
+			single_test_DANN()
 		else:
 			print("Unknown task: " + args.task_id)
 	else:
 		#single_test()
-		single_test_with_config()
+		#single_test_with_config('15')
 		#single_test_AdvProp()
 		#single_test_ImgAndFeature()
+		#single_test_DANN()
 		#multi_factor_search_test()
-		#unit_test_for_style()
+		unit_test_for_style()
 		#unit_test_for_quality()
 		#combination_test_for_style('36')
 		#combination_test_for_style_pretrain()

@@ -165,7 +165,7 @@ def net_nvidia_1(fClassifier, nClass, nChannel=3, Maxup_flag=False):
 		net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
 		#net.compile(optimizer=Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
-	print(net.summary())
+	# print(net.summary())
 	return net
 
 

@@ -9,7 +9,8 @@ print('PLATFORM_ROOT_DIR ', ROOT_DIR)
 
 sys.path.insert(0, './library/')
 
-from learning import train_dnn_multi
+from learning import train_dnn_multi, train_dnn_multi_two_stream
+from networks import create_nvidia_network
 
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -47,8 +48,12 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
     ## NOTE: paths must have forward slash (/) character at the end
     
 	#netType = netType        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
-	train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
-		BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
+	if BN_flag == 4:
+		train_dnn_multi_two_stream(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
+			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
+	else:
+		train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
+			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
 
 def get_suffix(level_id):
 	'''
@@ -74,14 +79,14 @@ def get_suffix(level_id):
 		return "_lighter_"+str(level_id-5)+"/"
 
 
-def get_new_level(channel_name, imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f):
+def get_new_level(channel_name, imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=""):
 	f.write('\nchannel_name: ' + channel_name + '\n')
 	print('channel_name: ' + channel_name)
 	MA_min = 1
 	#for new_level in range(1,7):
 	for new_level in range(1,11):
 		imagePath = imagePath0 + '_' + channel_name + get_suffix(new_level)
-		MA = test_network(modelPath, imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+		MA = test_network(modelPath, imagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio, net=net)
 		print(new_level, ': ', MA)
 		f.write(str(new_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 		if MA_min > MA:
@@ -106,8 +111,8 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 	flags = [fRandomDistort, fThreeCameras, fClassifier]
 	
 	## parameters
-	nRound = 1000
-	nEpoch = 1
+	nRound = 50
+	nEpoch = 20
 	batchSize = 128
 	nClass = 49        # only used if fClassifier = True
 	nFramesSample = 5  # only used for LSTMs
@@ -130,7 +135,7 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 
 	imagePath0 = imagePath[0:-1]
 
-	val_ratio = 0.1
+	val_ratio = 0.03
 	f = open(outputPath+"factor_level_choices.txt",'w')
 	for rid in range(nRound):
 		print("round no: "+str(rid)+"\n")
@@ -147,9 +152,9 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		H_imagePath = imagePath0 + '_H' + get_suffix(H_level)
 		S_imagePath = imagePath0 + '_S' + get_suffix(S_level)
 		V_imagePath = imagePath0 + '_V' + get_suffix(V_level)
-		Y_imagePath = imagePath0 + '_Y_luma' + get_suffix(Y_level)
-		U_imagePath = imagePath0 + '_U_blueproj' + get_suffix(U_level)
-		V1_imagePath = imagePath0 + '_V_redproj' + get_suffix(V1_level)
+		# Y_imagePath = imagePath0 + '_Y_luma' + get_suffix(Y_level)
+		# U_imagePath = imagePath0 + '_U_blueproj' + get_suffix(U_level)
+		# V1_imagePath = imagePath0 + '_V_redproj' + get_suffix(V1_level)
 
 		#imagePath_list = [imagePath, blur_imagePath, noise_imagePath, distortion_imagePath, R_imagePath, G_imagePath, B_imagePath, \
 		#					H_imagePath, S_imagePath, V_imagePath, Y_imagePath, U_imagePath, V1_imagePath]
@@ -172,6 +177,9 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 
 		modelPath = outputPath + "model-final.h5"
 		valOutputPath = ""
+
+		net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel=3)
+		net.load_weights(modelPath)
 		
 		
 		print('blur MAs:')
@@ -181,7 +189,7 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		for new_blur_level in range(1,6):
 			#blurImagePath = imagePath0+'_blur_'+str(new_blur_level*2-1)+'/'
 			blurImagePath = imagePath0+'_blur_'+str(new_blur_level)+'/'
-			MA = test_network(modelPath, blurImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			MA = test_network(modelPath, blurImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio, net=net)
 			print(new_blur_level, ': ', MA)
 			f.write(str(new_blur_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 			if MA_min > MA:
@@ -195,7 +203,7 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		for new_noise_level in range(1,6):
 			#noiseImagePath = imagePath0+'_noise_'+str(new_noise_level*2-1)+'/'
 			noiseImagePath = imagePath0+'_noise_'+str(new_noise_level)+'/'
-			MA = test_network(modelPath, noiseImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			MA = test_network(modelPath, noiseImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio, net=net)
 			print(new_noise_level, ': ', MA)
 			f.write(str(new_noise_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 			if MA_min > MA:
@@ -210,7 +218,7 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 		for new_distort_level in range(1,6):
 			#distortImagePath = imagePath0+'_distort_'+str(new_distort_level*2-1)+'/'
 			distortImagePath = imagePath0+'_distort_'+str(new_distort_level)+'/'
-			MA = test_network(modelPath, distortImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio)
+			MA = test_network(modelPath, distortImagePath, labelPath, valOutputPath, BN_flag=BN_flag, ratio=val_ratio, net=net)
 			print(new_distort_level, ': ', MA)
 			f.write(str(new_distort_level) + ': ' + '{:.2f}'.format(MA) + '\n')
 			if MA_min > MA:
@@ -218,13 +226,13 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 				distortion_level = new_distort_level
 		
 		
-		R_level = get_new_level('R', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
-		G_level = get_new_level('G', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
-		B_level = get_new_level('B', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		R_level = get_new_level('R', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=net)
+		G_level = get_new_level('G', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=net)
+		B_level = get_new_level('B', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=net)
 
-		H_level = get_new_level('H', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
-		S_level = get_new_level('S', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
-		V_level = get_new_level('V', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f)
+		H_level = get_new_level('H', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=net)
+		S_level = get_new_level('S', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=net)
+		V_level = get_new_level('V', imagePath0, modelPath, labelPath, valOutputPath, BN_flag, val_ratio, f, net=net)
 		
 
 
