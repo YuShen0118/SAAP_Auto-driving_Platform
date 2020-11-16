@@ -4,6 +4,7 @@
 # https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_imagenet_c.py
 
 import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 from PIL import Image
 import os.path
 import time
@@ -21,7 +22,11 @@ from PIL import Image
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
 # added by Laura 
-PLATFORM_ROOT = "/Users/laurazheng/projects/SAAP_Auto-driving_Platform/"
+PLATFORM_ROOT = "/media/yushen/workspace2/projects/SAAP_Auto-driving_Platform/"
+IMAGEW = 455
+IMAGEH = 256
+RESIZE_W = 200
+RESIZE_H = 66
 
 def is_image_file(filename):
     """Checks if a file is an image.
@@ -137,7 +142,7 @@ class DistortImageFolder(data.Dataset):
 
         save_path += path[path.rindex('/'):]
 
-        Image.fromarray(np.uint8(img)).save(save_path, quality=85, optimize=True)
+        Image.fromarray(np.uint8(img)).resize((RESIZE_W,RESIZE_H)).save(save_path, quality=85, optimize=True)
 
         return 0  # we do not care about returning the data
 
@@ -200,7 +205,7 @@ class MotionImage(WandImage):
 
 
 # modification of https://github.com/FLHerne/mapgen/blob/master/diamondsquare.py
-def plasma_fractal(mapsize=256, wibbledecay=3):
+def plasma_fractal(mapsize=512, wibbledecay=3):
     """
     Generate a heightmap using diamond-square algorithm.
     Return square 2d array, side length 'mapsize', of floats in range 0-255.
@@ -251,15 +256,20 @@ def plasma_fractal(mapsize=256, wibbledecay=3):
 
 def clipped_zoom(img, zoom_factor):
     h = img.shape[0]
+    w = img.shape[1]
+
     # ceil crop height(= crop width)
     ch = int(np.ceil(h / zoom_factor))
+    cw = int(np.ceil(w / zoom_factor))
 
     top = (h - ch) // 2
-    img = scizoom(img[top:top + ch, top:top + ch], (zoom_factor, zoom_factor, 1), order=1)
+    side = (w - cw) // 2
+    img = scizoom(img[top:top + ch, side:side + cw], (zoom_factor, zoom_factor, 1), order=1)
     # trim off any extra pixels
     trim_top = (img.shape[0] - h) // 2
+    trim_side = (img.shape[1] - w) // 2
 
-    return img[trim_top:trim_top + h, trim_top:trim_top + h]
+    return img[trim_top:trim_top + h, trim_side:trim_side + w]
 
 
 # /////////////// End Distortion Helpers ///////////////
@@ -322,8 +332,8 @@ def glass_blur(x, severity=1):
 
     # locally shuffle pixels
     for i in range(c[2]):
-        for h in range(224 - c[1], c[1], -1):
-            for w in range(224 - c[1], c[1], -1):
+        for h in range(IMAGEH - c[1], c[1], -1):
+            for w in range(IMAGEW - c[1], c[1], -1):
                 dx, dy = np.random.randint(-c[1], c[1], size=(2,))
                 h_prime, w_prime = h + dy, w + dx
                 # swap
@@ -358,7 +368,7 @@ def motion_blur(x, severity=1):
     x = cv2.imdecode(np.fromstring(x.make_blob(), np.uint8),
                      cv2.IMREAD_UNCHANGED)
 
-    if x.shape != (224, 224):
+    if x.shape != (IMAGEH, IMAGEW):
         return np.clip(x[..., [2, 1, 0]], 0, 255)  # BGR to RGB
     else:  # greyscale to RGB
         return np.clip(np.array([x, x, x]).transpose((1, 2, 0)), 0, 255)
@@ -404,7 +414,9 @@ def fog(x, severity=1):
 
     x = np.array(x) / 255.
     max_val = x.max()
-    x += c[0] * plasma_fractal(wibbledecay=c[1])[:224, :224][..., np.newaxis]
+    temp = plasma_fractal(wibbledecay=c[1])
+    fractal = c[0] * temp[:IMAGEH, :IMAGEW][..., np.newaxis]
+    x += fractal
     return np.clip(x * max_val / (max_val + c[0]), 0, 1) * 255
 
 
@@ -418,8 +430,8 @@ def frost(x, severity=1):
     filename = ['./frost1.png', './frost2.png', './frost3.png', './frost4.jpg', './frost5.jpg', './frost6.jpg'][idx]
     frost = cv2.imread(filename)
     # randomly crop and convert to rgb
-    x_start, y_start = np.random.randint(0, frost.shape[0] - 224), np.random.randint(0, frost.shape[1] - 224)
-    frost = frost[x_start:x_start + 224, y_start:y_start + 224][..., [2, 1, 0]]
+    x_start, y_start = np.random.randint(0, frost.shape[0] - IMAGEH), np.random.randint(0, frost.shape[1] - IMAGEW)
+    frost = frost[x_start:x_start + IMAGEH, y_start:y_start + IMAGEW][..., [2, 1, 0]]
 
     return np.clip(c[0] * np.array(x) + c[1] * frost, 0, 255)
 
@@ -433,10 +445,8 @@ def snow(x, severity=1):
 
     x = np.array(x, dtype=np.float32) / 255.
     snow_layer = np.random.normal(size=x.shape[:2], loc=c[0], scale=c[1])  # [:2] for monochrome
-
     snow_layer = clipped_zoom(snow_layer[..., np.newaxis], c[2])
     snow_layer[snow_layer < c[3]] = 0
-
     snow_layer = PILImage.fromarray((np.clip(snow_layer.squeeze(), 0, 1) * 255).astype(np.uint8), mode='L')
     output = BytesIO()
     snow_layer.save(output, format='PNG')
@@ -448,7 +458,8 @@ def snow(x, severity=1):
                               cv2.IMREAD_UNCHANGED) / 255.
     snow_layer = snow_layer[..., np.newaxis]
 
-    x = c[6] * x + (1 - c[6]) * np.maximum(x, cv2.cvtColor(x, cv2.COLOR_RGB2GRAY).reshape(224, 224, 1) * 1.5 + 0.5)
+    x = c[6] * x + (1 - c[6]) * np.maximum(x, cv2.cvtColor(x, cv2.COLOR_RGB2GRAY).reshape(IMAGEH, IMAGEW, 1) * 1.5 + 0.5)
+    
     return np.clip(x + snow_layer + np.rot90(snow_layer, k=2), 0, 1) * 255
 
 
@@ -550,8 +561,8 @@ def jpeg_compression(x, severity=1):
 def pixelate(x, severity=1):
     c = [0.6, 0.5, 0.4, 0.3, 0.25][severity - 1]
 
-    x = x.resize((int(224 * c), int(224 * c)), PILImage.BOX)
-    x = x.resize((224, 224), PILImage.BOX)
+    x = x.resize((int(IMAGEW * c), int(IMAGEH * c)), PILImage.BOX)
+    x = x.resize((IMAGEW, IMAGEH), PILImage.BOX)
 
     return x
 
@@ -599,9 +610,21 @@ def save_distorted(method=gaussian_noise):
     for severity in range(1, 6):
         print(method.__name__, severity)
         distorted_dataset = DistortImageFolder(
-            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valB"),
+            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valHm"),
             method=method, severity=severity,
-            transform=trn.Compose([trn.Resize(256), trn.CenterCrop(224)]))
+            transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
+        distorted_dataset_loader = torch.utils.data.DataLoader(
+            distorted_dataset, batch_size=100, shuffle=False, num_workers=4)
+
+        for _ in distorted_dataset_loader: continue
+    
+    # delete later
+    for severity in range(1, 6):
+        print(method.__name__, severity)
+        distorted_dataset = DistortImageFolder(
+            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valAds"),
+            method=method, severity=severity,
+            transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
         distorted_dataset_loader = torch.utils.data.DataLoader(
             distorted_dataset, batch_size=100, shuffle=False, num_workers=4)
 
@@ -612,6 +635,7 @@ def save_distorted(method=gaussian_noise):
 
 
 # /////////////// Display Results ///////////////
+
 if __name__ == "__main__":
     import collections
 
