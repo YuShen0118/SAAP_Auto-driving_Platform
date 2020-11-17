@@ -25,6 +25,13 @@ import argparse
 import os
 import shutil
 import time
+import sys
+import csv
+import cv2
+import math
+# cv2.setNumThreads(0)
+# print(cv2.getNumThreads())
+from PIL import Image
 
 import augmentations
 
@@ -32,9 +39,13 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
+import torch.nn as nn
 from torchvision import datasets
 from torchvision import models
 from torchvision import transforms
+from models.networks_pytorch import net_nvidia_pytorch
+
+from sklearn.model_selection import train_test_split
 
 augmentations.IMAGE_SIZE = 224
 
@@ -46,11 +57,16 @@ parser = argparse.ArgumentParser(description='Trains an ImageNet Classifier')
 parser.add_argument(
     'clean_data', metavar='DIR', help='path to clean ImageNet dataset')
 parser.add_argument(
-    'corrupted_data', metavar='DIR_C', help='path to ImageNet-C dataset')
+    'clean_data_label', metavar='LABEL_DIR', help='label path to clean ImageNet dataset')
+
+parser.add_argument('--gpu_id', required=False, metavar="gpu_id", help='gpu id (0/1)')
+
+# parser.add_argument(
+#     'corrupted_data', metavar='DIR_C', help='path to ImageNet-C dataset')
 parser.add_argument(
     '--model',
     '-m',
-    default='resnet50',
+    default='nvidia_cnn',
     choices=model_names,
     help='model architecture: ' + ' | '.join(model_names) +
     ' (default: resnet50)')
@@ -64,7 +80,7 @@ parser.add_argument(
     default=0.1,
     help='Initial learning rate.')
 parser.add_argument(
-    '--batch-size', '-b', type=int, default=256, help='Batch size.')
+    '--batch-size', '-b', type=int, default=128, help='Batch size.')
 parser.add_argument('--eval-batch-size', type=int, default=1000)
 parser.add_argument('--momentum', type=float, default=0.9, help='Momentum.')
 parser.add_argument(
@@ -97,7 +113,7 @@ parser.add_argument(
 parser.add_argument(
     '--no-jsd',
     '-nj',
-    action='store_true',
+    action='store_false',
     help='Turn off JSD consistency loss.')
 parser.add_argument(
     '--all-ops',
@@ -132,7 +148,7 @@ parser.add_argument(
 parser.add_argument(
     '--num-workers',
     type=int,
-    default=4,
+    default=0,
     help='Number of pre-fetching threads.')
 
 args = parser.parse_args()
@@ -194,6 +210,62 @@ def compute_mce(corruption_accs):
   return mce
 
 
+class ToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+        image, labels = sample
+
+        # swap color axis because
+        # numpy image: H x W x C
+        # torch image: C X H X W
+        #image = image.transpose((2, 0, 1))
+        return (torch.Tensor(image, dtype=torch.float32), torch.Tensor(labels, dtype=torch.float32))
+
+
+class DrivingDataset_pytorch(torch.utils.data.Dataset):
+    """Face Landmarks dataset."""
+
+    def __init__(self, xTrainList, yTrainList, transform=None):
+        """
+        Args:
+            csv_file (string): Path to the csv file with annotations.
+            root_dir (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.xTrainList = xTrainList
+        self.yTrainList = yTrainList
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.yTrainList)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = self.xTrainList[idx]
+
+        image = cv2.imread(img_name)
+        image = cv2.resize(image,(200, 66), interpolation = cv2.INTER_AREA)
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+
+        # image = Image.open(img_name)
+        # image = image.resize((200, 66))
+        # image = image.convert('YCbCr')
+
+        labels = self.yTrainList[idx]
+        labels = np.array([labels])
+        labels = labels.astype('float32')
+        sample = (image, labels)
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+        
+
 def aug(image, preprocess):
   """Perform AugMix augmentations and compute mixture.
 
@@ -212,7 +284,8 @@ def aug(image, preprocess):
       np.random.dirichlet([args.aug_prob_coeff] * args.mixture_width))
   m = np.float32(np.random.beta(args.aug_prob_coeff, args.aug_prob_coeff))
 
-  mix = torch.zeros_like(preprocess(image))
+  # mix = torch.zeros_like(preprocess(image))
+  mix = np.zeros_like(image, dtype='float32')
   for i in range(args.mixture_width):
     image_aug = image.copy()
     depth = args.mixture_depth if args.mixture_depth > 0 else np.random.randint(
@@ -221,16 +294,22 @@ def aug(image, preprocess):
       op = np.random.choice(aug_list)
       image_aug = op(image_aug, args.aug_severity)
     # Preprocessing commutes since all coefficients are convex
-    mix += ws[i] * preprocess(image_aug)
+    # mix += ws[i] * preprocess(image_aug)
+    mix += ws[i] * image_aug
 
-  mixed = (1 - m) * preprocess(image) + m * mix
+  mixed = (1 - m) * image + m * mix
+  mixed = cv2.cvtColor(mixed.astype('uint8'), cv2.COLOR_BGR2YUV)
+  # mixed = transforms.ToTensor()(mixed)
+  mixed = mixed.transpose((2, 0, 1))
+  mixed = torch.tensor(mixed, dtype=torch.float32)
+  # mixed = preprocess(mixed)
   return mixed
 
 
 class AugMixDataset(torch.utils.data.Dataset):
   """Dataset wrapper to perform AugMix augmentation."""
 
-  def __init__(self, dataset, preprocess, no_jsd=False):
+  def __init__(self, dataset, preprocess, no_jsd=True):
     self.dataset = dataset
     self.preprocess = preprocess
     self.no_jsd = no_jsd
@@ -238,7 +317,11 @@ class AugMixDataset(torch.utils.data.Dataset):
   def __getitem__(self, i):
     x, y = self.dataset[i]
     if self.no_jsd:
-      return aug(x, self.preprocess), y
+      # return aug(x, self.preprocess), y
+
+      x = x.transpose((2, 0, 1))
+      x = torch.tensor(x, dtype=torch.float32)
+      return x, y
     else:
       im_tuple = (self.preprocess(x), aug(x, self.preprocess),
                   aug(x, self.preprocess))
@@ -247,6 +330,77 @@ class AugMixDataset(torch.utils.data.Dataset):
   def __len__(self):
     return len(self.dataset)
 
+
+def load_train_data_multi(xFolder_list, trainLogPath_list, nRep = 1, fThreeCameras = False, ratio = 1.0, specialFilter = False):
+  '''
+  Load the training data
+  '''
+  ## prepare for getting x
+  for xFolder in xFolder_list:
+    if not os.path.exists(xFolder):
+      sys.exit('Error: the image folder is missing. ' + xFolder)
+    
+  ## prepare for getting y
+  trainLog_list = []
+  for trainLogPath in trainLogPath_list:
+    if not os.path.exists(trainLogPath):
+      sys.exit('Error: the labels.csv is missing. ' + trainLogPath)
+    with open(trainLogPath, newline='') as f:
+      trainLog = list(csv.reader(f, skipinitialspace=True, delimiter=',', quoting=csv.QUOTE_NONE))
+      trainLog_list.append(trainLog)
+
+  if not isinstance(ratio, list):
+    ratio = [ratio]*len(xFolder_list)
+  
+    ## get x and y
+  xList, yList = ([], [])
+  
+  for rep in range(0,nRep):
+    i = 0
+    for trainLog in trainLog_list:
+      xFolder = xFolder_list[i]
+      xList_1 = []
+      yList_1 = []
+      for row in trainLog:
+        ## center camera
+        if not specialFilter:
+          xList_1.append(xFolder + os.path.basename(row[0])) 
+          yList_1.append(float(row[3]))     
+        elif float(row[3]) < 0:
+          xList_1.append(xFolder + os.path.basename(row[0])) 
+          yList_1.append(float(row[3]))
+        
+        ## if using three cameras
+        if fThreeCameras:
+
+          ## left camera
+          xList_1.append(xFolder + row[1])  
+          yList_1.append(float(row[3]) + 0.25) 
+          
+          ## right camera
+          xList_1.append(xFolder + row[2])  
+          yList_1.append(float(row[3]) - 0.25) 
+
+      if ratio[i] < 1:
+        n = int(len(trainLog) * ratio[i])
+
+        #random.seed(42)
+        #random.shuffle(xList_1)
+        #random.seed(42)
+        #random.shuffle(yList_1)
+        xList_1, yList_1 = shuffle(xList_1, yList_1)
+
+        xList_1 = xList_1[0:n]
+        yList_1 = yList_1[0:n]
+      print(len(xList_1))
+      xList = xList + xList_1
+      yList = yList + yList_1
+
+      i+=1
+
+  #yList = np.array(yList)*10 + 10
+  return (xList, yList)
+  
 
 def train(net, train_loader, optimizer):
   """Train for one epoch."""
@@ -257,79 +411,111 @@ def train(net, train_loader, optimizer):
   acc1_ema = 0.
   acc5_ema = 0.
 
+  start = time.time()
   end = time.time()
+  # print(cv2.getNumThreads(), ' st')
+
+  acc_list = [0,0,0,0,0,0]
+  thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+  running_loss = 0
+  epoch_time = 0
+  data_time = 0
+  criterion = nn.MSELoss()
+
+  # print(cv2.getNumThreads())
+  batch_num = len(train_loader)-1
+  # batch_num = 2
+
   for i, (images, targets) in enumerate(train_loader):
     # Compute data loading time
-    data_time = time.time() - end
+    data_time_1 = time.time() - end
+    data_time += data_time_1
     optimizer.zero_grad()
 
-    if args.no_jsd:
-      images = images.cuda()
-      targets = targets.cuda()
-      logits = net(images)
-      loss = F.cross_entropy(logits, targets)
-      acc1, acc5 = accuracy(logits, targets, topk=(1, 5))  # pylint: disable=unbalanced-tuple-unpacking
-    else:
-      images_all = torch.cat(images, 0).cuda()
-      targets = targets.cuda()
-      logits_all = net(images_all)
-      logits_clean, logits_aug1, logits_aug2 = torch.split(
-          logits_all, images[0].size(0))
-
-      # Cross-entropy is only computed on clean images
-      loss = F.cross_entropy(logits_clean, targets)
-
-      p_clean, p_aug1, p_aug2 = F.softmax(
-          logits_clean, dim=1), F.softmax(
-              logits_aug1, dim=1), F.softmax(
-                  logits_aug2, dim=1)
-
-      # Clamp mixture distribution to avoid exploding KL divergence
-      p_mixture = torch.clamp((p_clean + p_aug1 + p_aug2) / 3., 1e-7, 1).log()
-      loss += 12 * (F.kl_div(p_mixture, p_clean, reduction='batchmean') +
-                    F.kl_div(p_mixture, p_aug1, reduction='batchmean') +
-                    F.kl_div(p_mixture, p_aug2, reduction='batchmean')) / 3.
-      acc1, acc5 = accuracy(logits_clean, targets, topk=(1, 5))  # pylint: disable=unbalanced-tuple-unpacking
+    images = images.cuda()
+    targets = targets.cuda()
+    # print(images)
+    logits = net(images)
+    # loss = F.mse_loss(logits, targets)
+    loss = criterion(logits, targets)
 
     loss.backward()
     optimizer.step()
 
+    # print(logits[0])
+    prediction_error = np.abs(logits.cpu().detach().numpy()-targets.cpu().detach().numpy())
+    for j,thresh_hold in enumerate(thresh_holds):
+      acc_count = np.sum(prediction_error < thresh_hold)
+      acc_list[j] += acc_count
+
     # Compute batch computation time and update moving averages.
-    batch_time = time.time() - end
+    # batch_time = time.time() - end
     end = time.time()
 
-    data_ema = data_ema * 0.1 + float(data_time) * 0.9
-    batch_ema = batch_ema * 0.1 + float(batch_time) * 0.9
-    loss_ema = loss_ema * 0.1 + float(loss) * 0.9
-    acc1_ema = acc1_ema * 0.1 + float(acc1) * 0.9
-    acc5_ema = acc5_ema * 0.1 + float(acc5) * 0.9
+    # data_ema = data_ema * 0.1 + float(data_time) * 0.9
+    # batch_time_ema = batch_ema * 0.1 + float(batch_time) * 0.9
+    # loss_ema = loss_ema * 0.1 + float(loss) * 0.9
+    # acc1_ema = acc1_ema * 0.1 + float(acc1) * 0.9
 
-    if i % args.print_freq == 0:
-      print(
-          'Batch {}/{}: Data Time {:.3f} | Batch Time {:.3f} | Train Loss {:.3f} | Train Acc1 '
-          '{:.3f} | Train Acc5 {:.3f}'.format(i, len(train_loader), data_ema,
-                                              batch_ema, loss_ema, acc1_ema,
-                                              acc5_ema))
+    running_loss += loss.item()
+    if math.isnan(running_loss):
+      print('image ============================================')
+      print(images)
+      print('logits ============================================')
+      print(logits)
+      print('targets ============================================')
+      print(targets)
+      asdf
+      break
 
-  return loss_ema, acc1_ema, batch_ema
+    # if i % args.print_freq == 0:
+    #   print(
+    #       'Batch {}/{}: Data Time {:.3f} | Batch Time {:.3f} | Train Loss {:.3f} | Train Acc1 '
+    #       '{:.3f} | Train Acc5 {:.3f}'.format(i, len(train_loader), data_ema,
+    #                                           batch_ema, loss_ema, acc1_ema,
+    #                                           acc5_ema))
+
+    if i >= batch_num -1:
+      break
+
+  epoch_time = time.time() - start
+
+  acc = np.mean(acc_list) / batch_num / args.batch_size
+  running_loss /= batch_num
+
+  print('data_time ', data_time)
+
+  return running_loss, acc, epoch_time
 
 
 def test(net, test_loader):
   """Evaluate network on given dataset."""
   net.eval()
-  total_loss = 0.
-  total_correct = 0
+  acc_list = [0,0,0,0,0,0]
+  thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+  running_loss = 0
+  batch_num = len(test_loader)-1
+  # batch_num = 2
+
   with torch.no_grad():
-    for images, targets in test_loader:
+    for i, (images, targets) in enumerate(test_loader):
       images, targets = images.cuda(), targets.cuda()
       logits = net(images)
-      loss = F.cross_entropy(logits, targets)
-      pred = logits.data.max(1)[1]
-      total_loss += float(loss.data)
-      total_correct += pred.eq(targets.data).sum().item()
+      loss = F.mse_loss(logits, targets)
+      running_loss += loss.item()
 
-  return total_loss / len(test_loader.dataset), total_correct / len(
-      test_loader.dataset)
+      prediction_error = np.abs(logits.cpu().detach().numpy()-targets.cpu().detach().numpy())
+      for j,thresh_hold in enumerate(thresh_holds):
+        acc_count = np.sum(prediction_error < thresh_hold)
+        acc_list[j] += acc_count
+
+      if i >= batch_num -1:
+        break
+
+  acc = np.mean(acc_list) / batch_num / args.batch_size
+  running_loss /= batch_num
+
+  return running_loss, acc
 
 
 def test_c(net, test_transform):
@@ -358,52 +544,91 @@ def test_c(net, test_transform):
   return corruption_accs
 
 
+def get_label_file_name(folder_name, suffix=""):
+  pos = folder_name.find('_')
+  if pos == -1:
+    main_name = folder_name
+  else:
+    main_name = folder_name[0:pos]
+
+  if "train" in folder_name:
+    labelName = main_name.replace("train","labels") + "_train"
+  elif "val" in folder_name:
+    labelName = main_name.replace("val","labels") + "_val"
+
+  labelName = labelName + suffix
+  labelName = labelName + ".csv"
+  return labelName
+
+
 def main():
   torch.manual_seed(1)
   np.random.seed(1)
 
   # Load datasets
-  mean = [0.485, 0.456, 0.406]
-  std = [0.229, 0.224, 0.225]
-  train_transform = transforms.Compose(
-      [transforms.RandomResizedCrop(224),
-       transforms.RandomHorizontalFlip()])
+  # mean = [0.485, 0.456, 0.406]
+  # std = [0.229, 0.224, 0.225]
+  # train_transform = transforms.Compose(
+  #     [transforms.RandomResizedCrop(224),
+  #      transforms.RandomHorizontalFlip()])
+  # preprocess = transforms.Compose(
+  #     [transforms.ToTensor(),
+  #      transforms.Normalize(mean, std)])
   preprocess = transforms.Compose(
-      [transforms.ToTensor(),
-       transforms.Normalize(mean, std)])
-  test_transform = transforms.Compose([
-      transforms.Resize(256),
-      transforms.CenterCrop(224),
-      preprocess,
-  ])
+      # [transforms.ToTensor(), transforms.resize(66, 200)]
+      [transforms.ToTensor()]
+      )
+  # test_transform = transforms.Compose([
+  #     transforms.Resize(256),
+  #     transforms.CenterCrop(224),
+  #     preprocess,
+  # ])
 
-  traindir = os.path.join(args.clean_data, 'train')
-  valdir = os.path.join(args.clean_data, 'val')
-  train_dataset = datasets.ImageFolder(traindir, train_transform)
+  traindir = args.clean_data
+  # valdir = traindir.replace('train', 'val')
+  testdir = traindir.replace('train', 'val')
+  label_file = args.clean_data_label
+
+  xList, yList = load_train_data_multi([traindir], [label_file])
+  xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
+  yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
+
+  train_dataset = DrivingDataset_pytorch(xTrainList, yTrainList)
+  valid_dataset = DrivingDataset_pytorch(xValidList, yValidList)
+
+  # train_dataset = datasets.ImageFolder(traindir, train_transform)
   train_dataset = AugMixDataset(train_dataset, preprocess)
+  valid_dataset = AugMixDataset(valid_dataset, preprocess)
+
   train_loader = torch.utils.data.DataLoader(
       train_dataset,
       batch_size=args.batch_size,
       shuffle=True,
       num_workers=args.num_workers)
   val_loader = torch.utils.data.DataLoader(
-      datasets.ImageFolder(valdir, test_transform),
+      valid_dataset,
       batch_size=args.batch_size,
       shuffle=False,
       num_workers=args.num_workers)
 
-  if args.pretrained:
-    print("=> using pre-trained model '{}'".format(args.model))
-    net = models.__dict__[args.model](pretrained=True)
-  else:
-    print("=> creating model '{}'".format(args.model))
-    net = models.__dict__[args.model]()
+  # if args.pretrained:
+  #   print("=> using pre-trained model '{}'".format(args.model))
+  #   net = models.__dict__[args.model](pretrained=True)
+  # else:
+  #   print("=> creating model '{}'".format(args.model))
+  #   net = models.__dict__[args.model]()
 
-  optimizer = torch.optim.SGD(
-      net.parameters(),
-      args.learning_rate,
-      momentum=args.momentum,
-      weight_decay=args.decay)
+  net = net_nvidia_pytorch()
+
+  print(net)
+
+  # optimizer = torch.optim.SGD(
+  #     net.parameters(),
+  #     args.learning_rate,
+  #     momentum=args.momentum,
+  #     weight_decay=args.decay)
+
+  optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 
   # Distribute model across all visible GPUs
   net = torch.nn.DataParallel(net).cuda()
@@ -448,7 +673,7 @@ def main():
   for epoch in range(start_epoch, args.epochs):
     adjust_learning_rate(optimizer, epoch)
 
-    train_loss_ema, train_acc1_ema, batch_ema = train(net, train_loader,
+    train_loss, train_acc1, epoch_time = train(net, train_loader,
                                                       optimizer)
     test_loss, test_acc1 = test(net, val_loader)
 
@@ -470,17 +695,16 @@ def main():
     with open(log_path, 'a') as f:
       f.write('%03d,%0.3f,%0.6f,%0.2f,%0.5f,%0.2f\n' % (
           (epoch + 1),
-          batch_ema,
-          train_loss_ema,
-          100. * train_acc1_ema,
+          epoch_time,
+          train_loss,
+          100. * train_acc1,
           test_loss,
           100. * test_acc1,
       ))
 
     print(
-        'Epoch {:3d} | Train Loss {:.4f} | Test Loss {:.3f} | Test Acc1 '
-        '{:.2f}'
-        .format((epoch + 1), train_loss_ema, test_loss, 100. * test_acc1))
+        'Epoch {:3d} ({:.4f}) | Train Loss {:.4f} | Train Acc1 {:.2f} | Test Loss {:.3f} | Test Acc1 {:.2f}'
+        .format((epoch + 1), epoch_time, train_loss, 100. * train_acc1, test_loss, 100. * test_acc1))
 
   corruption_accs = test_c(net, test_transform)
   for c in CORRUPTIONS:
@@ -490,4 +714,8 @@ def main():
 
 
 if __name__ == '__main__':
+  if (args.gpu_id != None):
+    os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
+  print("CUDA_VISIBLE_DEVICES " + os.environ["CUDA_VISIBLE_DEVICES"])
+
   main()
