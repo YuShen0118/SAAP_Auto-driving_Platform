@@ -1,1 +1,0 @@
-python .\steering.py clean_data=Data/udacityA_nvidiaB/trainB

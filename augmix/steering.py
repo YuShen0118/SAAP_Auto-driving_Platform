@@ -43,7 +43,7 @@ import torch.nn as nn
 from torchvision import datasets
 from torchvision import models
 from torchvision import transforms
-from models.networks_pytorch import net_nvidia_pytorch
+from models.networks_pytorch import net_nvidia_pytorch, net_commaai_pytorch
 
 from sklearn.model_selection import train_test_split
 
@@ -55,9 +55,9 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='Trains an ImageNet Classifier')
 parser.add_argument(
-    'clean_data', metavar='DIR', help='path to clean ImageNet dataset')
+    'clean_data', metavar='DIR', help='path to clean dataset')
 parser.add_argument(
-    'clean_data_label', metavar='LABEL_DIR', help='label path to clean ImageNet dataset')
+    'clean_data_label', metavar='LABEL_DIR', help='label path to clean dataset label')
 
 parser.add_argument('--gpu_id', required=False, metavar="gpu_id", help='gpu id (0/1)')
 
@@ -72,7 +72,7 @@ parser.add_argument(
     ' (default: resnet50)')
 # Optimization options
 parser.add_argument(
-    '--epochs', '-e', type=int, default=90, help='Number of epochs to train.')
+    '--epochs', '-e', type=int, default=1000, help='Number of epochs to train.')
 parser.add_argument(
     '--learning-rate',
     '-lr',
@@ -102,7 +102,7 @@ parser.add_argument(
     help='Depth of augmentation chains. -1 denotes stochastic depth in [1, 3]')
 parser.add_argument(
     '--aug-severity',
-    default=1,
+    default=-1,
     type=int,
     help='Severity of base augmentation operators')
 parser.add_argument(
@@ -249,7 +249,7 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
 
         image = cv2.imread(img_name)
         image = cv2.resize(image,(200, 66), interpolation = cv2.INTER_AREA)
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
 
         # image = Image.open(img_name)
         # image = image.resize((200, 66))
@@ -284,6 +284,7 @@ def aug(image, preprocess):
       np.random.dirichlet([args.aug_prob_coeff] * args.mixture_width))
   m = np.float32(np.random.beta(args.aug_prob_coeff, args.aug_prob_coeff))
 
+  image = cv2.cvtColor(image, cv2.COLOR_YUV2BGR)
   # mix = torch.zeros_like(preprocess(image))
   mix = np.zeros_like(image, dtype='float32')
   for i in range(args.mixture_width):
@@ -309,19 +310,24 @@ def aug(image, preprocess):
 class AugMixDataset(torch.utils.data.Dataset):
   """Dataset wrapper to perform AugMix augmentation."""
 
-  def __init__(self, dataset, preprocess, no_jsd=True):
+  def __init__(self, dataset, preprocess, no_jsd=True, no_aug=False):
     self.dataset = dataset
     self.preprocess = preprocess
     self.no_jsd = no_jsd
+    self.no_aug = no_aug
 
   def __getitem__(self, i):
     x, y = self.dataset[i]
-    if self.no_jsd:
-      # return aug(x, self.preprocess), y
-
+    if self.no_aug:
       x = x.transpose((2, 0, 1))
       x = torch.tensor(x, dtype=torch.float32)
       return x, y
+    elif self.no_jsd:
+      return aug(x, self.preprocess), y
+
+      # x = x.transpose((2, 0, 1))
+      # x = torch.tensor(x, dtype=torch.float32)
+      # return x, y
     else:
       im_tuple = (self.preprocess(x), aug(x, self.preprocess),
                   aug(x, self.preprocess))
@@ -427,6 +433,14 @@ def train(net, train_loader, optimizer):
   # batch_num = 2
 
   for i, (images, targets) in enumerate(train_loader):
+
+    # image0 = images.detach().numpy()
+    # for j in range(128):
+    #   print(targets[j])
+    #   image0_j = image0[j].transpose((1, 2, 0)).astype('uint8')
+    #   cv2.imshow("img", image0_j)
+    #   cv2.waitKey(0)
+
     # Compute data loading time
     data_time_1 = time.time() - end
     data_time += data_time_1
@@ -598,7 +612,7 @@ def main():
 
   # train_dataset = datasets.ImageFolder(traindir, train_transform)
   train_dataset = AugMixDataset(train_dataset, preprocess)
-  valid_dataset = AugMixDataset(valid_dataset, preprocess)
+  valid_dataset = AugMixDataset(valid_dataset, preprocess, no_aug=True)
 
   train_loader = torch.utils.data.DataLoader(
       train_dataset,
@@ -618,7 +632,8 @@ def main():
   #   print("=> creating model '{}'".format(args.model))
   #   net = models.__dict__[args.model]()
 
-  net = net_nvidia_pytorch()
+  # net = net_nvidia_pytorch()
+  net = net_commaai_pytorch()
 
   print(net)
 
@@ -671,7 +686,7 @@ def main():
   best_acc1 = 0
   print('Beginning training from epoch:', start_epoch + 1)
   for epoch in range(start_epoch, args.epochs):
-    adjust_learning_rate(optimizer, epoch)
+    # adjust_learning_rate(optimizer, epoch)
 
     train_loss, train_acc1, epoch_time = train(net, train_loader,
                                                       optimizer)
@@ -687,10 +702,11 @@ def main():
         'optimizer': optimizer.state_dict(),
     }
 
-    save_path = os.path.join(args.save, 'checkpoint.pth.tar')
-    torch.save(checkpoint, save_path)
-    if is_best:
-      shutil.copyfile(save_path, os.path.join(args.save, 'model_best.pth.tar'))
+    save_path = os.path.join(args.save, 'checkpoint_'+str(epoch)+'.pth')
+    if (epoch % 50 == 0) or (epoch>=args.epochs-1):
+      torch.save(checkpoint, save_path)
+      if is_best:
+        shutil.copyfile(save_path, os.path.join(args.save, 'model_best.pth'))
 
     with open(log_path, 'a') as f:
       f.write('%03d,%0.3f,%0.6f,%0.2f,%0.5f,%0.2f\n' % (
@@ -706,11 +722,11 @@ def main():
         'Epoch {:3d} ({:.4f}) | Train Loss {:.4f} | Train Acc1 {:.2f} | Test Loss {:.3f} | Test Acc1 {:.2f}'
         .format((epoch + 1), epoch_time, train_loss, 100. * train_acc1, test_loss, 100. * test_acc1))
 
-  corruption_accs = test_c(net, test_transform)
-  for c in CORRUPTIONS:
-    print('\t'.join(map(str, [c] + corruption_accs[c])))
+  # corruption_accs = test_c(net, test_transform)
+  # for c in CORRUPTIONS:
+  #   print('\t'.join(map(str, [c] + corruption_accs[c])))
 
-  print('mCE (normalized by AlexNet):', compute_mce(corruption_accs))
+  # print('mCE (normalized by AlexNet):', compute_mce(corruption_accs))
 
 
 if __name__ == '__main__':
