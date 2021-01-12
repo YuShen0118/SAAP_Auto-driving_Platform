@@ -22,6 +22,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+# from torchviz import make_dot
 
 import skimage.io
 import matplotlib.pyplot as plt
@@ -29,6 +30,7 @@ import matplotlib.pyplot as plt
 from numpy.random import default_rng
 
 from sys import platform
+from PIL import Image
 
 USE_KERAS = True
 if USE_KERAS:
@@ -37,6 +39,7 @@ if USE_KERAS:
 	from keras.utils.np_utils import to_categorical
 	from keras.callbacks import ModelCheckpoint, CSVLogger
 	from keras import backend as K
+	# from keras.utils.vis_utils import plot_model
 	from networks import net_lstm, create_nvidia_network, GAN_Nvidia, mean_accuracy
 
 
@@ -364,24 +367,52 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
         return len(self.yTrainList)
 
     def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
+        img_path = self.xTrainList[idx]
+        img = Image.open(img_path)
+		# img = cv2.resize(img, (200, 66), interpolation = cv2.INTER_AREA)
+		# img = np.asarray(img)
+        # if self.transform is not None:
+        #     img = self.transform(img)
+        transform=transforms.Compose([
+                transforms.Resize((66, 200)),
+                transforms.ToTensor(),
+				# transforms.Lambda(lambda rgb_img: 
+				# 	torch.matmul(rgb_img.permute(1, 2, 0), 
+				# 	yuv_weight.transpose(0, 1)).permute(2, 0, 1)),
+                ])
+        img = transform(img)
 
-        img_name = self.xTrainList[idx]
-        image = cv2.imread(img_name)
+        label = np.array([self.yTrainList[idx]])
+        label = torch.tensor(label).float()
 
-        image = cv2.resize(image,(200, 66), interpolation = cv2.INTER_AREA)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+        return img, label
 
-        labels = self.yTrainList[idx]
-        labels = np.array([labels])
-        labels = labels.astype('float')
-        sample = (image, labels)
+    # def __getitem__(self, idx):
+    #     if torch.is_tensor(idx):
+    #         idx = idx.tolist()
 
-        if self.transform:
-            sample = self.transform(sample)
+    #     img_name = self.xTrainList[idx]
+    #     image = cv2.imread(img_name)
 
-        return sample
+    #     image = cv2.resize(image,(200, 66), interpolation = cv2.INTER_AREA)
+    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+
+    #     image = np.transpose(image, (2, 0, 1))
+
+    #     labels = self.yTrainList[idx]
+
+    #     # image = np.zeros((200,66,3))
+    #     # labels = 0.
+
+    #     labels = np.array([labels])
+    #     labels = labels.astype('float')
+
+    #     sample = (image, labels)
+
+    #     if self.transform:
+    #         sample = self.transform(sample)
+
+    #     return sample
 
 '''
 def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
@@ -491,7 +522,7 @@ def get_mean_std():
 def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, specs, modelPath = "", 
 	trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
 	BN_flag=0, imageDir_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, 
-	pack_flag=False, mid=0, Maxup_flag=False, pytorch_flag=False):
+	pack_flag=False, mid=0, Maxup_flag=False, pytorch_flag=False, lr=0.0001):
 	
 	## assigning variables
 	fRandomDistort = flags[0]
@@ -549,8 +580,8 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=0)
 				#validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 			else:
-				trainGenerator = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=0, pin_memory=False)
-				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=0, pin_memory=False)
+				trainGenerator = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=8, pin_memory=True)
+				validGenerator = DataLoader(valid_dataset, batch_size=128, shuffle=True, num_workers=8, pin_memory=True)
 			#trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
 			#validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
 
@@ -567,7 +598,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			else:
 				net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
 
-			if BN_flag <= 1:
+			if BN_flag <= 1 or BN_flag == 5:
 				if not pack_flag:
 					trainGenerator = gen_train_data_random(xTrainList, yTrainList, batchSize, Maxup_flag=Maxup_flag)
 					validGenerator = gen_train_data_random(xValidList, yValidList, batchSize)
@@ -656,7 +687,6 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=[mean_accuracy])
 			#net.compile(optimizer=keras.optimizers.Adam(lr=1e-4), loss='mse', metrics=['accuracy'])
 
-
 	## setup outputs
 	if not os.path.exists(outputPath):
 		os.makedirs(outputPath)
@@ -672,7 +702,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		criterion = nn.MSELoss()
 		#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 		#optimizer = optim.Adam(net.parameters(), lr=0.0001)
-		optimizer = optim.Adam(net.parameters(), lr=0.0001)
+		optimizer = optim.Adam(net.parameters(), lr=lr)
 		train_batch_num = int(len(yTrainList)/batchSize)
 		valid_batch_num = int(len(yValidList)/batchSize)
 		thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
@@ -694,13 +724,15 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				if BN_flag == 3:
 					image, feature = inputs
 					labels1, labels2 = labels
-					image = np.transpose(image, (0, 3, 1, 2))
+					# image = np.transpose(image, (0, 3, 1, 2))
 					inputs = [image, feature]
 					labels = np.concatenate((labels1, labels2))
 					outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
 				else:
-					inputs = np.transpose(inputs, (0, 3, 1, 2))
-					outputs = net(torch.Tensor(inputs).cuda())
+					# inputs = np.transpose(inputs, (0, 3, 1, 2))
+					outputs = net(torch.Tensor(inputs).cuda(non_blocking=True))
+
+				# make_dot(outputs).render("rnn_torchviz", format="png")
 
 				# backward + optimize
 				if Maxup_flag and epoch >= 5:
@@ -721,7 +753,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				# zero the parameter gradients
 				optimizer.zero_grad()
 
-				loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
+				loss = criterion(outputs, torch.Tensor(labels_2d).cuda(non_blocking=True))
 
 				loss.backward()
 
@@ -752,13 +784,13 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				if BN_flag == 3:
 					image, feature = inputs
 					labels1, labels2 = labels
-					image = np.transpose(image, (0, 3, 1, 2))
+					# image = np.transpose(image, (0, 3, 1, 2))
 					inputs = [image, feature]
 					labels = np.concatenate((labels1, labels2))
 					outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
 				else:
-					inputs = np.transpose(inputs, (0, 3, 1, 2))
-					outputs = net(torch.Tensor(inputs).cuda())
+					# inputs = np.transpose(inputs, (0, 3, 1, 2))
+					outputs = net(torch.Tensor(inputs).cuda(non_blocking=True))
 
 				labels = labels.flatten()
 				labels_2d = labels.reshape((labels.shape[0], 1))
@@ -766,7 +798,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				# zero the parameter gradients
 				optimizer.zero_grad()
 
-				loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
+				loss = criterion(outputs, torch.Tensor(labels_2d).cuda(non_blocking=True))
 
 				# print statistics
 				valid_loss += loss.item()
@@ -818,12 +850,15 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				torch.save(net.state_dict(), outputPath + 'model_' + str(epoch) + '.pth')
 
 		f_log.close()
+		torch.save(net.state_dict(), outputPath + 'model-final_' + str(mid) + '.pth')
 		torch.save(net.state_dict(), outputPath + 'model-final.pth')
 		print('Finished Training')
 	else:
 		modelLog = ModelCheckpoint(outputPath + 'model{epoch:02d}.h5', monitor='val_loss', save_best_only=True)
 		lossLog  = CSVLogger(outputPath + 'loss-log', append=True, separator=',')
 		#tensorboard_callback = keras.callbacks.TensorBoard(log_dir=outputPath+"logs/")
+
+		#plot_model(net, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
 
 		if netType != 5:
 			nTrainStep = int(len(yTrainList)/batchSize) + 1
@@ -1432,7 +1467,10 @@ def bin_metric(predict_results, groundtruth_labels, uniform_bin=False, thresh_ho
 			correct_array[bin_id] += 1
 
 	for i in range(bin_amount):
-		print(i, ': ', int(correct_array[i]), ' / ', int(total_array[i]), '  {:.2f}'.format(correct_array[i]/total_array[i]*100), '%')
+		if int(total_array[i]) == 0:
+			print(i, ': ', int(correct_array[i]), ' / ', int(total_array[i]), '  0%')
+		else:
+			print(i, ': ', int(correct_array[i]), ' / ', int(total_array[i]), '  {:.2f}'.format(correct_array[i]/total_array[i]*100), '%')
 		# if i == int(bin_amount/2):
 		# 	print('(', int(correct_array[i]), '/', int(total_array[i]), ')', end = ' ')
 		# else:
@@ -1482,6 +1520,7 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 	print(testImagePaths)
 	print('The number of tested data: ' + str(testLabels.shape))
 	print('********************************************')
+
 	testData = []
 	if not pack_flag:
 		for i in range(len(testLabels)):
@@ -1551,21 +1590,18 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 	else:
 		print(net.summary())
 
-
 	# inference
 	if pytorch_flag:
 		testData = np.transpose(testData, (0, 3, 1, 2))
-
 		predictResults = net(torch.Tensor(testData).cuda())
 		if BN_flag == 4:
 			predictResults = predictResults[0]
-			print(predictResults)
 		predictResults = predictResults.cpu().detach().numpy()
 		#predictResults = predictResults.reshape(testLabels.shape)
 	else:
 		inp = net.input                                           # input placeholder
 
-		if BN_flag == 0:
+		if BN_flag == 0 or BN_flag == 5:
 			outputs = [layer.get_output_at(-1) for layer in net.layers]          # all layer outputs
 			outputs = outputs[1:]
 			last_conv_id = 10
@@ -1778,6 +1814,263 @@ def test_dnn_multi(modelPath, imageDir_list, labelPath_list, outputPath, netType
 		K.clear_session()
 
 	return np.mean(acc_list)
+
+
+
+def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath, netType, flags, specs, BN_flag=0, pathID=0, ratio=1, pack_flag=False, pytorch_flag=False, net=""):
+	
+    ## assigning variables
+# 	fRandomDistort = flags[0]
+	fThreeCameras  = flags[1]
+	fClassifier    = flags[2]
+# 	batchSize 	   = specs[0]
+# 	nEpoch 		   = specs[1]
+	nClass         = specs[2]
+	nFramesSample  = specs[3]
+	nRep  = specs[4]
+    
+	print('\n\n\n')
+	print('********************************************')
+	
+	if fClassifier:
+		print('Classification......')
+	else:
+		print('Regression......')
+
+	### retrieve the test data
+	testImagePaths, testLabels = load_train_data_multi(imageDir_list, labelPath_list, nRep, fThreeCameras, ratio=ratio)
+
+	#testImagePaths, testLabels = load_train_data(imageDir, labelPath, nRep, fThreeCameras, ratio=ratio)
+	testImagePaths = np.array(testImagePaths)
+	testLabels = np.array(testLabels)
+	if pack_flag:
+		testLabels = testLabels[:,0]
+	n = len(testLabels)
+
+	if fClassifier:
+		print('\n######### Classification #########')
+		testLabels = normalize_value(testLabels)
+		testLabels = to_categorical(testLabels, num_classes = nClass)
+    
+	print(testImagePaths)
+	print('The number of tested data: ' + str(testLabels.shape))
+	print('********************************************')
+
+	test_dataset = DrivingDataset_pytorch(testImagePaths, testLabels, transform=transforms.Compose([ToTensor()]))
+	#dataset = DrivingDataset_pytorch(xTrainList, yTrainList)
+	if platform == "win32":
+		testGenerator = DataLoader(test_dataset, batch_size=128, shuffle=False, num_workers=0)
+	else:
+		testGenerator = DataLoader(test_dataset, batch_size=128, shuffle=False, num_workers=8, pin_memory=True)
+
+	testData = []
+	if not pack_flag:
+		for i in range(len(testImagePaths)):
+			image_path = testImagePaths[i]
+			img = resize_image(cv2.imread(image_path))
+			testData.append(img)
+	else:
+		for i in range(len(testImagePaths)):
+			for j in range(len(testImagePaths[i])):
+				image_path = testImagePaths[i][j]
+				img_1 = resize_image(cv2.imread(image_path))
+				if j == 0:
+					img = img_1
+				else:
+					img = np.concatenate((img, img_1), axis=2)
+
+			#noise = np.random.uniform(low=0, high=255, size=(img.shape[0], img.shape[1], 1))
+			#img = np.concatenate((img, noise), axis=2)
+			testData.append(img)
+
+	testData = np.array(testData)
+	nChannel=3
+	if pack_flag:
+		testImagePaths = testImagePaths[:,0]
+		nChannel = 3*len(imageDir_list)
+
+	# redistribution
+	#testData = ((((testData / 127.5 - 1) - (-0.030626608) ) / 0.3224381 * 0.320617 + (-0.07968183)) + 1) * 127.5
+	# print(np.min(testData))
+	# print(np.max(testData))
+
+	## choose networks, 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o
+	empty_net_flag = False
+	if net == "":
+		empty_net_flag = True
+		if pytorch_flag:
+			net = create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel)
+		else:
+			if netType == 1:
+		# 		outputPath = trainPath + 'trainedModels/models-cnn/';
+				net = create_nvidia_network(BN_flag, fClassifier, nClass, nChannel)
+				if BN_flag == 3:
+					net = net[0]
+			elif netType == 2:
+		# 		outputPath = trainPath + 'trainedModels/models-lstm-m2o/'
+				net = net_lstm(2, nFramesSample)
+			elif netType == 3:
+		# 		outputPath = trainPath + 'trainedModels/models-lstm-m2m/'
+				net = net_lstm(3, nFramesSample)
+
+	    ## load model weights
+		if modelPath != "":
+			if pytorch_flag:
+				net.load_state_dict(torch.load(modelPath))
+				net.eval()
+				net.cuda()
+			else:
+				net.load_weights(modelPath)
+
+	#print(net.layers[3].get_weights())
+	if pytorch_flag:
+		print(net)
+	else:
+		print(net.summary())
+
+	net.eval()
+	predictResults = []
+
+	for i, (inputs, labels) in enumerate(testGenerator):
+		labels = labels.numpy().flatten()
+		if BN_flag == 3:
+			image, feature = inputs
+			labels1, labels2 = labels
+			image = np.transpose(image, (0, 3, 1, 2))
+			inputs = [image, feature]
+			labels = np.concatenate((labels1, labels2))
+			outputs = net(torch.Tensor(image).cuda(), torch.Tensor(feature).cuda(), mean2, std2)
+		else:
+			# inputs = np.transpose(inputs, (0, 3, 1, 2))
+			outputs = net(torch.Tensor(inputs).cuda(non_blocking=True))
+
+		predictResults = predictResults + outputs.cpu().detach().numpy().flatten().tolist()
+
+	predictResults = np.array(predictResults).flatten()
+
+	if outputPath != "":
+		f = open(outputPath,'w')
+	if fClassifier:
+		predictResults = predictResults.argmax(axis=1)
+		testLabels = testLabels.argmax(axis=1)
+		correct_count = n - np.count_nonzero(predictResults-testLabels)
+		print("accuracy: ", correct_count / (float)(n))
+
+		if outputPath != "":
+			f.write("accuracy: {:.5f}\n\n".format(correct_count / (float)(n)))
+			f.write("{:^12} {:^12} {:^12} {:^12}\n".format("prediction", "groundtruth", "difference", "input"))
+	    
+		for p in range(len(predictResults)):
+	# 		if fClassifier:
+	#  			f.write(str(np.argmax(p)))
+	#  			print(np.argmax(p))
+	# 		else: 
+	        # for regression
+			imgName = os.path.basename(testImagePaths[p])
+			prediction = predictResults[p]
+			groundTruth = testLabels[p]
+
+			if outputPath != "":
+				f.write("{:^12.0f} {:^12.0f} {:^12.0f} {:^12}".format(prediction, groundTruth, prediction-groundTruth, imgName))
+				f.write('\n')
+	else:
+		bin_metric(predictResults, testLabels)
+
+		prediction_error = predictResults - testLabels
+		mse_loss = np.mean(np.square(prediction_error))
+		print("mse loss: " + str(mse_loss))
+
+		if outputPath != "":
+			f.write("mse loss: {:.5f}\n".format(mse_loss))
+
+		#thresh_holds = [0.01, 0.033, 0.1, 0.33, 1, 3.3]
+		thresh_holds = [0.1, 0.2, 0.5, 1, 2, 5]
+		#thresh_holds = [1, 2, 4, 8]
+		acc_list = []
+
+		for thresh_hold in thresh_holds:
+			if outputPath != "":
+				image_fail_cases_folder = os.path.dirname(outputPath)+'/fail_cases_'+str(thresh_hold)
+				if not os.path.exists(image_fail_cases_folder):
+					os.mkdir(image_fail_cases_folder)
+
+			acc = np.sum(np.abs(prediction_error) < thresh_hold) / len(testLabels)
+			acc_list.append(acc)
+			print("accuracy (+-" + str(thresh_hold) + "): " + str(acc))
+
+			if outputPath != "":
+				f.write("accuracy (+-{:.3f}): {:.5f}\n".format(thresh_hold, acc))
+
+				f_img_list_succ = open(outputPath.replace(ntpath.basename(outputPath), "img_list_"+str(thresh_hold)+"_succ_formal.txt"),'w')
+				f_img_list_fail = open(outputPath.replace(ntpath.basename(outputPath), "img_list_"+str(thresh_hold)+"_fail_formal.txt"),'w')
+				img_list_succ = testImagePaths[np.abs(prediction_error) < thresh_hold]
+				label_succ = testLabels[np.abs(prediction_error) < thresh_hold]
+
+				fail_flag = (np.abs(prediction_error) >= thresh_hold)
+
+				#img_list_fail = testImagePaths[np.abs(prediction_error) >= thresh_hold]
+				#img_fail = testData[np.abs(prediction_error) >= thresh_hold]
+				#print(len(img_list_succ))
+				#print(len(img_list_fail))
+				for i in range(len(img_list_succ)):
+					f_img_list_succ.write(os.path.basename(img_list_succ[i]) + ",,," + str(label_succ[i]) +"\n")
+					#f_img_list_succ.write(str(img_file))
+					#f_img_list_succ.write('\n')
+
+				for i in range(len(fail_flag)):
+					if fail_flag[i] == True:
+						f_img_list_fail.write(os.path.basename(testImagePaths[i]) + ",,," + str(testLabels[i]) +"\n")
+						#f_img_list_fail.write(str(img_file))
+						#f_img_list_fail.write('\n')
+						
+						# img = cv2.imread(img_file)
+						# #img_path = image_fail_cases_folder + "/gt_" + str(testLabels[i]) + "_pred_" + str(predictResults.flatten()[i]) + "_diff_" + str(prediction_error[i]) + "_" + os.path.basename(img_file)
+						# img_path = image_fail_cases_folder + "/gt_" + "{:.3f}".format(testLabels[i]) + \
+						# 	"_pred_" + "{:.3f}".format(predictResults.flatten()[i]) + \
+						# 	"_diff_" + "{:.3f}".format(prediction_error[i]) + \
+						# 	"_" + os.path.basename(img_file)
+						# cv2.imwrite(img_path, img)
+						
+
+
+				f_img_list_succ.close()
+				f_img_list_fail.close()
+
+		print("mean accuracy: " + str(np.mean(acc_list)))
+		if outputPath != "":
+			f.write("mean accuracy: {:.5f} {:.2f}\n\n".format(np.mean(acc_list), np.mean(acc_list)*100))
+
+	    
+			f.write("{:^12} {:^12} {:^12} {:^12}\n".format("prediction", "groundtruth", "difference", "input"))
+		    
+			for p in range(len(predictResults)):
+		# 		if fClassifier:
+		#  			f.write(str(np.argmax(p)))
+		#  			print(np.argmax(p))
+		# 		else: 
+		        # for regression
+				imgName = os.path.basename(testImagePaths[p])
+				prediction = predictResults[p]
+				groundTruth = testLabels[p]
+				f.write("{:^12.3f} {:^12.3f} {:^12.3f} {:^12}".format(prediction, groundTruth, prediction-groundTruth, imgName))
+				f.write('\n')
+
+	if outputPath != "":
+		f.close()
+
+# 	for i in range(len(testLabels)):
+# 		print([str('%.4f' % float(j)) for j in predictResults[i]])
+
+			
+	print('********************************************')
+	print('\n\n\n')
+
+	if (not pytorch_flag) and empty_net_flag:
+		K.clear_session()
+
+	return np.mean(acc_list)
+
+
 
 
 

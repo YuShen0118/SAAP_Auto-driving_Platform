@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 
-def create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel=3, Maxup_flag=False):
+def create_nvidia_network_pytorch(BN_flag, fClassifier=False, nClass=1, nChannel=3, Maxup_flag=False):
 	#default
 	if BN_flag == 0:
 		return net_nvidia_pytorch()
@@ -12,6 +12,8 @@ def create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel=3, Maxu
 		return net_nvidia_featshift_pytorch()
 	elif BN_flag == 4:
 		return net_nvidia_pytorch_DANN()
+	elif BN_flag == 5:
+		return net_commaai_pytorch()
 		
 	return net_nvidia_pytorch()
 
@@ -36,7 +38,7 @@ class net_nvidia_pytorch(nn.Module):
 		self.fc4 = nn.Linear(10, 1)
 
 	def forward(self, x):
-		x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
+		# x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
 		x = F.elu(self.conv1(x))
 		x = F.elu(self.conv2(x))
 		x = F.elu(self.conv3(x))
@@ -48,6 +50,29 @@ class net_nvidia_pytorch(nn.Module):
 		x = F.elu(self.fc2(x))
 		x = F.elu(self.fc3(x))
 		x = self.fc4(x)
+		return x
+
+class net_commaai_pytorch(nn.Module):
+	def __init__(self):
+		super(net_commaai_pytorch, self).__init__()
+		self.conv1 = nn.Conv2d(3, 16, 8, 4, padding=8)
+		self.conv2 = nn.Conv2d(16, 32, 5, 2, padding=5)
+		self.conv3 = nn.Conv2d(32, 64, 5, 2, padding=5)
+		self.fc1 = nn.Linear(64 * 10 * 18, 512)
+		self.fc2 = nn.Linear(512, 1)
+
+	def forward(self, x):
+		x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
+		x = F.elu(self.conv1(x))
+		x = F.elu(self.conv2(x))
+		x = self.conv3(x)
+		x = x.reshape(-1, 64 * 10 * 18)
+		x = F.elu(F.dropout(x, .2))
+		#print(x.shape)
+		# x = x.reshape(-1, 64 * 1 * 18)
+		x = self.fc1(x)
+		x = F.elu(F.dropout(x, .5))
+		x = self.fc2(x)
 		return x
 
 
