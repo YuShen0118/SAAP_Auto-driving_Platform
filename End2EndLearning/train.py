@@ -40,7 +40,8 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 	
 	## parameters
 	batchSize = 128
-	nEpoch = 1000
+	# batchSize = 512
+	nEpoch = 4000
 	nClass = 49        # only used if fClassifier = True
 	nFramesSample = 5  # only used for LSTMs
 	nRep = 1
@@ -50,7 +51,7 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
     ## NOTE: paths must have forward slash (/) character at the end
     
 	#netType = netType        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
-	if BN_flag == 4:
+	if (BN_flag == 4) or (BN_flag == 6):
 		train_dnn_multi_two_stream(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
 			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag)
 	else:

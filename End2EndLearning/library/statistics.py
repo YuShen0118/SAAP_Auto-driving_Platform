@@ -10,6 +10,12 @@ import numpy as np
 #import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from networks_pytorch import create_nvidia_network_pytorch
+import torch
+
+
+ROOT_DIR = os.path.abspath("../")
+print('Platform root: ', ROOT_DIR)
 
 def plot_steering_angle_dist(dataFilePath, label):
     ''' Plots the distribution for a single steering angle label file. 
@@ -72,10 +78,10 @@ def draw_label_distribution():
     ROOT_DIR = os.path.abspath("../")
     print('Platform root: ', ROOT_DIR)
 
-    NVIDIA_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsB_trainval.csv'
-    Udacity_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsA_trainval.csv'
+    NVIDIA_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsAudi1_train.csv'
+    Udacity_labels = ROOT_DIR + '/Data/udacityA_nvidiaB/labelsAudi2_train.csv'
     custom_labels = ROOT_DIR + '/Data/training_simu_1/end2endLabels.csv'
-    output_path = ROOT_DIR + '/Data/output.png'
+    output_path = ROOT_DIR + '/Data/output_Audi1_2.png'
 
     plot_all_datasets(NVIDIA_labels, Udacity_labels, custom_labels, output_path)
 
@@ -204,7 +210,53 @@ def show_BN_statistics_difference():
     show_statistics(BN_stds_1, BN_stds_1, output_folder, case_title="std_1", BN_flag=BN_flag)
     show_statistics(BN_stds_2, BN_stds_1, output_folder, case_title="std_2", BN_flag=BN_flag)
 
+def test_network_similarity():
+    ROOT_DIR = os.path.abspath("../")
+    print('Platform root: ', ROOT_DIR)
+    TRAIN_OUTPUT_ROOT = os.path.join(ROOT_DIR, "Data/udacityA_nvidiaB_results/train_results")
+
+    train_folder1 = "trainB_pytorch_newp"
+    train_folder1 = "trainB_pytorch_newp1"
+    modelPath1 = os.path.join(TRAIN_OUTPUT_ROOT, train_folder1, "model-final.pth")
+    net1 = create_nvidia_network_pytorch(BN_flag=0)
+    net1.load_state_dict(torch.load(modelPath1))
+
+    param1 = []
+    for param in net1.parameters():
+        param1.append(param.detach().numpy())
+
+    # train_folder2 = "trainB_pytorch_newp1"
+    train_folder2 = "trainAds_pytorch_newp1"
+    # train_folder2 = "trainB_pytorch_retrain_newp_reAds"
+    modelPath2 = os.path.join(TRAIN_OUTPUT_ROOT, train_folder2, "model-final.pth")
+    net2 = create_nvidia_network_pytorch(BN_flag=0)
+    net2.load_state_dict(torch.load(modelPath2))
+
+    param2 = []
+    for param in net2.parameters():
+        param2.append(param.detach().numpy())
+
+    dist1 = []
+    dist2 = []
+    dist = []
+    for i in range(len(param1)):
+        dist1.append(np.linalg.norm(param1[i])/param1[i].size)
+        dist2.append(np.linalg.norm(param2[i])/param1[i].size)
+        dist.append(np.linalg.norm(param1[i]-param2[i]))
+
+    print('')
+    print(dist1)
+    print('')
+    print(dist2)
+    print('')
+    print(dist)
+    print('')
+    print(np.mean(dist1))
+    print(np.mean(dist2))
+    print(np.mean(dist))
+
 
 if __name__ == "__main__":
     draw_label_distribution()
     #show_BN_statistics_difference()
+    # test_network_similarity()

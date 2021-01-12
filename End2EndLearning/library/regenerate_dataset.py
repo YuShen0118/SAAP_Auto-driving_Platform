@@ -9,7 +9,7 @@ import os
 import csv
 
 # Root directory of the project
-ROOT_DIR = os.path.abspath("../../")
+ROOT_DIR = os.path.abspath("../")
 print('Platform root: ', ROOT_DIR)
 #root = ROOT_DIR + '/Data/udacityA_nvidiaB/'
 #print('Dataset root: ', root)
@@ -1203,6 +1203,23 @@ def generate_all(code):
     generate_combined(dataFolderVal, "5", parameter_file=os.path.join(dataset_path, "valB_combined_9_0_LVL5", "parameters.txt"))
     generate_combined(dataFolderVal, "6", parameter_file=os.path.join(dataset_path, "valB_combined_10_0_LVL5", "parameters.txt"))
 
+
+def resizeDataset(src_folder, dst_folder, size):
+
+    print(src_folder)
+    print(dst_folder)
+
+    if not os.path.exists(dst_folder):
+        os.mkdir(dst_folder)
+
+    image_paths = glob.glob(src_folder + "/*.jpg")
+    for image_path in image_paths:
+        image = cv2.imread(image_path)
+        image = cv2.resize(image, size)
+        out_path = image_path.replace(src_folder, dst_folder)
+        cv2.imwrite(out_path, image)
+
+
 if __name__ == '__main__':
     #print(__doc__)
     '''
@@ -1240,5 +1257,13 @@ if __name__ == '__main__':
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
     '''
     
-    generate_all("Hc")
+    # generate_all("Hc")
     # generate_all("Ads")
+
+    src_folder = os.path.join(dataset_path, "valB")
+    dst_folder = os.path.join(dataset_path, "valBs")
+    resizeDataset(src_folder, dst_folder, (200,66))
+
+    src_folder = os.path.join(dataset_path, "trainB")
+    dst_folder = os.path.join(dataset_path, "trainBs")
+    resizeDataset(src_folder, dst_folder, (200,66))

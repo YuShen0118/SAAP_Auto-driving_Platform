@@ -190,7 +190,7 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False, ratio = 
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
 
-def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0, specialFilter = False):
+def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0, specialFilter = 0):
 	'''
 	Load the training data
 	'''
@@ -222,7 +222,7 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 			yList_1 = []
 			for row in trainLog:
 				## center camera
-				if not specialFilter:
+				if specialFilter != 1:
 					xList_1.append(xFolder + os.path.basename(row[0])) 
 					yList_1.append(float(row[3]))     
 				elif float(row[3]) < 0:
@@ -247,10 +247,15 @@ def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras =
 				#random.shuffle(xList_1)
 				#random.seed(42)
 				#random.shuffle(yList_1)
-				xList_1, yList_1 = shuffle(xList_1, yList_1)
+				if specialFilter == 2:
+					start_pos = random.randrange(len(trainLog)-n)
+					xList_1 = xList_1[start_pos:start_pos+n]
+					yList_1 = yList_1[start_pos:start_pos+n]
+				else:
+					xList_1, yList_1 = shuffle(xList_1, yList_1)
 
-				xList_1 = xList_1[0:n]
-				yList_1 = yList_1[0:n]
+					xList_1 = xList_1[0:n]
+					yList_1 = yList_1[0:n]
 			print(len(xList_1))
 			xList = xList + xList_1
 			yList = yList + yList_1
@@ -306,7 +311,7 @@ def load_train_data_multi_pack(xFolder_list, trainLogPath_list, nRep, fThreeCame
 			yList.append(yUnit)
 
 	if ratio[0] < 1:
-		k = int(m * ratio[i])
+		k = int(m * ratio[0])
 
 		#random.seed(42)
 		#random.shuffle(xList_1)
