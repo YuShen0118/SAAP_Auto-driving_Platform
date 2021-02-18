@@ -29,7 +29,7 @@ import sys
 import csv
 import cv2
 import math
-# cv2.setNumThreads(0)
+cv2.setNumThreads(0)
 # print(cv2.getNumThreads())
 from PIL import Image
 
@@ -43,7 +43,7 @@ import torch.nn as nn
 from torchvision import datasets
 from torchvision import models
 from torchvision import transforms
-from models.networks_pytorch import net_nvidia_pytorch, net_commaai_pytorch
+from models.networks_pytorch import net_nvidia_pytorch, net_commaai_pytorch, net_resnet_pytorch
 
 from sklearn.model_selection import train_test_split
 
@@ -72,7 +72,7 @@ parser.add_argument(
     ' (default: resnet50)')
 # Optimization options
 parser.add_argument(
-    '--epochs', '-e', type=int, default=1000, help='Number of epochs to train.')
+    '--epochs', '-e', type=int, default=4000, help='Number of epochs to train.')
 parser.add_argument(
     '--learning-rate',
     '-lr',
@@ -226,7 +226,7 @@ class ToTensor(object):
 class DrivingDataset_pytorch(torch.utils.data.Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, xTrainList, yTrainList, transform=None):
+    def __init__(self, xTrainList, yTrainList, transform=None, size=(200,66)):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -237,6 +237,7 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
         self.xTrainList = xTrainList
         self.yTrainList = yTrainList
         self.transform = transform
+        self.size = size
 
     def __len__(self):
         return len(self.yTrainList)
@@ -248,7 +249,7 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
         img_name = self.xTrainList[idx]
 
         image = cv2.imread(img_name)
-        image = cv2.resize(image,(200, 66), interpolation = cv2.INTER_AREA)
+        image = cv2.resize(image,self.size, interpolation = cv2.INTER_AREA)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
 
         # image = Image.open(img_name)
@@ -449,7 +450,7 @@ def train(net, train_loader, optimizer):
     images = images.cuda()
     targets = targets.cuda()
     # print(images)
-    logits = net(images)
+    logits,_ = net(images)
     # loss = F.mse_loss(logits, targets)
     loss = criterion(logits, targets)
 
@@ -479,7 +480,6 @@ def train(net, train_loader, optimizer):
       print(logits)
       print('targets ============================================')
       print(targets)
-      asdf
       break
 
     # if i % args.print_freq == 0:
@@ -514,7 +514,7 @@ def test(net, test_loader):
   with torch.no_grad():
     for i, (images, targets) in enumerate(test_loader):
       images, targets = images.cuda(), targets.cuda()
-      logits = net(images)
+      logits,_ = net(images)
       loss = F.mse_loss(logits, targets)
       running_loss += loss.item()
 
@@ -607,8 +607,16 @@ def main():
   xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
   yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 
-  train_dataset = DrivingDataset_pytorch(xTrainList, yTrainList)
-  valid_dataset = DrivingDataset_pytorch(xValidList, yValidList)
+  # BN_flag = 0 # nvidia net
+  # BN_flag = 5 # comma.ai
+  BN_flag = 8 # resnet
+
+  size = (200, 66)
+  if BN_flag == 8: #resnet
+    size = (64, 64)
+
+  train_dataset = DrivingDataset_pytorch(xTrainList, yTrainList, size=size)
+  valid_dataset = DrivingDataset_pytorch(xValidList, yValidList, size=size)
 
   # train_dataset = datasets.ImageFolder(traindir, train_transform)
   train_dataset = AugMixDataset(train_dataset, preprocess)
@@ -632,8 +640,12 @@ def main():
   #   print("=> creating model '{}'".format(args.model))
   #   net = models.__dict__[args.model]()
 
-  # net = net_nvidia_pytorch()
-  net = net_commaai_pytorch()
+  if BN_flag == 0:
+    net = net_nvidia_pytorch()
+  elif BN_flag == 5:
+    net = net_commaai_pytorch()
+  elif BN_flag == 8:
+    net = net_resnet_pytorch()
 
   print(net)
 

@@ -58,21 +58,21 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 		train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
 			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr)
 
-def get_suffix(level_id):
-	'''
-	if level_id == 1:
-		return "_darker_2/"
-	if level_id == 2:
-		return "_darker/"
-	if level_id == 3:
-		return "_lighter/"
-	if level_id == 4:
-		return "_lighter_2/"
-	'''
-	if level_id <= 3:
-		return "_darker_"+str(7-level_id*2)+"/"
-	else:
-		return "_lighter_"+str(level_id*2-7)+"/"
+# def get_suffix(level_id):
+# 	'''
+# 	if level_id == 1:
+# 		return "_darker_2/"
+# 	if level_id == 2:
+# 		return "_darker/"
+# 	if level_id == 3:
+# 		return "_lighter/"
+# 	if level_id == 4:
+# 		return "_lighter_2/"
+# 	'''
+# 	if level_id <= 3:
+# 		return "_darker_"+str(7-level_id*2)+"/"
+# 	else:
+# 		return "_lighter_"+str(level_id*2-7)+"/"
 
 
 def get_suffix(level_id):

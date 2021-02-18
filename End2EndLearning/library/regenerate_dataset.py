@@ -1213,6 +1213,13 @@ def resizeDataset(src_folder, dst_folder, size):
         os.mkdir(dst_folder)
 
     image_paths = glob.glob(src_folder + "/*.jpg")
+    if len(image_paths) == 0:
+        image_paths = glob.glob(src_folder + "/*.png")
+
+    if len(image_paths) == 0:
+        print("Empty source folder!")
+
+    # print(image_paths)
     for image_path in image_paths:
         image = cv2.imread(image_path)
         image = cv2.resize(image, size)

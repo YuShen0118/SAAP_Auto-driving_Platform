@@ -7,6 +7,7 @@ import os
 import shutil
 import numpy as np
 import random
+import math
 
 
 from sklearn.utils import shuffle
@@ -398,7 +399,7 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
 
         return img, label
 
-    # def __getitem__(self, idx):
+    # def __getitem__(self, idx): # for augmix
     #     if torch.is_tensor(idx):
     #         idx = idx.tolist()
 
@@ -409,6 +410,7 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
     #     image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
 
     #     image = np.transpose(image, (2, 0, 1))
+    #     image = image.astype('float32')
 
     #     labels = self.yTrainList[idx]
 
@@ -416,14 +418,15 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
     #     # labels = 0.
 
     #     labels = np.array([labels])
-    #     labels = labels.astype('float')
+    #     labels = labels.astype('float32')
 
     #     sample = (image, labels)
 
-    #     if self.transform:
-    #         sample = self.transform(sample)
+    #     # if self.transform:
+    #     #     sample = self.transform(sample)
 
     #     return sample
+
 
 '''
 def train_dnn(imageDir, labelPath, outputPath, netType, flags, specs):
@@ -2057,6 +2060,74 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 	n = len(testLabels)
 
 	testLabels = testLabels / 15
+
+
+
+	# video_outpath = os.path.dirname(os.path.dirname(outputPath)) + "/video_outpath/"
+	# if not os.path.exists(video_outpath):
+	# 	os.mkdir(video_outpath)
+	# video_file = video_outpath + os.path.basename(os.path.dirname(outputPath)) + ".mp4"
+
+	# # out_video = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc(*'MJPG'), 10, (455,256))  # for avi
+	# # out_video = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc(*'MP4V'), 5, (455,256))  # for mp4
+	# out_video = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc(*'MP4V'), 60, (1280,720))  # for mp4
+	# # out_video = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc(*'MJPG'), 10, (1280,720))  # for avi
+	# alpha = 10
+	# STEP = 1
+
+
+	# for i,img_file in enumerate(testImagePaths):
+	# 	if i % STEP != 0:
+	# 		continue
+
+	# 	# if ( i > 100 and i < 5000) or ( i > 5100 and i < 6000):
+	# 	# if ( i > 100 and i < 5000) or ( i > 5100 and i < 6000):
+	# 	# if i < 500 or ( i > 600 and i < 1500) or ( i > 1600 and i < 2500) or ( i > 2600 and i < 3500) or ( i > 3600 and i < 4500) or ( i > 4600 and i < 5500):
+	# 		# continue
+
+	# 	# if not ((i > 0 and i < 100) or (i > 4500 and i < 4600) or (i > 6000 and i < 6100)):
+	# 	# if not ((i > 530 and i < 580) or (i > 2490 and i < 2540) ):
+
+	# 	# if not ((i > 0 and i < 100) or (i > 1000 and i < 1100) or (i > 2000 and i < 2100) or (i > 3000 and i < 3100) or (i > 4000 and i < 4100) or (i > 5000 and i < 5100) or (i > 6000 and i < 6100)):
+	# 	# if not ((i > 1200 and i < 1600)):
+	# 	# if not ((i > 5000 and i < 5400)):
+	# 	# if not ((i > 250 and i < 650) or (i > 1100 and i < 1500) or (i > 1600 and i < 2000)):
+	# 	# 	continue
+
+
+	# 	if not ((i > 0 and i < 400) or (i > 1400 and i < 1800) or (i > 2200 and i < 2600)):
+	# 		continue
+
+	# 	print(i)
+
+	# 	img = cv2.imread(img_file)
+
+	# 	# gt_v = testLabels[i]
+	# 	# start_point = (227, 255)
+	# 	# length = 80
+	# 	# end_point = (int(start_point[0] + length*math.sin(gt_v*alpha/180*math.pi)), int(start_point[1] - length*math.cos(gt_v*alpha/180*math.pi)))
+	# 	# img = cv2.line(img, start_point, end_point, (0, 255, 0), thickness=2) 
+
+	# 	# predict_v = predictResults[i]
+	# 	# start_point = (227, 255)
+	# 	# length = 80
+	# 	# end_point = (int(start_point[0] + length*math.sin(predict_v*alpha/180*math.pi)), int(start_point[1] - length*math.cos(predict_v*alpha/180*math.pi)))
+	# 	# img = cv2.line(img, start_point, end_point, (0, 0, 255), thickness=2) 
+
+	# 	# img = cv2.putText(img, str(i), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA) 
+
+	# 	cv2.imshow("img", img)
+	# 	cv2.waitKey(1)
+	# 	out_video.write(img)
+
+	# 	if i > 10000:
+	# 		break
+
+	# out_video.release()
+	# return 0.5
+
+
+
 
 	if fClassifier:
 		print('\n######### Classification #########')
