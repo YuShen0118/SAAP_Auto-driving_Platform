@@ -8,9 +8,12 @@ import scipy
 from playing import play,play_multi_model            # get the RL Test agent, gives out feature expectations after 2000 frames
 from neuralNets import net1         # construct the nn and send to playing
 from cvxopt import matrix, solvers  # convex optimization library
+import cvxpy as cp
 from learning import QLearning      # get the Reinforcement learner
 import os
 import timeit
+import math
+
 
 
 start_time = timeit.default_timer()
@@ -64,6 +67,63 @@ class IRLAgent:
         weights = np.squeeze(np.asarray(sol['x']))
         norm = np.linalg.norm(weights)
         weights = weights/norm
+
+        print("Computing optimal weights finished!")
+        return weights # return the normalized weights
+
+
+    def ComputeOptimalWeights_trustRegion(self, wm_pre, delta): 
+        # implement the convex optimization, posed as an SVM problem
+        print("Computing optimal weights starts......")
+        m = len(self.expert_fe)
+        P = matrix(2.0*np.eye(m), tc='d') # min ||w||
+        q = matrix(np.zeros(m), tc='d')
+
+        # add the feature expectations of the expert policy
+        policy_fe_list = [self.expert_fe]
+        h_list = [1]
+
+        policy_fe_diff_list = []
+        # add the feature expectations of other policies
+        for i in self.policy_fe_list.keys():
+            policy_fe_list.append(self.policy_fe_list[i])
+            h_list.append(1)
+            policy_fe_diff_list.append(np.array(self.expert_fe)-np.array(self.policy_fe_list[i]))
+            
+
+        # Problem data.
+
+        # Define and solve the CVXPY problem.
+        x = cp.Variable(m)
+
+        G = np.array(policy_fe_list)
+        G[0] = -1*G[0] # reverse the expert policy computation
+        h = -np.array(h_list)
+
+        # mse = cp.sum_squares(x[-1] - wm_pre*w_cur_esti)
+        # mse1 = cp.sum_squares(x[-1]) - 0.7*cp.sum_squares(x)
+        # mse2 = x[-1] - 0.9*cp.sum_squares(x)
+
+        # prob = cp.Problem(cp.Minimize((1/2)*cp.quad_form(x, P)), [G @ x <= h])
+        # prob = cp.Problem(cp.Minimize((1/2)*cp.quad_form(x, P)), [G @ x <= h, mse <= delta*w_cur_esti])
+
+        t = cp.Variable(1)
+        prob = cp.Problem(cp.Minimize(-t), [G @ x >= t, cp.sum_squares(x) <= 1, cp.sum_squares(x[-1]-wm_pre) <= delta*delta])
+        # prob = cp.Problem(cp.Minimize(-t), [G @ x >= t, cp.sum_squares(x) <= 1, cp.sum_squares(x[-1]-0.8) <= 0.01])
+
+        print("Is problem DQCP?: ", prob.is_dqcp())
+
+        prob.solve()
+
+        # Print result.
+        print("\nThe optimal value is", prob.value)
+        print("A solution x is")
+
+        weights = x.value
+        # norm = np.linalg.norm(weights)
+        # weights = weights/norm
+
+        print(weights)
 
         print("Computing optimal weights finished!")
         return weights # return the normalized weights
@@ -131,9 +191,45 @@ class IRLAgent:
 
         temp_fe, aver_score, aver_dist = play_multi_model(self.model_list, lamda, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
 
-        return min_dist, aver_score, aver_dist
+        return min_dist, aver_score, aver_dist, weights
 
-        
+    def TestNewMixingPolicy_trustRegion(self, weights, scene_file_name, wm_pre, delta):  
+
+        policy_fe_list = []
+        policy_fe_diff_list = []
+        # add the feature expectations of other policies
+        for i in self.policy_fe_list.keys():
+            policy_fe_list.append(self.policy_fe_list[i])
+            policy_fe_diff_list.append(np.array(self.expert_fe)-np.array(self.policy_fe_list[i]))
+
+        feture_matrix = np.matrix(policy_fe_list)
+        miu_expert = np.matrix(self.expert_fe).T
+        n = len(policy_fe_list)
+
+        P = matrix(2*feture_matrix@feture_matrix.T, tc='d')
+        q = matrix(-2 * feture_matrix @ miu_expert, tc='d')
+        G = matrix(-1 * np.eye(n), tc='d')
+        h = matrix(np.zeros((n,1)), tc='d')
+        A = matrix(np.ones((1,n)), tc='d')
+        b = matrix(np.ones((1,1)), tc='d')
+
+        sol = solvers.qp(P,q,G,h,A,b)
+        lamda = np.asarray(sol['x'])
+        #print(miu_expert.T)
+        #print((feture_matrix.T@lamda-miu_expert).T)
+        lamda = lamda.flatten()
+        #print(lamda)
+
+        weights = self.ComputeOptimalWeights_trustRegion(wm_pre, delta)
+        policy_fe_diff_list_mat = np.matrix(policy_fe_diff_list)
+        distance_list = np.abs(weights @ policy_fe_diff_list_mat.T)
+        min_dist = np.min(distance_list)
+
+        temp_fe, aver_score, aver_dist = play_multi_model(self.model_list, lamda, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
+
+        return min_dist, aver_score, aver_dist, weights
+
+
     def IRL(self, scene_file_name):
         # create a folder for storing results
         if not os.path.exists(self.results_folder):
@@ -145,11 +241,13 @@ class IRLAgent:
         nearest_iter_no = -1
         opt_count = 1
         enlarge_lr = 0
+
         while True:
             print("================ IRL iteration number: ", opt_count, " ================")
             
             # Main Step 1: compute the new weights according to the list of policies and the expert policy
-            weights_new = self.ComputeOptimalWeights() 
+            # weights_new = self.ComputeOptimalWeights() 
+            weights_new = self.ComputeOptimalWeights()
             print("The optimal weights so far: ", weights_new)
             f.write( str(weights_new) )
             f.write('\n')
@@ -162,7 +260,7 @@ class IRLAgent:
 
             print("UpdatePolicyFEList finished")
             # Main Step 2.5: use the latest model list to get a best policy (has most similar feature expectation with expert)
-            self.current_dis, score, car_dist = self.TestNewMixingPolicy(weights_new, scene_file_name)
+            self.current_dis, score, car_dist, weights_new = self.TestNewMixingPolicy(weights_new, scene_file_name)
 
             f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
             f1.write("iteration " + str(opt_count) + ": current_dis " +str(self.current_dis) + "  score " + str(score) + "  trajectory length " + str(car_dist))
@@ -182,6 +280,113 @@ class IRLAgent:
                 print("The final weights of IRL is: ", weights_new)
                 break
             opt_count += 1
+        f.close()
+
+        
+    def IRL_trust_region(self, scene_file_name):
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+        
+        # create a file to store weights after each iteration of learning
+        f = open(self.results_folder + 'weights-'+self.behavior_type+'.txt', 'w')
+        nearest_dist = 9999999999
+        nearest_iter_no = -1
+        opt_count = 1
+        enlarge_lr = 0
+
+        # for trust region
+        GAMMA = 0.99
+        n = self.num_features
+        eps = self.epsilon
+        reduce_ratio = n/math.sqrt(n*n+(1-GAMMA)*(1-GAMMA)*eps*eps)
+        reduce_ratio_e = math.sqrt(reduce_ratio)
+        delta = 0.01
+        wm_pre = -0.8
+        alpha = 0.98
+        zero = 1e-4
+        rej_cnt = 0
+
+        weights_new = self.ComputeOptimalWeights_trustRegion(wm_pre, zero) 
+        # weights_new = self.ComputeOptimalWeights() 
+        # weights_new[-1] = wm_pre
+        # weights_new[0:45] = weights_new[0:45] / np.norm(weights_new[0:45]) * sqrt((1-wm_pre*wm_pre))
+
+        while True:
+            print("================ IRL iteration number: ", opt_count, " ================")
+            
+            # Main Step 2: update the policy feature expectations list
+            # and compute the distance between the lastest policy and expert feature expecations
+            current_dis, score, car_dist, stop_status = self.UpdatePolicyFEList(weights_new, opt_count, scene_file_name, enlarge_lr)
+            if stop_status == 1:
+                enlarge_lr += 1
+
+            print("UpdatePolicyFEList finished")
+            # Main Step 2.5: use the latest model list to get a best policy (has most similar feature expectation with expert)
+            current_dis, score, car_dist, weights_new = self.TestNewMixingPolicy_trustRegion(weights_new, scene_file_name, wm_pre, delta)
+
+
+            # Main Step 1: compute the new weights according to the list of policies and the expert policy
+            # weights_new = self.ComputeOptimalWeights() 
+            # weights_new = self.ComputeOptimalWeights_trustRegion(wm_pre, self.current_dis*reduce_ratio_e, delta) 
+
+            print("!!!!!!!!! Converge ratio ", current_dis / self.current_dis)
+
+            if opt_count == 1 or current_dis / self.current_dis <= alpha * reduce_ratio:
+                self.current_dis = current_dis
+                wm_pre = weights_new[-1]
+                rej_cnt = 0
+            else:
+                weights_new = self.ComputeOptimalWeights_trustRegion(wm_pre, zero) 
+                wm_pre = weights_new[-1]
+
+                policy_fe_diff_list = []
+                for i in self.policy_fe_list.keys():
+                    policy_fe_diff_list.append(np.array(self.expert_fe)-np.array(self.policy_fe_list[i]))
+                policy_fe_diff_list_mat = np.matrix(policy_fe_diff_list)
+                distance_list = np.abs(weights_new @ policy_fe_diff_list_mat.T)
+                min_dist = np.min(distance_list)
+                self.current_dis = min_dist
+
+                rej_cnt += 1
+                # weights_new = self.ComputeOptimalWeights() 
+                # weights_new[-1] = wm_pre
+                # weights_new[0:45] = weights_new[0:45] / np.norm(weights_new[0:45]) * sqrt((1-wm_pre*wm_pre))
+
+            if rej_cnt == 0:
+                delta = min(1.1*delta, 0.05)
+            elif rej_cnt >= 5:
+                delta = max(0.9*delta, 0.001)
+                rej_cnt = 0
+
+
+            print("The optimal weights so far: ", weights_new)
+            f.write( str(weights_new) )
+            f.write('\n')
+            
+            print("delta ", delta)
+            print("w[-1] ", wm_pre)
+            print("t ", self.current_dis)
+
+            f1 = open(self.results_folder + 'models-'+ behavior_type +'/' + 'results.txt', 'a')
+            f1.write("iteration " + str(opt_count) + ": current_dis " + "{:.3f}".format(self.current_dis) + "  score " + "{:.3f}".format(score) + "  trajectory length " + "{:.3f}".format(car_dist) + "  delta " + "{:.3f}".format(delta) + "  w[-1] " + "{:.3f}".format(wm_pre) + "  rej_cnt " + str(rej_cnt))
+            f1.write('\n')
+            f1.close()
+
+            # Main Step 3: assess the above-computed distance, decide whether to terminate IRL
+            print("The stopping distance thresould is: ", epsilon)
+            print("The latest policy to expert policy distance is: ", self.current_dis)
+
+            print("Total consumed time: ", timeit.default_timer() - start_time, " s")
+            print("Total consumed time: ", (timeit.default_timer() - start_time)/3600.0, " h")
+            print("===========================================================")
+            print("\n")
+            if self.current_dis <= self.epsilon: 
+                print("IRL finished!")
+                print("The final weights of IRL is: ", weights_new)
+                break
+            opt_count += 1
+
         f.close()
 
 
@@ -225,9 +430,16 @@ if __name__ == '__main__':
     expert_city_no_norm_fe = [139.14573, 148.79673, 159.14211, 177.13265, 197.08391, 225.48979, 247.19806, 266.35487, 293.04903, 326.56844, 369.50046, 396.40893, 429.47554, 466.40125, 140.61482, 95.34397, 49.28687, 40.73446, 32.92940, 30.93725, 25.84396, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 34.95831, 0.03268, 0.00000, 0.00000,]
     random_city_no_norm_fe = [40.31113, 47.87702, 50.02711, 57.83832, 67.04075, 80.32250, 96.51203, 126.96788, 160.12895, 185.66793, 216.06720, 261.38999, 324.60439, 368.17770, 416.33010, 471.85543, 540.16283, 300.23169, 224.27305, 182.51940, 142.87087, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 10.00000, 56.32504, 0.04876, 0.00000, 0.00497]
 
+    expert_city_no_norm_fe_99 = [1228.61171, 1295.05796, 1372.72092, 1467.49753, 1582.88252, 1728.19820, 1884.58479, 2086.13707, 2368.21991, 2780.97953, 3605.24220, 3407.44229, 3542.81914, 3611.64553, 2525.81646, 1716.64241, 923.22114, 546.70938, 440.30162, 383.25882, 343.43864, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 93.79391, 99.05547, 99.23428, 99.06967, 99.31548, 99.41473, 97.49383, 99.99745, 99.99737, 99.99727, 99.99719, 213.67659, 0.31451, 0.17177, 0.00000]
+    random_city_no_norm_fe_99 = [692.96580, 765.50164, 844.19555, 962.30012, 1111.86355, 1314.24535, 1602.83350, 1964.12510, 2422.89467, 2861.01471, 3290.37220, 3783.01214, 4081.32759, 4225.85403, 3327.85811, 2706.77085, 2181.52107, 1972.70783, 1841.97445, 1620.98429, 1357.73803, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 99.48760, 97.31135, 485.91348, 0.19696, 0.00000, 0.48562]
+
     # training parameters
-    nn_param = [164, 150]
+    # nn_param = [164, 150]
+    # nn_param = [64, 128, 128, 128, 128, 128, 128, 128, 128, 64]
+    nn_param = [64, 128, 64, 32, 16, 8, 16, 32, 64, 128, 64]
+    # nn_param = [32, 16, 64, 128, 64]
     params = {
+        # "batch_size": 100,
         "batch_size": 100,
         "buffer": 50000,
         "nn": nn_param
@@ -237,15 +449,16 @@ if __name__ == '__main__':
     num_actions = 25
     train_frames = 20000   # number of RL training frames per iteration of IRL
     play_frames = 2000 # the number of frames we play for getting the feature expectations of a policy online
-    behavior_type = 'city' # yellow/brown/red/bumping
+    behavior_type = 'city_RL_reward0' # yellow/brown/red/bumping
     results_folder = 'results/'
     
     scene_file_name = 'scenes/scene-city-car.txt'
     scene_file_name = 'scenes/scene-ground-car.txt'
     scene_file_name = 'scenes/scene-city.txt'
 
-    irl_learner = IRLAgent(params, random_city_no_norm_fe, expert_city_no_norm_fe, epsilon, \
+    irl_learner = IRLAgent(params, random_city_no_norm_fe_99, expert_city_no_norm_fe_99, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
-    irl_learner.IRL(scene_file_name)
+    # irl_learner.IRL(scene_file_name)
+    irl_learner.IRL_trust_region(scene_file_name)
 

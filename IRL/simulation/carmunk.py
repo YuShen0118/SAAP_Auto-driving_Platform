@@ -565,21 +565,44 @@ class GameState:
                 reward += 0.5
             if (readings[-1] == 1):
                 # collision
-                reward -= 0.9
+                reward -= 0.7
+
+            min_dist = np.min(readings[0:21])
+
+            if min_dist + readings[10] <= 6 or min_dist <= 1:
+                reward -= (3 - min_dist)/10 # -0.3 at most
+
+            # print(readings[42])
+            reward += 0.005 - np.abs(readings[42])/1000
 
             reward = np.clip(reward, -1, 1)
             if normalize_reading == False:
                 reward *= 100
+
+            # print("min dist: ", "{:.2f}".format(min_dist), "  middle dist: ", "{:.2f}".format(readings[10]), "  reward: ", "{:.2f}".format(reward))
         elif reward_type == 1:
             reward = np.dot(W, readings)
         elif reward_type == 2:
             reward = 0.4*readings[-3] # get closer to the goal
+        
             if (readings[-2] == 1):
                 # reach the goal
                 reward += 0.5
             if (readings[-1] == 1):
                 # collision
-                reward -= 0.9
+                reward -= 0.7
+
+            min_dist = np.min(readings[0:21])
+
+            if min_dist + readings[10] <= 6 or min_dist <= 1:
+                reward -= (3 - min_dist)/10 # -0.3 at most
+
+            # print(readings[42])
+            reward += 0.005 - np.abs(readings[42])/1000
+
+            reward = np.clip(reward, -1, 1)
+
+
             if normalize_reading == False:
                 reward *= 100
                 
@@ -588,7 +611,7 @@ class GameState:
             if normalize_reading:
                 reward = np.clip(reward, -1, 1)
         
-
+        # print(reward)
         return reward
     
     def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = False):
@@ -649,9 +672,9 @@ class GameState:
         angle_unit = angle_range /unit_range
         goal_direction = self.get_direction(self.car_body.position, self.car_body.angle, current_goal, angle_unit)
         if normalize_reading:
-            readings.append(np.clip(abs(goal_direction) / unit_range,-1,1))
+            readings.append(np.clip(goal_direction / unit_range,-1,1))
         else:
-            readings.append(abs(goal_direction))
+            readings.append(goal_direction)
         section_number = unit_range*2 + 1
 
         # Whether there's obstacle in the goal direction, 1 channel
@@ -756,6 +779,8 @@ class GameState:
         """
         
         [position, angle, velocity, goal_id] = states
+
+        # self.car_body.position = position + [(np.random.random()*2-1) * 2 * MULTI, (np.random.random()*2-1) * 2 * MULTI]
         self.car_body.position = position
         self.car_body.angle = angle + (np.random.random()*2-1) * math.pi / 8
         self.car_body.velocity = velocity
@@ -789,10 +814,17 @@ class GameState:
         dir = goal_position - base_position
         angle = math.atan2(dir[1], dir[0])
         relative_angle = angle - base_direction
+        while relative_angle > math.pi:
+            relative_angle -= 2*math.pi
+
+        while relative_angle < -math.pi:
+            relative_angle += 2*math.pi
+
         if relative_angle > math.pi:
-            relative_angle -= math.pi
-        elif relative_angle < -math.pi:
-            relative_angle += math.pi
+            relative_angle = 2*math.pi - relative_angle
+
+        if relative_angle < -math.pi:
+            relative_angle = 2*math.pi + relative_angle
 
         section_id = round(relative_angle / angle_unit)
         return section_id

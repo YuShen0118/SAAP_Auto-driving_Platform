@@ -10,7 +10,8 @@ from playing import play
 from keras import backend as K
 import keras
 
-GAMMA = 0.9  # discount factor
+
+GAMMA = 0.99  # discount factor
 TUNING = False  # If False, just use arbitrary, pre-selected params
 
 
@@ -41,7 +42,7 @@ def outPutW(weights, border=4):
             
             
 def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
-              continue_train=True, hitting_reaction_mode=0, enlarge_lr=0):
+              continue_train=True, hitting_reaction_mode=1, enlarge_lr=0):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -155,10 +156,10 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             if frame_idx % 100 == 0:
                 print("history.losses ", history.losses)
                 
-            if frame_idx % 100 == 0:
+            if frame_idx % 1000 == 0:
                 temp_fe, aver_score, aver_dist = play(model, weights, play_rounds=10, scene_file_name=scene_file_name)
                 if len(score_log) == 0 or (len(score_log) > 0 and aver_score > np.max(score_log) and aver_dist > np.max(dist_log)):
-                    model.save_weights(model_name, overwrite=True)
+                    model.save_weights(model_name.replace('.h5', '_frame'+str(frame_idx)+'.h5'), overwrite=True)
                     np.save(weights_name, weights)
                     print("Saving model inner: ", model_name)
                 score_log.append([aver_score])
@@ -224,13 +225,15 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
 
         # save the current model 
         if frame_idx == train_frames:
-            #model.save_weights(model_name, overwrite=True)
-            #np.save(weights_name, weights)
+            model.save_weights(model_name, overwrite=True)
+            np.save(weights_name, weights)
             print("Saving model: ", model_name)
 
     # log results after we're done with all training frames
     log_results(results_folder, filename, survive_data, loss_log, score_log, dist_log)
     print("Q learning finished!")
+
+    K.clear_session()
     return model_name, stop_status
     
     

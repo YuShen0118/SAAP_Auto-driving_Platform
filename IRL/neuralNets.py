@@ -24,18 +24,25 @@ def net1(numInputs, numOutputs, params, weightsFile='', epochCount=1, enlarge_lr
     netInputs = Input(shape=(numInputs,))
     x = Dense(params[0], kernel_initializer='lecun_uniform', activation='relu')(netInputs)
     x = Dropout(0.2)(x)
-    x = Dense(params[1], kernel_initializer='lecun_uniform', activation='relu')(x)
-    x = Dropout(0.2)(x)
+
+    if len(params) > 1:
+        for i in range(len(params)-1):
+            x = Dense(params[i+1], kernel_initializer='lecun_uniform', activation='relu')(x)
+            x = Dropout(0.2)(x)
+
     netOutputs = Dense(numOutputs, kernel_initializer='lecun_uniform', activation='linear')(x)
 
     model = Model(inputs = netInputs, outputs = netOutputs)
+
+    print(model.summary())
     
     #lr = 0.001 / 2**(epochCount-1)
     #print('===============lr===============', lr)
 
     #optimizer = keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
     #optimizer = keras.optimizers.RMSprop(learning_rate=0.001, rho=0.9)
-    optimizer = keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    # optimizer = keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    optimizer = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
     #optimizer = keras.optimizers.Adamax(learning_rate=0.002, beta_1=0.9, beta_2=0.999)
     #optimizer = keras.optimizers.Nadam(learning_rate=0.002, beta_1=0.9, beta_2=0.999)
     model.compile(optimizer=optimizer, loss='mse')

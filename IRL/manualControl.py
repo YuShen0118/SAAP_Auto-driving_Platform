@@ -22,7 +22,7 @@ import math
 
 
 NUM_FEATURES = 46
-GAMMA = 0.9 # the discount factor for RL algorithm
+GAMMA = 0.99 # the discount factor for RL algorithm
 
 def demo(screen):
     while True:

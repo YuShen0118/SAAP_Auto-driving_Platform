@@ -13,7 +13,7 @@ import random
 
 NUM_FEATURES = 46 # number of features
 NUM_ACTIONS = 25 # number of actions
-GAMMA = 0.9
+GAMMA = 0.99
 
 
 def play(model, weights, play_frames=10000, play_rounds=10000, scene_file_name='scenes/scene-city.txt'):
@@ -129,20 +129,24 @@ if __name__ == "__main__":
     score_list = []
     dist_list = []
     
-    for FRAME in range(1,10):
+    for FRAME in range(1,3):
         print('***************************************************************************************************')
         print('FRAME ', FRAME)
         modelType = BEHAVIOR
         #model_dir = 'results/models-'+ modelType +'/'
         model_dir = 'results/finals/'
+        model_dir = 'results/models-city/'
         saved_model = model_dir+'164-150-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
+        saved_model = model_dir+'64-128-100-50000-'+str(ITERATION)+'-'+str(FRAME)+'.h5'
         weights = [-0.79380502 , 0.00704546 , 0.50866139 , 0.29466834, -0.07636144 , 0.09153848 ,-0.02632325 ,-0.09672041]
-        model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
+        # model = net1(NUM_FEATURES, NUM_ACTIONS, [164, 150], saved_model)
+        model = net1(NUM_FEATURES, NUM_ACTIONS, [64, 128, 64, 32, 16, 8, 16, 32, 64, 128, 64], saved_model)
         
         scene_file_name = 'scenes/scene-city-car.txt'
         scene_file_name = 'scenes/scene-ground-car.txt'
         scene_file_name = 'scenes/scene-city.txt'
-        featureExp, score, dist = play(model, weights, play_rounds=100, scene_file_name = scene_file_name)
+        reward_weights=''
+        featureExp, score, dist = play(model, weights=reward_weights, play_rounds=100, scene_file_name = scene_file_name)
         score_list.append(score)
         dist_list.append(dist)
 
