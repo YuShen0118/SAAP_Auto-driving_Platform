@@ -375,6 +375,7 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
         if not isinstance(img_path, (list, tuple, np.ndarray)):
             img_paths = [img_path]
 
+        # gt_value = np.random.rand()
         for i in range(len(img_paths)):
             img_path = img_paths[i]
             if not os.path.isfile(img_path):
@@ -391,9 +392,45 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
             else:
                 img = torch.cat((img, img_1), 0)
 
+            ################################ additional channels #####################################
+            # random values
+            # random_channel = torch.rand(img.shape)
+            # img = torch.cat((img, random_channel), 0)
+
+            # ground truth values
+            # gt_channel = torch.tensor(np.full(img.shape, gt_value), dtype=torch.float32)
+            # img = torch.cat((img, gt_channel), 0)
+
+            # mask generation
+            # mask_channel = cv2.imread("mask_ori.png")
+            # mask_channel = cv2.resize(mask_channel, (200,66))
+            # for i in range(33, 66):
+            #     for j in range(200):
+            #         mask_channel[i,j] = mask_channel[i,j]*(1-(i-33)*0.015)
+            # cv2.imwrite("mask.png", mask_channel)
+
+            # mask
+            # img_1 = Image.open("mask.png")
+            # img_1 = img_1.convert("RGB")
+
+            # if self.transform:
+            #     img_1 = self.transform(img_1)
+
+            # img = torch.cat((img, img_1), 0)
+
+
+            # mask_channel = cv2.imread("mask.png")
+
+            # cv2.imshow("img", mask_channel)
+            # cv2.waitKey(0)
+            ###################################################################################################
+
         label = self.yTrainList[idx]
+
+        # label = gt_value # TODO
+
         if isinstance(label, (list, tuple, np.ndarray)):
-        	label = label[0]
+            label = label[0]
         label = np.array([label])
         label = torch.tensor(label).float()
 
@@ -572,8 +609,8 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 		yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 
-	yTrainList/=15
-	yValidList/=15
+	# yTrainList/=15
+	# yValidList/=15
 
 	if (BN_flag == 2) or (BN_flag == 3):
 		xList_advp, yList_advp = load_train_data_multi(imageDir_list_advp, labelPath_list_advp, nRep, fThreeCameras, trainRatio_advp, specialFilter=specialFilter)
@@ -772,6 +809,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			net.train()
 
 			for i, (inputs, labels) in enumerate(trainGenerator):
+				# inputs.requires_grad = True  #TODO
 				# labels = labels.numpy().flatten()
 				if BN_flag == 3:
 					image, feature = inputs
@@ -826,6 +864,21 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 				loss = criterion(outputs, torch.Tensor(labels_2d).cuda(non_blocking=True))
 
 				loss.backward()
+
+				# print(inputs.grad)           #TODO
+				# print(inputs.grad.shape)
+
+				# print('=====================================================================================')
+				# input_grad_np = inputs.grad.cpu().detach().numpy()
+				# print(np.mean(np.abs(input_grad_np[:,0,:,:])))
+				# print(np.mean(np.abs(input_grad_np[:,1,:,:])))
+				# print(np.mean(np.abs(input_grad_np[:,2,:,:])))
+				# print('------------------------------------------------------------------')
+				# print(np.mean(np.abs(input_grad_np[:,3,:,:])))
+				# print(np.mean(np.abs(input_grad_np[:,4,:,:])))
+				# print(np.mean(np.abs(input_grad_np[:,5,:,:])))
+				# adf
+
 
 				optimizer.step()
 
@@ -1004,12 +1057,12 @@ def train_dnn_multi_two_stream(imageDir_list, labelPath_list, outputPath, netTyp
 		xList, yList = load_train_data_multi_pack(imageDir_list, labelPath_list, nRep, fThreeCameras, trainRatio)
 		xList_advp, yList_advp = load_train_data_multi_pack(imageDir_list_advp, labelPath_list_advp, nRep, fThreeCameras, trainRatio_advp)
 
-	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.13, random_state=42)
-	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.13, random_state=42)
+	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
+	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 
 	xTrainList_advp, xValidList_advp = train_test_split(np.array(xList_advp), test_size=0.1, random_state=42)
 	yTrainList_advp, yValidList_advp = train_test_split(np.array(yList_advp), test_size=0.1, random_state=42)
-	
+
 	## change the data format if necessary
 	if fClassifier:
 		print('\n######### Classification #########')
@@ -1177,7 +1230,7 @@ def train_ADDA(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_
 			# training model using source data
 			data_source = data_source_iter.next()
 			s_img, s_label = data_source
-			s_label = s_label / 15
+			# s_label = s_label / 15
 
 			batch_size = len(s_img)
 
@@ -1201,7 +1254,7 @@ def train_ADDA(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_
 			# training model using target data
 			data_target = data_target_iter.next()
 			t_img, t_label = data_target
-			t_label = t_label / 15
+			# t_label = t_label / 15
 
 			batch_size = len(t_img)
 
@@ -1278,7 +1331,7 @@ def train_ADDA(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_
 			outputs = net_r(feature)
 
 			labels = labels.numpy().flatten()
-			labels = labels / 15
+			# labels = labels / 15
 			labels_2d = labels.reshape((labels.shape[0], 1))
 
 			loss = loss_regression(outputs, torch.Tensor(labels_2d).cuda())
@@ -2059,7 +2112,7 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 		testLabels = testLabels[:,0]
 	n = len(testLabels)
 
-	testLabels = testLabels / 15
+	# testLabels = testLabels / 15
 
 
 
@@ -2222,6 +2275,15 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 		print(net)
 	else:
 		print(net.summary())
+
+
+	# for name, param in net.named_parameters():
+	# 	if param.requires_grad: 
+	# 		print(name)
+
+	# for param in net.parameters():
+	# 	print(param.data)
+	# 	adf
 
 	net.eval()
 	predictResults = []

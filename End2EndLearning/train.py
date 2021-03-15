@@ -41,7 +41,7 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 	## parameters
 	batchSize = 128
 	# batchSize = 512
-	nEpoch = 4000
+	nEpoch = 2000
 	nClass = 49        # only used if fClassifier = True
 	nFramesSample = 5  # only used for LSTMs
 	nRep = 1

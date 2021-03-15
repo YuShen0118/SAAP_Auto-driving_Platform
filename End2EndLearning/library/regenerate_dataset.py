@@ -1227,6 +1227,20 @@ def resizeDataset(src_folder, dst_folder, size):
         cv2.imwrite(out_path, image)
 
 
+def generate_folder_with_csv():
+    src_folder = dataset_path + "/trainB"
+    dst_folder = dataset_path + "/trainB_simp"
+    if not os.path.exists(dst_folder):
+        os.mkdir(dst_folder)
+
+    image_paths = get_image_name_list_from_csv(dataset_path+"/labelsB_train.csv", dataset_path+"/trainB")
+
+    for image_path in image_paths:
+        image = cv2.imread(image_path)
+        out_path = image_path.replace(src_folder, dst_folder)
+        cv2.imwrite(out_path, image)
+
+
 if __name__ == '__main__':
     #print(__doc__)
     '''
