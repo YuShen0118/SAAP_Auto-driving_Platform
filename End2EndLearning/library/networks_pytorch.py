@@ -19,6 +19,8 @@ def create_nvidia_network_pytorch(BN_flag, fClassifier=False, nClass=1, nChannel
 		return net_nvidia_pytorch_LSTM(nChannel)
 	elif BN_flag == 8:
 		return net_resnet_pytorch(nChannel)
+	elif BN_flag == 9:
+		return net_hintnet_pytorch(nChannelBase=3, nChannelHint=nChannel)
 		
 	return net_nvidia_pytorch()
 

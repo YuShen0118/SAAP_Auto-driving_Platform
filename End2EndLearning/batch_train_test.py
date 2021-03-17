@@ -480,6 +480,7 @@ def single_test_2_streams(subtask_id=-1):
 	labelName_add = get_label_file_name(train_folder_add, labelsuffix)
 	labelPath_add = DATASET_ROOT + labelName_add
 
+
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + train_folder_add + suffix + "/"
 	# modelPath = TRAIN_OUTPUT_ROOT + train_folder_add + "/model-final.h5"
 	modelPath = TRAIN_OUTPUT_ROOT + "trainAudi3_pytorch/model-final.pth"

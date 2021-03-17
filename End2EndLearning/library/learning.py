@@ -14,7 +14,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 
 from utilities import resize_image, random_distort, load_train_data, load_train_data_multi, load_train_data_multi_pack
-from networks_pytorch import create_nvidia_network_pytorch, ADDA_NVIDIA_FEATURE_CNN, ADDA_NVIDIA_REGRESSOR, ADDA_DOMAIN_DISCRIMINATOR
+from networks_pytorch import create_nvidia_network_pytorch, ADDA_NVIDIA_FEATURE_CNN, ADDA_NVIDIA_REGRESSOR, ADDA_DOMAIN_DISCRIMINATOR, net_nvidia_pytorch_CNN, net_nvidia_pytorch_regressor
 import time
 import ntpath
 
@@ -434,7 +434,8 @@ class DrivingDataset_pytorch(torch.utils.data.Dataset):
         label = np.array([label])
         label = torch.tensor(label).float()
 
-        return img, label
+        return img, label, img_path
+        # return img, label
 
     # def __getitem__(self, idx): # for augmix
     #     if torch.is_tensor(idx):
@@ -1135,17 +1136,251 @@ def train_dnn_multi_two_stream(imageDir_list, labelPath_list, outputPath, netTyp
 	f_log = open(outputPath + 'loss-log', 'w')
 	f_log.write('epoch,loss,loss_t_domain,loss_s_domain,loss_s_label,mean_accuracy,val_loss,val_mean_accuracy\n')
 
-	nChannel = 3
-	train_ADDA(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
-		trainGenerator_src, trainGenerator_dst, validGenerator_src, validGenerator_dst, 
-		loss_domain, loss_regression, thresh_holds, outputPath, f_log)
+	if BN_flag == 4:
+		nChannel = 3
+		train_DANN(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
+			trainGenerator_src, trainGenerator_dst, validGenerator_src, validGenerator_dst, 
+			loss_domain, loss_regression, thresh_holds, outputPath, f_log)
+	elif BN_flag == 6:
+		nChannel = 3
+		train_ADDA(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
+			trainGenerator_src, trainGenerator_dst, validGenerator_src, validGenerator_dst, 
+			loss_domain, loss_regression, thresh_holds, outputPath, f_log)
+	elif BN_flag == 9:
+		nChannel_base = 3
+		nChannel_hint = 6
+		train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
+			trainGenerator_src, validGenerator_src, imageDir_list, imageDir_list_advp, transform, loss_regression, thresh_holds, outputPath, f_log)
 
-	# train_DANN(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
-	# 	trainGenerator_src, trainGenerator_dst, validGenerator_src, validGenerator_dst, 
-	# 	loss_domain, loss_regression, thresh_holds, outputPath, f_log)
 
 
 	f_log.close()
+
+def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
+	trainGenerator_base, validGenerator_base, imageDir_list_base, imageDir_list_hint, transform, criterion, thresh_holds, outputPath, f_log):
+
+	net_f_ori = net_nvidia_pytorch_CNN(nChannel_base)
+	net_f_hint = net_nvidia_pytorch_CNN(nChannel_hint)
+	net_d = net_nvidia_pytorch_regressor()
+
+	net_f_ori.cuda()
+	net_f_hint.cuda()
+	net_d.cuda()
+
+	optimizer_fo = optim.Adam(net_f_ori.parameters(), lr=0.0001)
+	optimizer_fh = optim.Adam(net_f_hint.parameters(), lr=0.0001)
+	optimizer_d = optim.Adam(net_d.parameters(), lr=0.0001)
+
+	dict_hard_cover = {}
+
+	# for round_id in range(nRound):
+	for epoch in range(nEpoch):
+		start = time.time()
+
+		data_base_iter = iter(trainGenerator_base)
+
+		net_f_ori.train()
+		net_d.train()
+
+		running_loss = 0
+		train_acc_list = [0,0,0,0,0,0]
+
+		img_path_list = []
+		label_list = []
+		error_list = []
+		for i in range(len(trainGenerator_base)):
+			# training model using source data
+			img_base, label_base, img_path = data_base_iter.next()
+			# img_path = "a"
+			# s_label = s_label / 15
+
+			batch_size = len(img_base)
+
+			feature_base = net_f_ori(input_data=img_base.cuda(non_blocking=True))
+			output_base,_ = net_d(feature_base)
+
+			labels_2d = label_base.reshape(output_base.shape)
+
+			optimizer_fo.zero_grad()
+			optimizer_d.zero_grad()
+
+			loss = criterion(output_base, torch.Tensor(labels_2d).cuda(non_blocking=True))
+
+			loss.backward()
+
+			optimizer_fo.step()
+			optimizer_d.step()
+
+			# print statistics
+			running_loss += loss.item()
+
+			prediction_error = np.abs(output_base.cpu().detach().numpy().flatten()-label_base.numpy().flatten())
+			for j,thresh_hold in enumerate(thresh_holds):
+				acc_count = np.sum(prediction_error < thresh_hold)
+				train_acc_list[j] += acc_count
+
+			img_path_list = img_path_list + img_path
+			error_list = error_list + prediction_error.tolist()
+			label_list = label_list + label_base.detach().numpy().tolist()
+
+			# if i >= train_batch_num-1:
+			# 	break
+
+		for j in range(len(train_acc_list)):
+			train_acc_list[j] = train_acc_list[j] / train_batch_num / batchSize
+		train_acc = np.mean(train_acc_list)
+
+
+		running_loss_hint = 0
+		loss1 = 0
+		loss2 = 0
+		loss3 = 0
+		batch_num_hard = 1
+
+		if epoch > 1000000:
+			sorted_index_list = np.argsort(error_list)
+			total_number = len(error_list)
+			hard_case_number = int(total_number * 1)
+
+			for i in range(hard_case_number):
+				img_path = img_path_list[sorted_index_list[total_number-1-i]]
+				dict_hard_cover[img_path] = label_list[sorted_index_list[total_number-1-i]][0]
+
+			hard_case_list = []
+			hard_case_label_list = []
+			for img_path in dict_hard_cover:
+				label = dict_hard_cover[img_path]
+				element1 = [img_path]
+				for new_folder in imageDir_list_hint:
+					element1.append(img_path.replace(imageDir_list_base[0], new_folder))
+				element1[-1] = element1[-1].replace("_camera_", "_label_")
+
+				hard_case_list.append(element1)
+				hard_case_label_list.append(label)
+
+			hard_case_dataset = DrivingDataset_pytorch(hard_case_list, hard_case_label_list, transform=transform)
+			batch_size = 64
+
+			if platform == "win32":
+				hard_case_generator = DataLoader(hard_case_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+				# hard_case_generator = trainGenerator_base
+			else:
+				hard_case_generator = DataLoader(hard_case_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
+				# hard_case_generator = trainGenerator_base
+
+			data_hint_iter = iter(hard_case_generator)
+
+			# copy net_f_ori parameter to net_f_hint
+			net_f_hint.conv1.weight.data = torch.zeros(net_f_hint.conv1.weight.data.shape)
+			net_f_hint.conv1.weight.data[:,0:3,:,:] = net_f_ori.conv1.weight.data
+			net_f_hint.conv1.bias.data = net_f_ori.conv1.bias.data
+			net_f_hint.conv2.weight.data = net_f_ori.conv2.weight.data
+			net_f_hint.conv2.bias.data = net_f_ori.conv2.bias.data
+			net_f_hint.conv3.weight.data = net_f_ori.conv3.weight.data
+			net_f_hint.conv3.bias.data = net_f_ori.conv3.bias.data
+			net_f_hint.conv4.weight.data = net_f_ori.conv4.weight.data
+			net_f_hint.conv4.bias.data = net_f_ori.conv4.bias.data
+			net_f_hint.conv5.weight.data = net_f_ori.conv5.weight.data
+			net_f_hint.conv5.bias.data = net_f_ori.conv5.bias.data
+
+			net_f_hint.cuda()
+
+			batch_num_hard = len(hard_case_generator)
+			for i in range(len(hard_case_generator)):
+				# training model using source data
+				img_all, labels, _ = data_hint_iter.next()
+				# print(img_all)
+				# print(labels)
+
+				img_base = img_all[:,0:3,:,:]
+				img_hint = img_all[:,3:9,:,:]
+				# s_label = s_label / 15
+
+				feature_base = net_f_ori(input_data=img_base.cuda(non_blocking=True))
+				output_base,_ = net_d(feature_base)
+
+				feature_hint = net_f_hint(input_data=img_hint.cuda(non_blocking=True))
+				output_hint,_ = net_d(feature_hint)
+
+				labels_2d = labels.reshape(output_base.shape)
+
+				optimizer_fo.zero_grad()
+				optimizer_fh.zero_grad()
+				optimizer_d.zero_grad()
+
+				loss_1 = criterion(output_base, torch.Tensor(labels_2d).cuda(non_blocking=True))
+				loss_2 = criterion(output_hint, torch.Tensor(labels_2d).cuda(non_blocking=True))
+				loss_3 = criterion(feature_base, feature_hint)
+
+				loss = loss_1 + loss_2 + loss_3
+
+				loss.backward()
+
+				optimizer_fo.step()
+				optimizer_fh.step()
+				optimizer_d.step()
+
+				# print statistics
+				running_loss_hint += loss.item()
+				loss1 += loss_1.item()
+				loss2 += loss_2.item()
+				loss3 += loss_3.item()
+
+			del hard_case_generator
+
+		valid_loss = 0.0
+		valid_acc_list = [0,0,0,0,0,0]
+		net_f_ori.eval()
+		net_d.eval()
+
+		valid_iter = iter(validGenerator_base)
+
+		# for i, (inputs, labels) in enumerate(validGenerator_src):
+		# 	feature = net_s(input_data=inputs.cuda(non_blocking=True))
+		# for i, (inputs, labels, _) in enumerate(validGenerator_base):
+		for i in range(len(validGenerator_base)):
+			inputs, labels, _ = valid_iter.next()
+			feature = net_f_ori(input_data=inputs.cuda(non_blocking=True))
+			outputs,_ = net_d(feature)
+
+			labels = labels.numpy().flatten()
+			# labels = labels / 15
+			labels_2d = labels.reshape((labels.shape[0], 1))
+
+			loss = criterion(outputs, torch.Tensor(labels_2d).cuda())
+
+			# print statistics
+			valid_loss += loss.item()
+
+			prediction_error = np.abs(outputs.cpu().detach().numpy().flatten()-labels)
+			for j,thresh_hold in enumerate(thresh_holds):
+				acc_count = np.sum(prediction_error < thresh_hold)
+				valid_acc_list[j] += acc_count
+
+			# if i >= valid_batch_num-1:
+			# 	break
+
+		for j in range(len(valid_acc_list)):
+			valid_acc_list[j] = valid_acc_list[j] / valid_batch_num / batchSize
+		val_acc = np.mean(valid_acc_list)
+
+		end = time.time()
+		print('[%d/%d][cost time %f] all loss: %.3f, training acc: %.3f, loss1: %.3f, loss2: %.3f, loss3: %.3f, hard loss: %.3f, valid loss: %.3f, valid acc: %.3f, hard case number: %d' % \
+			(epoch+1, nEpoch, end-start, running_loss/train_batch_num, train_acc, loss1/batch_num_hard, loss2/batch_num_hard, loss3/batch_num_hard, running_loss_hint/batch_num_hard, valid_loss / valid_batch_num, val_acc, len(dict_hard_cover)))
+		# print('[%d/%d][cost time %f] training loss: %.3f, training acc: %.3f, valid loss: %.3f, valid acc: %.3f' % \
+		# 	(epoch+1, nEpoch, end-start, running_loss / train_batch_num, train_acc, valid_loss / valid_batch_num, val_acc))
+		f_log.write("{:d},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f},{:.4f}\n".format(epoch+1, running_loss / train_batch_num, train_acc, loss1/batch_num_hard, loss2/batch_num_hard, loss3/batch_num_hard, running_loss_hint/batch_num_hard, valid_loss / valid_batch_num, val_acc))
+		f_log.flush()
+		if epoch % 100 == 0:
+			torch.save(net_f_ori.state_dict(), outputPath + 'model_f_ori_' + str(epoch) + '.pth')
+			torch.save(net_f_hint.state_dict(), outputPath + 'model_f_hint_' + str(epoch) + '.pth')
+			torch.save(net_d.state_dict(), outputPath + 'model_d_' + str(epoch) + '.pth')
+
+	torch.save(net_f_ori.state_dict(), outputPath + 'model_f_ori-final.pth')
+	torch.save(net_f_hint.state_dict(), outputPath + 'model_f_hint-final.pth')
+	torch.save(net_d.state_dict(), outputPath + 'model_d-final.pth')
+	print('Finished Training')
+
 
 def load_pretrain_model(fClassifier, nClass, nChannel, modelPath):
 	net = create_nvidia_network_pytorch(0, fClassifier, nClass, nChannel)
