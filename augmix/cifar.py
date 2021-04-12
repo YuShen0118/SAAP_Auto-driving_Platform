@@ -37,6 +37,7 @@ from third_party.WideResNet_pytorch.wideresnet import WideResNet
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
+import cv2
 from torchvision import datasets
 from torchvision import transforms
 
@@ -46,7 +47,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '--dataset',
     type=str,
-    default='cifar10',
+    default='cifar100',
     choices=['cifar10', 'cifar100'],
     help='Choose between CIFAR-10, CIFAR-100.')
 parser.add_argument(
@@ -57,8 +58,12 @@ parser.add_argument(
     choices=['wrn', 'allconv', 'densenet', 'resnext'],
     help='Choose architecture.')
 # Optimization options
+parser.add_argument('--gpu_id', required=False, metavar="gpu_id", help='gpu id (0/1)')
+
 parser.add_argument(
-    '--epochs', '-e', type=int, default=100, help='Number of epochs to train.')
+    '--epochs', '-e', type=int, default=5, help='Number of epochs to train.')
+parser.add_argument(
+    '--rounds', '-rd', type=int, default=5, help='Number of rounds to train.')
 parser.add_argument(
     '--learning-rate',
     '-lr',
@@ -100,7 +105,7 @@ parser.add_argument(
 parser.add_argument(
     '--no-jsd',
     '-nj',
-    action='store_true',
+    action='store_false',
     help='Turn off JSD consistency loss.')
 parser.add_argument(
     '--all-ops',
@@ -180,6 +185,24 @@ def aug(image, preprocess):
   mixed = (1 - m) * preprocess(image) + m * mix
   return mixed
 
+def aug1(image, preprocess, aug_list, aug_no, aug_severity):
+  """Perform AugMix augmentations and compute mixture.
+
+  Args:
+    image: PIL.Image input image
+    preprocess: Preprocessing function which should return a torch tensor.
+
+  Returns:
+    mixed: Augmented and mixed image.
+  """
+  # aug_list = augmentations.augmentations
+  # if args.all_ops:
+  #   aug_list = augmentations.augmentations_all
+
+  op = aug_list[aug_no]
+  image_aug = preprocess(op(image, aug_severity))
+
+  return image_aug
 
 class AugMixDataset(torch.utils.data.Dataset):
   """Dataset wrapper to perform AugMix augmentation."""
@@ -200,6 +223,44 @@ class AugMixDataset(torch.utils.data.Dataset):
 
   def __len__(self):
     return len(self.dataset)
+
+
+class OurDataset(torch.utils.data.Dataset):
+  """Dataset wrapper to perform AugMix augmentation."""
+
+  def __init__(self, dataset, preprocess, aug_list, severity_list, include_clean_data=True):
+    self.base_dataset = dataset
+    self.base_len = len(dataset)
+    self.preprocess = preprocess
+    self.aug_list = aug_list
+    self.aug_number = len(aug_list)
+    self.severity_list = severity_list
+    self.include_clean_data = include_clean_data
+
+  def __getitem__(self, i):
+    x, y = self.base_dataset[i%self.base_len]
+
+    # x.show()
+
+    aug_no = int(i / self.base_len)
+
+    if self.include_clean_data:
+      if aug_no == 0:
+        return self.preprocess(x), y
+
+      aug_no = aug_no-1
+
+    aug_severity = self.severity_list[aug_no]
+
+    im_tuple = aug1(x, self.preprocess, self.aug_list, aug_no, aug_severity)
+
+    return im_tuple, y
+
+  def __len__(self):
+    if self.include_clean_data:
+      return self.base_len * (self.aug_number + 1)
+    else:
+      return self.base_len * self.aug_number
 
 
 def train(net, train_loader, optimizer, scheduler):
@@ -239,8 +300,8 @@ def train(net, train_loader, optimizer, scheduler):
     optimizer.step()
     scheduler.step()
     loss_ema = loss_ema * 0.9 + float(loss) * 0.1
-    if i % args.print_freq == 0:
-      print('Train Loss {:.3f}'.format(loss_ema))
+    # if i % args.print_freq == 0:
+    #   print('Train Loss {:.3f}'.format(loss_ema))
 
   return loss_ema
 
@@ -252,6 +313,12 @@ def test(net, test_loader):
   total_correct = 0
   with torch.no_grad():
     for images, targets in test_loader:
+      # img = np.array(images.detach())[0]
+      # img = np.transpose(img, (1, 2, 0))
+      # img = cv2.resize(img, (128,128))
+      # cv2.imshow("images", img)
+      # cv2.waitKey(0)
+      # break
       images, targets = images.cuda(), targets.cuda()
       logits = net(images)
       loss = F.cross_entropy(logits, targets)
@@ -284,6 +351,228 @@ def test_c(net, test_data, base_path):
         corruption, test_loss, 100 - 100. * test_acc))
 
   return np.mean(corruption_accs)
+
+
+def get_train_loader(train_transform, preprocess, aug_list, severity_list):
+    train_data = datasets.CIFAR100(
+        './data/cifar', train=False, transform=train_transform, download=False)
+    train_data = OurDataset(train_data, preprocess, aug_list, severity_list)
+    train_loader = torch.utils.data.DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=True)
+
+    return train_loader
+
+def evaluate_multi_factors(eval_model, train_transform, preprocess, aug_list):
+    severity_list = [1]*len(aug_list)
+
+    for aug_id in range(len(aug_list)):
+        print("aug_id ", aug_id)
+
+        aug_val = [aug_list[aug_id]]
+        max_range = 4
+
+        acc_min = 1.01
+        for new_level in range(1,max_range+1):
+            val_data = datasets.CIFAR100(
+                  './data/cifar', train=False, transform=train_transform, download=False)
+            val_data = OurDataset(val_data, preprocess, aug_val, [new_level], include_clean_data=False)
+            val_loader = torch.utils.data.DataLoader(
+                val_data,
+                batch_size=args.batch_size,
+                shuffle=True,
+                num_workers=args.num_workers,
+                pin_memory=True)
+
+            val_loss, val_acc = test(eval_model, val_loader)
+            if acc_min > val_acc:
+                acc_min = val_acc
+                severity_list[aug_id] = new_level
+            print("new_level ", new_level, "   val_acc ", val_acc)
+
+        print("acc_min ", acc_min)
+    print(severity_list)
+    return severity_list
+
+
+def main_robust():
+  torch.manual_seed(1)
+  np.random.seed(1)
+
+  # Load datasets
+  train_transform = transforms.Compose(
+      [transforms.RandomHorizontalFlip(),
+       transforms.RandomCrop(32, padding=4)])
+  preprocess = transforms.Compose(
+      [transforms.ToTensor(),
+       transforms.Normalize([0.5] * 3, [0.5] * 3)])
+  test_transform = preprocess
+
+  if args.dataset == 'cifar10':
+    train_data = datasets.CIFAR10(
+        './data/cifar', train=True, transform=train_transform, download=True)
+    test_data = datasets.CIFAR10(
+        './data/cifar', train=False, transform=test_transform, download=True)
+    base_c_path = './data/cifar/CIFAR-10-C/'
+    num_classes = 10
+  else:
+    # train_data = datasets.CIFAR100(
+    #     './data/cifar', train=True, transform=train_transform, download=True)
+    test_data = datasets.CIFAR100(
+        './data/cifar', train=False, transform=test_transform, download=True)
+    base_c_path = './data/cifar/CIFAR-100-C/'
+    num_classes = 100
+
+  aug_list = augmentations.augmentations
+  if args.all_ops:
+    aug_list = augmentations.augmentations_all
+
+  severity_list = [1]*len(aug_list)
+  train_loader = get_train_loader(train_transform, preprocess, aug_list, severity_list)
+  # train_data = AugMixDataset(train_data, preprocess, args.no_jsd)
+  # train_loader = torch.utils.data.DataLoader(
+  #     train_data,
+  #     batch_size=args.batch_size,
+  #     shuffle=True,
+  #     num_workers=args.num_workers,
+  #     pin_memory=True)
+
+  test_loader = torch.utils.data.DataLoader(
+      test_data,
+      batch_size=args.eval_batch_size,
+      shuffle=False,
+      num_workers=args.num_workers,
+      pin_memory=True)
+
+  # Create model
+  if args.model == 'densenet':
+    net = densenet(num_classes=num_classes)
+  elif args.model == 'wrn':
+    net = WideResNet(args.layers, num_classes, args.widen_factor, args.droprate)
+  elif args.model == 'allconv':
+    net = AllConvNet(num_classes)
+  elif args.model == 'resnext':
+    net = resnext29(num_classes=num_classes)
+
+  optimizer = torch.optim.SGD(
+      net.parameters(),
+      args.learning_rate,
+      momentum=args.momentum,
+      weight_decay=args.decay,
+      nesterov=True)
+
+  # Distribute model across all visible GPUs
+  net = torch.nn.DataParallel(net).cuda()
+  cudnn.benchmark = True
+
+  start_epoch = 0
+
+  if args.resume:
+    if os.path.isfile(args.resume):
+      checkpoint = torch.load(args.resume)
+      start_epoch = checkpoint['epoch'] + 1
+      best_acc = checkpoint['best_acc']
+      net.load_state_dict(checkpoint['state_dict'])
+      optimizer.load_state_dict(checkpoint['optimizer'])
+      print('Model restored from epoch:', start_epoch)
+
+  if args.evaluate:
+    # Evaluate clean accuracy first because test_c mutates underlying data
+    test_loss, test_acc = test(net, test_loader)
+    print('Clean\n\tTest Loss {:.3f} | Test Error {:.2f}'.format(
+        test_loss, 100 - 100. * test_acc))
+
+    test_c_acc = test_c(net, test_data, base_c_path)
+    print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
+    return
+
+  scheduler = torch.optim.lr_scheduler.LambdaLR(
+      optimizer,
+      lr_lambda=lambda step: get_lr(  # pylint: disable=g-long-lambda
+          step,
+          args.epochs * len(train_loader),
+          1,  # lr_lambda computes multiplicative factor
+          1e-6 / args.learning_rate))
+
+  if not os.path.exists(args.save):
+    os.makedirs(args.save)
+  if not os.path.isdir(args.save):
+    raise Exception('%s is not a dir' % args.save)
+
+  log_path = os.path.join(args.save,
+                          args.dataset + '_' + args.model + '_training_log.csv')
+  with open(log_path, 'w') as f:
+    f.write('epoch,time(s),train_loss,test_loss,test_error(%)\n')
+
+  best_acc = 0
+  best_c_acc = 0
+  print('Beginning training from epoch:', start_epoch + 1)
+
+  # for epoch in range(start_epoch, args.epochs):
+  for round_id in range(args.rounds):
+    begin_time = time.time()
+    # severity_list = evaluate_multi_factors(net, train_transform, preprocess, aug_list)
+
+    train_loader = get_train_loader(train_transform, preprocess, aug_list, severity_list)
+
+    for epoch in range(args.epochs):
+      train_loss_ema = train(net, train_loader, optimizer, scheduler)
+
+    test_loss, test_acc = test(net, test_loader)
+
+    test_c_acc = test_c(net, test_data, base_c_path)
+    print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
+
+    is_best = test_acc > best_acc
+    best_acc = max(test_acc, best_acc)
+
+    is_c_best = test_c_acc > best_c_acc
+    best_c_acc = max(test_c_acc, best_c_acc)
+
+    checkpoint = {
+        'epoch': round_id,
+        'dataset': args.dataset,
+        'model': args.model,
+        'state_dict': net.state_dict(),
+        'best_acc': best_acc,
+        'best_c_acc': best_c_acc,
+        'optimizer': optimizer.state_dict(),
+    }
+
+
+    with open(log_path, 'a') as f:
+      f.write('%03d,%05d,%0.6f,%0.5f,%0.2f\n' % (
+          (round_id + 1),
+          time.time() - begin_time,
+          train_loss_ema,
+          test_loss,
+          100 - 100. * test_acc,
+      ))
+
+    print(
+        'Epoch {0:3d} | Time {1:5d} | Train Loss {2:.4f} | Test Loss {3:.3f} |'
+        ' Test Error {4:.2f}'
+        .format((round_id + 1), int(time.time() - begin_time), train_loss_ema,
+                test_loss, 100 - 100. * test_acc))
+
+    severity_list = evaluate_multi_factors(net, train_transform, preprocess, aug_list)
+
+    save_path = os.path.join(args.save, 'checkpoint.pth.tar')
+    torch.save(checkpoint, save_path)
+    if is_best:
+      shutil.copyfile(save_path, os.path.join(args.save, 'model_best.pth.tar'))
+
+    if is_c_best:
+      shutil.copyfile(save_path, os.path.join(args.save, 'model_c_best.pth.tar'))
+
+
+
+  with open(log_path, 'a') as f:
+    f.write('%03d,%05d,%0.6f,%0.5f,%0.2f\n' %
+            (args.epochs + 1, 0, 0, 0, 100 - 100 * test_c_acc))
 
 
 def main():
@@ -437,4 +726,9 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+  if (args.gpu_id != None):
+    os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_id)
+    print("CUDA_VISIBLE_DEVICES " + os.environ["CUDA_VISIBLE_DEVICES"])
+
+  # main()
+  main_robust()

@@ -141,20 +141,21 @@ def sharpness(pil_img, level):
     return ImageEnhance.Sharpness(pil_img).enhance(level)
 
 
-# augmentations = [
-#     autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
-#     translate_x, translate_y
-# ]
+augmentations = [
+    autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
+    translate_x, translate_y
+]
 
-# augmentations_all = [
-#     autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
-#     translate_x, translate_y, color, contrast, brightness, sharpness
-# ]
+augmentations_all = [
+    autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
+    translate_x, translate_y, color, contrast, brightness, sharpness
+]
 
 RATIO_LIST = [0.02, 0.2, 0.5, 0.65, 1.0]
 RGB_MAX = 255
 HSV_H_MAX = 180
 HSV_SV_MAX = 255
+
 
 def change_channel_value(image, channel, level, maxval):
   if level < 0:
@@ -269,14 +270,14 @@ def Distortion(image, level):
   return image
 
 
-augmentations = [
-    R_channel, G_channel, B_channel, 
-    H_channel, S_channel, V_channel,
-    Gaussian_blur, Gaussian_noise, Distortion
-]
+# augmentations = [
+#     R_channel, G_channel, B_channel, 
+#     H_channel, S_channel, V_channel,
+#     Gaussian_blur, Gaussian_noise, Distortion
+# ]
 
-augmentations_all = [
-    R_channel, G_channel, B_channel, 
-    H_channel, S_channel, V_channel,
-    Gaussian_blur, Gaussian_noise, Distortion
-]
+# augmentations_all = [
+#     R_channel, G_channel, B_channel, 
+#     H_channel, S_channel, V_channel,
+#     Gaussian_blur, Gaussian_noise, Distortion
+# ]
