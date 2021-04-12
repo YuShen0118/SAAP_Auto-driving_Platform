@@ -13,10 +13,10 @@ sys.path.insert(0, './library/')
 
 from learning import test_dnn_multi, test_dnn_multi_pytorch, test_dnn_visualize, visualize_dnn_on_image
 
-def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1, pytorch_flag=False, net=""):
-	return test_network_multi(modelPath, [imagePath], [labelPath], outputPath, BN_flag, pathID, classification, visualize, radius, ratio, pytorch_flag=pytorch_flag, net=net)
+def test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1, pytorch_flag=False, net="", withFFT=False):
+	return test_network_multi(modelPath, [imagePath], [labelPath], outputPath, BN_flag, pathID, classification, visualize, radius, ratio, pytorch_flag=pytorch_flag, net=net, withFFT=withFFT)
 
-def test_network_multi(modelPath, imagePath_list, labelPath_list, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1, pack_flag=False, pytorch_flag=False, net=""):
+def test_network_multi(modelPath, imagePath_list, labelPath_list, outputPath, BN_flag=0, pathID=0, classification=False, visualize=False, radius=5, ratio=1, pack_flag=False, pytorch_flag=False, net="", withFFT=False):
 	if modelPath:
 		print('Model used: ' + modelPath)
 	else:
@@ -50,7 +50,7 @@ def test_network_multi(modelPath, imagePath_list, labelPath_list, outputPath, BN
 	if visualize:
 		test_dnn_visualize(modelPath, imagePath, labelPath, outputPath, netType, flags, specs, BN_flag, pathID, radius)
 	elif pytorch_flag:
-		MA = test_dnn_multi_pytorch(modelPath, imagePath_list, labelPath_list, outputPath, netType, flags, specs, BN_flag, pathID, ratio, pack_flag, pytorch_flag=pytorch_flag, net=net)
+		MA = test_dnn_multi_pytorch(modelPath, imagePath_list, labelPath_list, outputPath, netType, flags, specs, BN_flag, pathID, ratio, pack_flag, pytorch_flag=pytorch_flag, net=net, withFFT=withFFT)
 	else:
 		MA = test_dnn_multi(modelPath, imagePath_list, labelPath_list, outputPath, netType, flags, specs, BN_flag, pathID, ratio, pack_flag, pytorch_flag=pytorch_flag, net=net)
 

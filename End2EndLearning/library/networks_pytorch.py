@@ -5,9 +5,11 @@ import torch.optim as optim
 import torchvision.models as models
 
 
-def create_nvidia_network_pytorch(BN_flag, fClassifier=False, nClass=1, nChannel=3, Maxup_flag=False):
+def create_nvidia_network_pytorch(BN_flag, fClassifier=False, nClass=1, nChannel=3, Maxup_flag=False, nChannel_hint=6, withFFT=False):
 	#default
 	if BN_flag == 0:
+		if withFFT:
+			return net_nvidia_pytorch_FFT(nChannel)
 		return net_nvidia_pytorch(nChannel)
 	elif BN_flag == 3:
 		return net_nvidia_featshift_pytorch()
@@ -20,7 +22,11 @@ def create_nvidia_network_pytorch(BN_flag, fClassifier=False, nClass=1, nChannel
 	elif BN_flag == 8:
 		return net_resnet_pytorch(nChannel)
 	elif BN_flag == 9:
-		return net_hintnet_pytorch(nChannelBase=3, nChannelHint=nChannel)
+		# return net_hintnet_pytorch(nChannelBase=3, nChannelHint=nChannel)
+		net_f_ori = net_nvidia_pytorch_CNN(nChannel)
+		net_f_hint = net_nvidia_pytorch_CNN(nChannel_hint)
+		net_d = net_nvidia_pytorch_regressor()
+		return net_f_ori, net_f_hint, net_d
 		
 	return net_nvidia_pytorch()
 
@@ -58,6 +64,82 @@ class net_nvidia_pytorch(nn.Module):
 		last_layer_feature = F.elu(self.fc3(x))
 		output = self.fc4(last_layer_feature)
 		return output, last_layer_feature
+
+class net_nvidia_pytorch_FFT(nn.Module):
+	def __init__(self, nChannel=3):
+		super(net_nvidia_pytorch_FFT, self).__init__()
+		# self.conv0 = nn.Conv2d(nChannel, nChannel, 1)
+		self.conv11 = nn.Conv2d(nChannel, 24, 5, 2)
+		self.conv12 = nn.Conv2d(24, 36, 5, 2)
+		self.conv13 = nn.Conv2d(36, 48, 5, 2)
+		self.conv14 = nn.Conv2d(48, 64, 3)
+		self.conv15 = nn.Conv2d(64, 64, 3)
+		self.conv21 = nn.Conv2d(nChannel*2, 24, 5, 2)
+		self.conv22 = nn.Conv2d(24, 36, 5, 2)
+		self.conv23 = nn.Conv2d(36, 48, 5, 2)
+		self.conv24 = nn.Conv2d(48, 64, 3)
+		self.conv25 = nn.Conv2d(64, 64, 3)
+		self.fc1 = nn.Linear(64 * 1 * 18 * 2, 100)
+		self.fc2 = nn.Linear(100, 50)
+		self.fc3 = nn.Linear(50, 10)
+		self.fc4 = nn.Linear(10, 1)
+		self.nChannel = nChannel
+
+	def forward(self, x):
+		# x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
+		# x = F.elu(self.conv0(x))
+		x_img, x_fft = x[:,0:self.nChannel,:,:], x[:,self.nChannel:,:,:]
+
+		x_img = F.elu(self.conv11(x_img))
+		x_img = F.elu(self.conv12(x_img))
+		x_img = F.elu(self.conv13(x_img))
+		x_img = F.elu(self.conv14(x_img))
+		x_img = F.elu(self.conv15(x_img))
+
+		x_fft = F.elu(self.conv21(x_fft))
+		x_fft = F.elu(self.conv22(x_fft))
+		x_fft = F.elu(self.conv23(x_fft))
+		x_fft = F.elu(self.conv24(x_fft))
+		x_fft = F.elu(self.conv25(x_fft))
+
+		x = torch.cat((x_img, x_fft), 1)
+		#print(x.shape)
+		x = x.reshape(-1, 64 * 1 * 18 * 2)
+		x = F.elu(self.fc1(x))
+		x = F.elu(self.fc2(x))
+		last_layer_feature = F.elu(self.fc3(x))
+		output = self.fc4(last_layer_feature)
+		return output, last_layer_feature
+
+class net_nvidia_pytorch_classification(nn.Module):
+	def __init__(self, nChannel=3, nClass=5):
+		super(net_nvidia_pytorch_classification, self).__init__()
+		# self.conv0 = nn.Conv2d(nChannel, nChannel, 1)
+		self.conv1 = nn.Conv2d(nChannel, 24, 5, 2)
+		self.conv2 = nn.Conv2d(24, 36, 5, 2)
+		self.conv3 = nn.Conv2d(36, 48, 5, 2)
+		self.conv4 = nn.Conv2d(48, 64, 3)
+		self.conv5 = nn.Conv2d(64, 64, 3)
+		self.fc1 = nn.Linear(64 * 1 * 18, 100)
+		self.fc2 = nn.Linear(100, 50)
+		self.fc3 = nn.Linear(50, 10)
+		self.fc4 = nn.Linear(10, nClass)
+
+	def forward(self, x):
+		# x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
+		# x = F.elu(self.conv0(x))
+		x = F.elu(self.conv1(x))
+		x = F.elu(self.conv2(x))
+		x = F.elu(self.conv3(x))
+		x = F.elu(self.conv4(x))
+		x = F.elu(self.conv5(x))
+		#print(x.shape)
+		x = x.reshape(-1, 64 * 1 * 18)
+		x = F.elu(self.fc1(x))
+		x = F.elu(self.fc2(x))
+		last_layer_feature = F.elu(self.fc3(x))
+		output = self.fc4(last_layer_feature)
+		return output
 
 class net_commaai_pytorch(nn.Module):
 	def __init__(self):
@@ -394,3 +476,58 @@ class net_resnet_pytorch(nn.Module):
 		last_layer_feature = self.resnet152(x)
 		output = self.header(last_layer_feature)
 		return output, last_layer_feature
+
+
+
+# class net_hintnet_pytorch(nn.Module):
+# 	def __init__(self, nChannelBase=3, nChannelHint=6):
+# 		super(net_nvidia_pytorch, self).__init__()
+# 		# self.conv0 = nn.Conv2d(nChannel, nChannel, 1)
+# 		self.conv11 = nn.Conv2d(nChannelBase, 24, 5, 2)
+# 		self.conv12 = nn.Conv2d(24, 36, 5, 2)
+# 		self.conv13 = nn.Conv2d(36, 48, 5, 2)
+# 		self.conv14 = nn.Conv2d(48, 64, 3)
+# 		self.conv15 = nn.Conv2d(64, 64, 3)
+
+# 		self.conv21 = nn.Conv2d(nChannelHint, 24, 5, 2)
+# 		self.conv22 = nn.Conv2d(24, 36, 5, 2)
+# 		self.conv23 = nn.Conv2d(36, 48, 5, 2)
+# 		self.conv24 = nn.Conv2d(48, 64, 3)
+# 		self.conv25 = nn.Conv2d(64, 64, 3)
+
+# 		self.fc1 = nn.Linear(64 * 1 * 18, 100)
+# 		self.fc2 = nn.Linear(100, 50)
+# 		self.fc3 = nn.Linear(50, 10)
+# 		self.fc4 = nn.Linear(10, 1)
+
+# 	def forward(self, xBase, xHint, hardFlag=False):
+# 		# x = LambdaLayer(lambda x: x/127.5 - 1.0)(x)
+# 		# x = F.elu(self.conv0(x))
+# 		x1 = F.elu(self.conv11(xBase))
+# 		x1 = F.elu(self.conv12(x1))
+# 		x1 = F.elu(self.conv13(x1))
+# 		x1 = F.elu(self.conv14(x1))
+# 		feature1 = F.elu(self.conv15(x1))
+
+# 		y1 = feature1.reshape(-1, 64 * 1 * 18)
+# 		y1 = F.elu(self.fc1(y1))
+# 		y1 = F.elu(self.fc2(y1))
+# 		y1 = F.elu(self.fc3(y1))
+# 		output1 = self.fc4(y1)
+
+# 		if hardFlag:
+# 			x2 = F.elu(self.conv21(xHint))
+# 			x2 = F.elu(self.conv22(x2))
+# 			x2 = F.elu(self.conv23(x2))
+# 			x2 = F.elu(self.conv24(x2))
+# 			feature2 = F.elu(self.conv25(x2))
+
+# 			y2 = feature2.reshape(-1, 64 * 1 * 18)
+# 			y2 = F.elu(self.fc1(y2))
+# 			y2 = F.elu(self.fc2(y2))
+# 			y2 = F.elu(self.fc3(y2))
+# 			output2 = self.fc4(y2)
+
+# 			return output1, output2, feature1, feature2
+
+# 		return output1

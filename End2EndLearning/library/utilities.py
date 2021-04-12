@@ -190,7 +190,7 @@ def load_train_data(xFolder, trainLogPath, nRep, fThreeCameras = False, ratio = 
 	#yList = np.array(yList)*10 + 10
 	return (xList, yList)
 
-def load_train_data_multi(xFolder_list, trainLogPath_list, nRep, fThreeCameras = False, ratio = 1.0, specialFilter = 0):
+def load_train_data_multi(xFolder_list, trainLogPath_list, nRep=1, fThreeCameras = False, ratio = 1.0, specialFilter = 0):
 	'''
 	Load the training data
 	'''
