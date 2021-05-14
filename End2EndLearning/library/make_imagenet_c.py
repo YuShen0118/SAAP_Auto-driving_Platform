@@ -23,8 +23,11 @@ IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
 # added by Laura 
 PLATFORM_ROOT = "/media/yushen/workspace2/projects/SAAP_Auto-driving_Platform/"
+# PLATFORM_ROOT = "C:/projects/SAAP_Auto-driving_Platform/Data/udacityA_nvidiaB"
 IMAGEW = 455
 IMAGEH = 256
+IMAGEW = 200
+IMAGEH = 66
 RESIZE_W = 200
 RESIZE_H = 66
 
@@ -114,6 +117,7 @@ class DistortImageFolder(data.Dataset):
         self.root = root
         self.method = method
         self.severity = severity
+        self.basefolder = os.path.basename(root)
         self.imgs = imgs
         self.classes = classes
         self.class_to_idx = class_to_idx
@@ -134,8 +138,10 @@ class DistortImageFolder(data.Dataset):
 
         # save_path = '/share/data/vision-greg/DistortedImageNet/JPEG/' + self.method.__name__ + \
         #             '/' + str(self.severity) + '/' + self.idx_to_class[target]
-        save_path = os.path.join(PLATFORM_ROOT,'Data/udacityA_nvidiaB',
-                        '_'.join(['valB','IMGC',self.method.__name__, str(self.severity)]))
+        # save_path = os.path.join(PLATFORM_ROOT,'Data/udacityA_nvidiaB',
+        #                 '_'.join([self.basefolder,'IMGC',self.method.__name__, str(self.severity)]))
+        save_path = '_'.join([self.root,'IMGC',self.method.__name__, str(self.severity)])
+        # print("Image generation save path is: ", save_path)
 
         if os.path.exists(save_path) == False:
             os.makedirs(save_path, exist_ok=True)
@@ -610,7 +616,7 @@ def save_distorted(method=gaussian_noise):
     for severity in range(1, 6):
         print(method.__name__, severity)
         distorted_dataset = DistortImageFolder(
-            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valHm"),
+            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valAudi6"),
             method=method, severity=severity,
             transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
         distorted_dataset_loader = torch.utils.data.DataLoader(
@@ -619,16 +625,16 @@ def save_distorted(method=gaussian_noise):
         for _ in distorted_dataset_loader: continue
     
     # delete later
-    for severity in range(1, 6):
-        print(method.__name__, severity)
-        distorted_dataset = DistortImageFolder(
-            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valAds"),
-            method=method, severity=severity,
-            transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
-        distorted_dataset_loader = torch.utils.data.DataLoader(
-            distorted_dataset, batch_size=100, shuffle=False, num_workers=4)
+    # for severity in range(1, 6):
+    #     print(method.__name__, severity)
+    #     distorted_dataset = DistortImageFolder(
+    #         root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valAds"),
+    #         method=method, severity=severity,
+    #         transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
+    #     distorted_dataset_loader = torch.utils.data.DataLoader(
+    #         distorted_dataset, batch_size=100, shuffle=False, num_workers=4)
 
-        for _ in distorted_dataset_loader: continue
+    #     for _ in distorted_dataset_loader: continue
 
 
 # /////////////// End Further Setup ///////////////
