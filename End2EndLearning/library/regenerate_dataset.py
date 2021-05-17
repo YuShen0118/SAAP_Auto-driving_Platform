@@ -227,7 +227,7 @@ def generate_dataset_diff_quality(dataset_path, folder):
     image_paths = glob.glob(os.path.join(dataset_path, folder, "*.png")) + glob.glob(os.path.join(dataset_path, folder, "*.jpg"))
 
     for image_path in image_paths:
-        print(image_path)
+        # print(image_path)
         src_image = cv2.imread(image_path)
 
         
@@ -1181,6 +1181,7 @@ def generate_all_color_levels(dataFolder, dataFolderVal, csvFile, csvFileVal):
     print('finished generating all color datasets')
 
 def generate_all(code):
+    print("Beginning data generation for all training perturbations.. ")
     dataFolder = os.path.join(dataset_path, "train" + code)
     csvFile = os.path.join(dataset_path, "labels" + code + "_train.csv")
     dataFolderVal = os.path.join(dataset_path, "val" + code)
@@ -1196,12 +1197,14 @@ def generate_all(code):
     generate_dataset_distort(dataset_path, "val" + code)
     print("finished generating distortion for val" + code)
 
-    generate_combined(dataFolderVal, "1", parameter_file=os.path.join(dataset_path, "valB_combined_3_0_LVL5", "parameters.txt"))
-    generate_combined(dataFolderVal, "2", parameter_file=os.path.join(dataset_path, "valB_combined_4_0_LVL5", "parameters.txt"))
-    generate_combined(dataFolderVal, "3", parameter_file=os.path.join(dataset_path, "valB_combined_7_0_LVL5", "parameters.txt"))
-    generate_combined(dataFolderVal, "4", parameter_file=os.path.join(dataset_path, "valB_combined_8_0_LVL5", "parameters.txt"))
-    generate_combined(dataFolderVal, "5", parameter_file=os.path.join(dataset_path, "valB_combined_9_0_LVL5", "parameters.txt"))
-    generate_combined(dataFolderVal, "6", parameter_file=os.path.join(dataset_path, "valB_combined_10_0_LVL5", "parameters.txt"))
+    print("Starting generation for combined perturbation datasets")
+    generate_combined(dataFolderVal, "1", parameter_file=os.path.join("combined_parameters", "parameters3.txt"))
+    generate_combined(dataFolderVal, "2", parameter_file=os.path.join("combined_parameters", "parameters4.txt"))
+    generate_combined(dataFolderVal, "3", parameter_file=os.path.join("combined_parameters", "parameters7.txt"))
+    generate_combined(dataFolderVal, "4", parameter_file=os.path.join("combined_parameters", "parameters8.txt"))
+    generate_combined(dataFolderVal, "5", parameter_file=os.path.join("combined_parameters", "parameters9.txt"))
+    generate_combined(dataFolderVal, "6", parameter_file=os.path.join("combined_parameters", "parameters10.txt"))
+    print("Finished all data generation for ", code)
 
 if __name__ == '__main__':
     #print(__doc__)
@@ -1240,5 +1243,5 @@ if __name__ == '__main__':
     transfer_to_3_maps(dataset_path, folder, [folder+"_lap", folder+"_canny", folder+"_lap_blur", folder+"_canny_blur", folder+"_comb"])
     '''
     
-    generate_all("Hc")
+    generate_all("Waymo")
     # generate_all("Ads")

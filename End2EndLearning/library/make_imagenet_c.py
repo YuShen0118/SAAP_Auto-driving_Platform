@@ -616,7 +616,7 @@ def save_distorted(method=gaussian_noise):
     for severity in range(1, 6):
         print(method.__name__, severity)
         distorted_dataset = DistortImageFolder(
-            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valAudi6"),
+            root=os.path.join(PLATFORM_ROOT + "Data/udacityA_nvidiaB/valHonda100k"),
             method=method, severity=severity,
             transform=trn.Compose([trn.Resize((IMAGEH, IMAGEW))]))
         distorted_dataset_loader = torch.utils.data.DataLoader(
