@@ -7,6 +7,7 @@ import sys # Enables the passing of arguments
 import glob
 import os
 import csv
+import time
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -825,9 +826,15 @@ def generate_combined(originalDataset, id, parameter_file='', csv_file='', dist_
         if csv_file != '':
             image_name_list = get_image_name_list_from_csv(csv_file, originalDataset)
         
+        # total_time1 = 0
+        # total_time2 = 0
+        cnt=0
         for i in image_name_list:
+            cnt+=1
             # image_id = int(os.path.basename(i).replace('.jpg', ''))
-            img = cv2.imread(i).copy()
+            # start = time.time()
+            img = cv2.imread(i)
+            # end1 = time.time()
             
             # adding color channel distortion on RGB, HSV, 6 channels total
 
@@ -863,8 +870,14 @@ def generate_combined(originalDataset, id, parameter_file='', csv_file='', dist_
 
             img = cv2.undistort(img, K, np.array([dist2, dist2, 0, 0]))
 
-            saveAsName = os.path.join(saveDir, os.path.basename(i))
+            # end2 = time.time()
+            # time1 = end1 - start
+            # time2 = end2 - end1
+            # total_time1 = total_time1 + time1
+            # total_time2 = total_time2 + time2
+            # print("aver read time ", str(total_time1 / cnt), "   aver process time ", str(total_time2 / cnt), "   diff ", str((total_time2-total_time1)/cnt), "   ratio ", str(total_time1/total_time2))
         
+            saveAsName = os.path.join(saveDir, os.path.basename(i))
             cv2.imwrite(saveAsName, img)
 
             # if image_id % 6000 == 0:
@@ -1221,10 +1234,16 @@ def resizeDataset(src_folder, dst_folder, size):
 
     # print(image_paths)
     for image_path in image_paths:
+        out_path = image_path.replace(src_folder, dst_folder)
+        out_path = out_path.replace(".png", ".jpg")
+
+        # if os.path.exists(out_path):
+        #     continue
+            
         image = cv2.imread(image_path)
         image = cv2.resize(image, size)
-        out_path = image_path.replace(src_folder, dst_folder)
         cv2.imwrite(out_path, image)
+        
 
 
 def generate_folder_with_csv():
@@ -1281,10 +1300,109 @@ if __name__ == '__main__':
     # generate_all("Hc")
     # generate_all("Ads")
 
-    src_folder = os.path.join(dataset_path, "valB")
-    dst_folder = os.path.join(dataset_path, "valBs")
-    resizeDataset(src_folder, dst_folder, (200,66))
+    # src_folder = os.path.join(dataset_path, "trainWaymo")
+    # dst_folder = os.path.join(dataset_path, "trainWaymo_jpg")
+    # resizeDataset(src_folder, dst_folder, (200,66))
 
-    src_folder = os.path.join(dataset_path, "trainB")
-    dst_folder = os.path.join(dataset_path, "trainBs")
-    resizeDataset(src_folder, dst_folder, (200,66))
+    # src_folder = os.path.join(dataset_path, "trainB")
+    # dst_folder = os.path.join(dataset_path, "trainBs")
+    # resizeDataset(src_folder, dst_folder, (200,66))
+
+    # src_folder = "C:/Users/weizili/Kitti/object/training_ori/depth_map_new"
+    # dst_folder = "C:/Users/weizili/Kitti/object/training_ori/depth_map_new_resized_squre"
+    # resizeDataset(src_folder, dst_folder, (320,320))
+
+    # src_folder = "C:/Users/weizili/Kitti/object/training_ori/depth_map_new"
+    # dst_folder = "C:/Users/weizili/Kitti/object/training_ori/depth_map_new_resized_squre"
+    # resizeDataset(src_folder, dst_folder, (320,320))
+
+    # src_folder = "C:/Users/weizili/Kitti/object/test_ori/depth_map_new"
+    # dst_folder = "C:/Users/weizili/Kitti/object/test_ori/depth_map_new_resized_squre"
+    # resizeDataset(src_folder, dst_folder, (320,320))
+
+    # src_folder = "C:/Users/weizili/Kitti/object/test_ori/image_2"
+    # dst_folder = "C:/Users/weizili/Kitti/object/test_ori/image_2_resized_squre"
+    # resizeDataset(src_folder, dst_folder, (320,320))
+
+
+    # src_folder = "C:/projects/SC-SfMLearner-Release/results/vis_depth"
+    # dst_folder = "C:/projects/SC-SfMLearner-Release/results/trainHonda100kdepthinfer"
+    # resizeDataset(src_folder, dst_folder, (200,66))
+
+    # src_folder = "C:/projects/semantic-segmentation/results/trainHonda100k_large/best_images"
+    # dst_folder = "C:/projects/semantic-segmentation/results/trainHonda100k_large/trainHonda100kseginfer"
+    # resizeDataset(src_folder, dst_folder, (200,66))
+
+
+
+    # dataFolderVal = os.path.join(dataset_path, "valB")
+    # generate_combined(dataFolderVal, "1")
+
+    # generate_combined(dataFolderVal, "2", parameter_file=os.path.join(dataset_path, "valB_combined_5levels_blurlast_2", "parameters.txt"))
+    # generate_combined(dataFolderVal, "3", parameter_file=os.path.join(dataset_path, "valB_combined_5levels_blurlast_3", "parameters.txt"))
+    # generate_combined(dataFolderVal, "4", parameter_file=os.path.join(dataset_path, "valB_combined_5levels_blurlast_4", "parameters.txt"))
+    # generate_combined(dataFolderVal, "5", parameter_file=os.path.join(dataset_path, "valB_combined_5levels_blurlast_5", "parameters.txt"))
+
+    VAL_LIST = [
+                "valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5", \
+                "valB_noise_1", "valB_noise_2", "valB_noise_3", "valB_noise_4", "valB_noise_5", \
+                "valB_distort_1", "valB_distort_2", "valB_distort_3", "valB_distort_4", "valB_distort_5", \
+                "valB_R_darker_1", "valB_R_darker_2", "valB_R_darker_3", "valB_R_darker_4", "valB_R_darker_5", \
+                "valB_R_lighter_1", "valB_R_lighter_2", "valB_R_lighter_3", "valB_R_lighter_4", "valB_R_lighter_5", \
+                "valB_G_darker_1", "valB_G_darker_2", "valB_G_darker_3", "valB_G_darker_4", "valB_G_darker_5", \
+                "valB_G_lighter_1", "valB_G_lighter_2", "valB_G_lighter_3", "valB_G_lighter_4", "valB_G_lighter_5", \
+                "valB_B_darker_1", "valB_B_darker_2", "valB_B_darker_3", "valB_B_darker_4", "valB_B_darker_5", \
+                "valB_B_lighter_1", "valB_B_lighter_2", "valB_B_lighter_3", "valB_B_lighter_4", "valB_B_lighter_5", \
+                "valB_H_darker_1", "valB_H_darker_2", "valB_H_darker_3", "valB_H_darker_4", "valB_H_darker_5", \
+                "valB_H_lighter_1", "valB_H_lighter_2", "valB_H_lighter_3", "valB_H_lighter_4", "valB_H_lighter_5", \
+                "valB_S_darker_1", "valB_S_darker_2", "valB_S_darker_3", "valB_S_darker_4", "valB_S_darker_5", \
+                "valB_S_lighter_1", "valB_S_lighter_2", "valB_S_lighter_3", "valB_S_lighter_4", "valB_S_lighter_5", \
+                "valB_V_darker_1", "valB_V_darker_2", "valB_V_darker_3", "valB_V_darker_4", "valB_V_darker_5", \
+                "valB_V_lighter_1", "valB_V_lighter_2", "valB_V_lighter_3", "valB_V_lighter_4", "valB_V_lighter_5", \
+                # "valB_combined_1_3", "valB_combined_1_4", "valB_combined_1_7", \
+                # "valB_combined_1_8", "valB_combined_1_9", "valB_combined_1_10", \
+                "valB_combined_1_0", "valB_combined_2_0", "valB_combined_3_0", \
+                "valB_combined_4_0", "valB_combined_5_0", "valB_combined_6_0", \
+                "valB_IMGC_motion_blur_1", "valB_IMGC_motion_blur_2", "valB_IMGC_motion_blur_3", \
+                "valB_IMGC_motion_blur_4", "valB_IMGC_motion_blur_5", \
+                "valB_IMGC_zoom_blur_1", "valB_IMGC_zoom_blur_2", "valB_IMGC_zoom_blur_3", \
+                "valB_IMGC_zoom_blur_4", "valB_IMGC_zoom_blur_5", \
+                "valB_IMGC_pixelate_1", "valB_IMGC_pixelate_2", "valB_IMGC_pixelate_3", \
+                "valB_IMGC_pixelate_4", "valB_IMGC_pixelate_5", \
+                "valB_IMGC_jpeg_compression_1", "valB_IMGC_jpeg_compression_2", "valB_IMGC_jpeg_compression_3", \
+                "valB_IMGC_jpeg_compression_4", "valB_IMGC_jpeg_compression_5", \
+                "valB_IMGC_snow_1", "valB_IMGC_snow_2", "valB_IMGC_snow_3", \
+                "valB_IMGC_snow_4", "valB_IMGC_snow_5", \
+                "valB_IMGC_frost_1", "valB_IMGC_frost_2", "valB_IMGC_frost_3", \
+                "valB_IMGC_frost_4", "valB_IMGC_frost_5", \
+                "valB_IMGC_fog_1", "valB_IMGC_fog_2", "valB_IMGC_fog_3", \
+                "valB_IMGC_fog_4", "valB_IMGC_fog_5"
+                ]
+
+    TRAIN_LIST = [
+                "trainB_blur_1", "trainB_blur_2", "trainB_blur_3", "trainB_blur_4", "trainB_blur_5", \
+                "trainB_noise_1", "trainB_noise_2", "trainB_noise_3", "trainB_noise_4", "trainB_noise_5", \
+                "trainB_distort_1", "trainB_distort_2", "trainB_distort_3", "trainB_distort_4", "trainB_distort_5", \
+                "trainB_R_darker_1", "trainB_R_darker_2", "trainB_R_darker_3", "trainB_R_darker_4", "trainB_R_darker_5", \
+                "trainB_R_lighter_1", "trainB_R_lighter_2", "trainB_R_lighter_3", "trainB_R_lighter_4", "trainB_R_lighter_5", \
+                "trainB_G_darker_1", "trainB_G_darker_2", "trainB_G_darker_3", "trainB_G_darker_4", "trainB_G_darker_5", \
+                "trainB_G_lighter_1", "trainB_G_lighter_2", "trainB_G_lighter_3", "trainB_G_lighter_4", "trainB_G_lighter_5", \
+                "trainB_B_darker_1", "trainB_B_darker_2", "trainB_B_darker_3", "trainB_B_darker_4", "trainB_B_darker_5", \
+                "trainB_B_lighter_1", "trainB_B_lighter_2", "trainB_B_lighter_3", "trainB_B_lighter_4", "trainB_B_lighter_5", \
+                "trainB_H_darker_1", "trainB_H_darker_2", "trainB_H_darker_3", "trainB_H_darker_4", "trainB_H_darker_5", \
+                "trainB_H_lighter_1", "trainB_H_lighter_2", "trainB_H_lighter_3", "trainB_H_lighter_4", "trainB_H_lighter_5", \
+                "trainB_S_darker_1", "trainB_S_darker_2", "trainB_S_darker_3", "trainB_S_darker_4", "trainB_S_darker_5", \
+                "trainB_S_lighter_1", "trainB_S_lighter_2", "trainB_S_lighter_3", "trainB_S_lighter_4", "trainB_S_lighter_5", \
+                "trainB_V_darker_1", "trainB_V_darker_2", "trainB_V_darker_3", "trainB_V_darker_4", "trainB_V_darker_5", \
+                "trainB_V_lighter_1", "trainB_V_lighter_2", "trainB_V_lighter_3", "trainB_V_lighter_4", "trainB_V_lighter_5", \
+                ]
+
+    for folder in TRAIN_LIST:
+        src_folder = os.path.join(dataset_path, folder)
+        dst_folder = os.path.join(dataset_path, folder)
+        resizeDataset(src_folder, dst_folder, (200,66))
+
+    for folder in VAL_LIST:
+        src_folder = os.path.join(dataset_path, folder)
+        dst_folder = os.path.join(dataset_path, folder)
+        resizeDataset(src_folder, dst_folder, (200,66))

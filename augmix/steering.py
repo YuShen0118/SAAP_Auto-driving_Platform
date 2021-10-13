@@ -607,9 +607,9 @@ def main():
   xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
   yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 
-  # BN_flag = 0 # nvidia net
+  BN_flag = 0 # nvidia net
   # BN_flag = 5 # comma.ai
-  BN_flag = 8 # resnet
+  # BN_flag = 8 # resnet
 
   size = (200, 66)
   if BN_flag == 8: #resnet

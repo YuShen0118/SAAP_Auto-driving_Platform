@@ -154,6 +154,12 @@ def get_lr(step, total_steps, lr_max, lr_min):
                                              np.cos(step / total_steps * np.pi))
 
 
+def get_lr_robust(step, total_steps, lr_max, lr_min):
+  """Compute learning rate according to cosine annealing schedule."""
+  return lr_min + (lr_max - lr_min) * 0.5 * (1 +
+                                             np.cos(step / total_steps * np.pi))
+
+
 def aug(image, preprocess):
   """Perform AugMix augmentations and compute mixture.
 
@@ -399,6 +405,8 @@ def evaluate_multi_factors(eval_model, train_transform, preprocess, aug_list):
 
 
 def main_robust():
+  all_begin_time = time.time()
+
   torch.manual_seed(1)
   np.random.seed(1)
 
@@ -489,14 +497,6 @@ def main_robust():
     print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
     return
 
-  scheduler = torch.optim.lr_scheduler.LambdaLR(
-      optimizer,
-      lr_lambda=lambda step: get_lr(  # pylint: disable=g-long-lambda
-          step,
-          args.epochs * len(train_loader),
-          1,  # lr_lambda computes multiplicative factor
-          1e-6 / args.learning_rate))
-
   if not os.path.exists(args.save):
     os.makedirs(args.save)
   if not os.path.isdir(args.save):
@@ -511,26 +511,29 @@ def main_robust():
   best_c_acc = 0
   print('Beginning training from epoch:', start_epoch + 1)
 
+  start_lr = 1
   # for epoch in range(start_epoch, args.epochs):
   for round_id in range(args.rounds):
     begin_time = time.time()
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optimizer,
+        lr_lambda=lambda step: get_lr_robust(  # pylint: disable=g-long-lambda
+            step,
+            args.epochs * len(train_loader),
+            start_lr,  # lr_lambda computes multiplicative factor
+            1e-6 / args.learning_rate))
     # severity_list = evaluate_multi_factors(net, train_transform, preprocess, aug_list)
 
     train_loader = get_train_loader(train_transform, preprocess, aug_list, severity_list)
 
     for epoch in range(args.epochs):
+      print('round_id ' + str(round_id) + '  epoch ' + str(epoch) + ': ')
       train_loss_ema = train(net, train_loader, optimizer, scheduler)
 
     test_loss, test_acc = test(net, test_loader)
-
-    test_c_acc = test_c(net, test_data, base_c_path)
-    print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
-
     is_best = test_acc > best_acc
     best_acc = max(test_acc, best_acc)
-
-    is_c_best = test_c_acc > best_c_acc
-    best_c_acc = max(test_c_acc, best_c_acc)
 
     checkpoint = {
         'epoch': round_id,
@@ -565,17 +568,28 @@ def main_robust():
     if is_best:
       shutil.copyfile(save_path, os.path.join(args.save, 'model_best.pth.tar'))
 
-    if is_c_best:
-      shutil.copyfile(save_path, os.path.join(args.save, 'model_c_best.pth.tar'))
+    # if is_c_best:
+    #   shutil.copyfile(save_path, os.path.join(args.save, 'model_c_best.pth.tar'))
+
+    start_lr = start_lr / 2
 
 
+
+  test_c_acc = test_c(net, test_data, base_c_path)
+  print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
+  is_c_best = test_c_acc > best_c_acc
+  best_c_acc = max(test_c_acc, best_c_acc)
 
   with open(log_path, 'a') as f:
     f.write('%03d,%05d,%0.6f,%0.5f,%0.2f\n' %
             (args.epochs + 1, 0, 0, 0, 100 - 100 * test_c_acc))
 
+  print('Overall Time ' + str(time.time() - all_begin_time) + 's')
+
 
 def main():
+  all_begin_time = time.time()
+
   torch.manual_seed(1)
   np.random.seed(1)
 
@@ -717,6 +731,10 @@ def main():
         .format((epoch + 1), int(time.time() - begin_time), train_loss_ema,
                 test_loss, 100 - 100. * test_acc))
 
+    # if epoch % 10 == 9:
+    #   test_c_acc = test_c(net, test_data, base_c_path)
+    #   print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
+
   test_c_acc = test_c(net, test_data, base_c_path)
   print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
 
@@ -724,6 +742,7 @@ def main():
     f.write('%03d,%05d,%0.6f,%0.5f,%0.2f\n' %
             (args.epochs + 1, 0, 0, 0, 100 - 100 * test_c_acc))
 
+  print('Overall Time ' + str(time.time() - all_begin_time) + 's')
 
 if __name__ == '__main__':
   if (args.gpu_id != None):

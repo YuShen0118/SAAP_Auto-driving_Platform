@@ -168,6 +168,7 @@ def tsne(X=np.array([]), no_dims=2, initial_dims=50, perplexity=30.0):
             momentum = initial_momentum
         else:
             momentum = final_momentum
+
         gains = (gains + 0.2) * ((dY > 0.) != (iY > 0.)) + \
                 (gains * 0.8) * ((dY > 0.) == (iY > 0.))
         gains[gains < min_gain] = min_gain
@@ -378,6 +379,15 @@ def read_datasets_features(data_folders):
     return np.array(data_list)/max_v, np.array(class_id_list)
 
 
+def read_datasets_features_toy(folder):
+    with open(folder+'/features.npy', 'rb') as f:
+        features = np.load(f)
+    with open(folder+'/labels.npy', 'rb') as f:
+        labels = np.load(f)
+
+    return features, labels
+
+
 if __name__ == "__main__":
     print("Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset.")
 
@@ -427,17 +437,28 @@ if __name__ == "__main__":
 
     # X, labels = read_steering_datasets(label_names)
     # X, labels = read_succ_fail_datasets(label_names)
-    X, labels = read_datasets_features(label_names)
+    # X, labels = read_datasets_features(label_names)
+
+    # folder = ROOT_DIR + "/toy_exp/features/toy_base_500/"
+    folder = ROOT_DIR + "/toy_exp/features/toy_hint_400_02Ia/"
+    # folder = ROOT_DIR + "/toy_exp/features/toy_base_5000/"
+    X, labels = read_datasets_features_toy(folder)
+
+
+    # label_names = ["0", "1", "2", "3", "4", "5", "6", "7"]
+    label_names = ["0", "1", "2", "3"]
 
     # print(X)
     # print(labels)
     # adsf
 
-    X = X[::2]
-    labels = labels[::2]
+    # X = X[::5]
+    # labels = labels[::5]
+
+    X = X[:, ::5]
 
     # Y = tsne(X, 2, 50, 20.0)
-    Y = tsne(X, 2, 10, 20.0)
+    Y = tsne(X, 2, 50, 20.0)
     for class_id in range(len(label_names)):
         clsss_mask = (labels==class_id)
         pylab.scatter(Y[:, 0][clsss_mask], Y[:, 1][clsss_mask], s=5, alpha=0.7, label=label_names[class_id])

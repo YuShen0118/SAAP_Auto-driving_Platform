@@ -19,12 +19,12 @@ import torch
 
 
 def train_network(imagePath, labelPath, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, Maxup_flag=False, pytorch_flag=False, lr=0.0001):
+	BN_flag=0, imagePath_advp=[], labelPath_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, Maxup_flag=False, pytorch_flag=False, lr=0.0001, withFFT=False):
 	train_network_multi([imagePath], [labelPath], outputPath, modelPath, trainRatio, partialPreModel, reinitHeader, BN_flag, 
-		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification, netType, pack_flag=False, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr)
+		[imagePath_advp], [labelPath_advp], trainRatio_advp, reinitBN, classification, netType, pack_flag=False, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr, withFFT=withFFT)
 
 def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = "", trainRatio = 1.0, partialPreModel = False, reinitHeader = False, 
-	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, pack_flag=False, Maxup_flag=False, pytorch_flag=False, lr=0.0001):
+	BN_flag=0, imagePath_list_advp=[], labelPath_list_advp=[], trainRatio_advp = 1.0, reinitBN = False, classification = False, netType=1, pack_flag=False, Maxup_flag=False, pytorch_flag=False, lr=0.0001, withFFT=False):
 	print('Image folder: ' + str(imagePath_list))
 	print('Label file: ' + str(labelPath_list))
 	print('Output folder: ' + outputPath)
@@ -46,7 +46,7 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
 	nFramesSample = 5  # only used for LSTMs
 	nRep = 1
 
-	if BN_flag == 9:
+	if (BN_flag == 9) or (BN_flag == 10):
 		nRound = 100
 		nEpoch = 20
 
@@ -56,12 +56,12 @@ def train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = 
     ## NOTE: paths must have forward slash (/) character at the end
     
 	#netType = netType        # 1: CNN, 2: LSTM-m2o, 3: LSTM-m2m, 4: LSTM-o2o, 5: GAN
-	if (BN_flag == 4) or (BN_flag == 6) or (BN_flag == 9):
+	if (BN_flag == 4) or (BN_flag == 6) or (BN_flag == 9) or (BN_flag == 10):
 		train_dnn_multi_two_stream(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
 			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, nRound=nRound)
 	else:
 		train_dnn_multi(imagePath_list, labelPath_list, outputPath, netType, flags, specs, modelPath, trainRatio, partialPreModel, reinitHeader, 
-			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr)
+			BN_flag, imagePath_list_advp, labelPath_list_advp, trainRatio_advp, reinitBN, pack_flag, mid=0, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr, withFFT=withFFT)
 
 # def get_suffix(level_id):
 # 	'''
@@ -143,7 +143,8 @@ def train_network_multi_factor_search(imagePath, labelPath, outputPath, modelPat
 
 	imagePath0 = imagePath[0:-1]
 
-	val_ratio = 0.03
+	# val_ratio = 0.03
+	val_ratio = 0.003
 	f = open(outputPath+"factor_level_choices.txt",'w')
 	for rid in range(nRound):
 		print("round no: "+str(rid)+"\n")

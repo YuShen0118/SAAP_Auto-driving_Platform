@@ -27,6 +27,11 @@ def create_nvidia_network_pytorch(BN_flag, fClassifier=False, nClass=1, nChannel
 		net_f_hint = net_nvidia_pytorch_CNN(nChannel_hint)
 		net_d = net_nvidia_pytorch_regressor()
 		return net_f_ori, net_f_hint, net_d
+	elif BN_flag == 10:
+		net_f_ori = net_nvidia_pytorch_resnet(nChannel)
+		net_f_hint = net_nvidia_pytorch_resnet(nChannel_hint)
+		net_d = net_nvidia_pytorch_regressor(1000)
+		return net_f_ori, net_f_hint, net_d
 		
 	return net_nvidia_pytorch()
 
@@ -427,13 +432,29 @@ class net_nvidia_pytorch_CNN(nn.Module):
 
 		return output
 
+class net_nvidia_pytorch_resnet(nn.Module):
+	# implementation of "Unsupervised Domain Adaptation by Backpropagation"
+	def __init__(self, nChannel=3):
+		super(net_nvidia_pytorch_resnet, self).__init__()
+		self.conv1 = nn.Conv2d(nChannel, 3, 1)
+		self.resnet152 = models.resnet152()
+		# self.header = nn.Linear(1000, 64 * 1 * 18)
+
+	def forward(self, input_data):
+		# x = LambdaLayer(lambda x: x/127.5 - 1.0)(input_data)
+		x = self.conv1(input_data)
+		output = self.resnet152(x)
+		# output = self.header(x)
+		# output = output.reshape(-1, 64 * 1 * 18)
+
+		return output
 
 class net_nvidia_pytorch_regressor(nn.Module):
 	# implementation of "Unsupervised Domain Adaptation by Backpropagation"
-	def __init__(self):
+	def __init__(self, nChannel=64 * 1 * 18):
 		super(net_nvidia_pytorch_regressor, self).__init__()
 
-		self.fc1 = nn.Linear(64 * 1 * 18, 100)
+		self.fc1 = nn.Linear(nChannel, 100)
 		self.fc2 = nn.Linear(100, 50)
 		self.fc3 = nn.Linear(50, 10)
 		self.fc4 = nn.Linear(10, 1)
@@ -476,6 +497,24 @@ class net_resnet_pytorch(nn.Module):
 		last_layer_feature = self.resnet152(x)
 		output = self.header(last_layer_feature)
 		return output, last_layer_feature
+
+
+class net_nvidia_with_generator_pytorch(nn.Module):
+	# implementation of "Unsupervised Domain Adaptation by Backpropagation"
+	def __init__(self, nChannel=3):
+		super(net_nvidia_with_generator_pytorch, self).__init__()
+		self.generator = FCN8s()
+		self.feature_fusion = net_nvidia_pytorch_CNN()
+		self.regressor = net_nvidia_pytorch_regressor()
+		# self.header = nn.Linear(1000, 64 * 1 * 18)
+
+	def forward(self, input_data):
+		assist = self.generator(input_data)
+		x = torch.cat((input_data, assist), 0)
+		x = self.feature_fusion(x)
+		output = self.regressor(x)
+
+		return output,assist
 
 
 

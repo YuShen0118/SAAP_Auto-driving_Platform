@@ -46,13 +46,18 @@ def get_label_file_name(folder_name, suffix=""):
 	elif "val" in folder_name:
 		labelName = main_name.replace("val","labels") + "_val"
 
+	# labelName = labelName.replace("segall", "")
+	labelName = labelName.replace("seginfer", "")
+	labelName = labelName.replace("edgeinfer", "")
+	# labelName = labelName.replace("depthinfer", "")
+
 	labelName = labelName + suffix
 	labelName = labelName + ".csv"
 	return labelName
 
 def single_test():
-	train_folder = "trainAudi4_pytorch"
-	val_folder = "valAudi4"
+	train_folder = "trainWaymo"
+	val_folder = "valWaymo"
 	pytorch_flag = True
 
 	imagePath = DATASET_ROOT + train_folder + "/"
@@ -61,7 +66,7 @@ def single_test():
 	labelPath = DATASET_ROOT + labelName
 
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "/"
-	# train_network(imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag)
+	train_network(imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag)
 
 	if pytorch_flag:
 		modelPath = outputPath + "/model-final.pth"
@@ -94,6 +99,7 @@ def single_test_with_config(subtask_id=-1):
 	modelPath = ""
 	suffix = ""
 	lr = 0.0001
+	withFFT = False
 
 	if subtask_id == '0':
 		train_folder = "trainB"
@@ -332,12 +338,58 @@ def single_test_with_config(subtask_id=-1):
 		val_folder = "valAudi4"
 		pytorch_flag = True
 		modelPath = TRAIN_OUTPUT_ROOT + "trainAudi3_pytorch/model-final.pth"
-	elif subtask_id == '100':
-		train_folder = "trainAudi5"
-		val_folder = "valAudi5"
+	elif subtask_id == '49':
+		train_folder = "trainHc"
+		val_folder = "valHc"
 		pytorch_flag = True
 		BN_flag = 8
+	elif subtask_id == '50':
+		train_folder = "trainHonda100k"
+		val_folder = "valHonda100k"
+		pytorch_flag = True
+		BN_flag = 0
+		modelPath = TRAIN_OUTPUT_ROOT + "trainHonda100k_all_rob_20round_5epoch_pytorch_withFFT/model-final.pth"
+		withFFT = True
+	elif subtask_id == '51':
+		train_folder = "trainHonda100k"
+		val_folder = "valHonda100k"
+		pytorch_flag = True
+		BN_flag = 0
+		modelPath = TRAIN_OUTPUT_ROOT + "trainHonda100k_all_rob_20round_5epoch_pytorch/model-final.pth"
+		withFFT = False
+	elif subtask_id == '52':
+		# train_folder = "trainWaymo"
+		train_folder = "trainWaymo"
+		val_folder = "valWaymo"
+		pytorch_flag = True
+		BN_flag = 0
+		modelPath = TRAIN_OUTPUT_ROOT + "trainWaymo_all_rob_50round_2epoch_pytorch/model-final.pth"
+		withFFT = False
+	elif subtask_id == '53':
+		train_folder = "trainWaymo"
+		# train_folder = "valWaymo"
+		val_folder = "valWaymo"
+		pytorch_flag = True
+		BN_flag = 8
+		# modelPath = TRAIN_OUTPUT_ROOT + "trainWaymo_all_rob_50round_2epoch_pytorch/model-final.pth"
+		withFFT = False
 		suffix = "_test"
+	elif subtask_id == '54':
+		train_folder = "trainAudi56"
+		val_folder = "valAudi5"
+		pytorch_flag = True
+		withFFT = False
+	elif subtask_id == '55':
+		train_folder = "trainAudi56"
+		val_folder = "valAudi6"
+		pytorch_flag = True
+		withFFT = False
+	elif subtask_id == '100':
+		train_folder = "trainB"
+		val_folder = "trainAdL"
+		pytorch_flag = True
+		BN_flag = 0
+		# suffix = "_test"
 	else:
 		print('Invalid subtask_id ', subtask_id)
 		return
@@ -354,6 +406,8 @@ def single_test_with_config(subtask_id=-1):
 		train_suffix = train_suffix + "_Maxup"
 	if pytorch_flag:
 		train_suffix = train_suffix + "_pytorch"
+	if withFFT:
+		train_suffix = train_suffix + "_fft"
 	if modelPath != "":
 		train_suffix = train_suffix + "_retrain"
 
@@ -364,7 +418,7 @@ def single_test_with_config(subtask_id=-1):
 	labelPath = DATASET_ROOT + labelName
 
 	outputPath = TRAIN_OUTPUT_ROOT + train_folder + train_suffix + "/"
-	train_network(imagePath, labelPath, outputPath, modelPath=modelPath, BN_flag=BN_flag, classification=classification, netType=net_type, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr)
+	train_network(imagePath, labelPath, outputPath, modelPath=modelPath, BN_flag=BN_flag, classification=classification, netType=net_type, Maxup_flag=Maxup_flag, pytorch_flag=pytorch_flag, lr=lr, withFFT=withFFT)
 
 	modelPath = outputPath + "/model-final.h5"
 	if pytorch_flag:
@@ -378,7 +432,7 @@ def single_test_with_config(subtask_id=-1):
 	if visualize:
 		outputPath = TEST_OUTPUT_ROOT + train_folder + train_suffix + "__" + val_folder + "__r" + str(radius) + "__visualize/test_result.txt"
 	else:
-		outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + train_suffix + ")_(" + val_folder + ")/test_result.txt"
+		outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + train_suffix + ")_(" + val_folder + "_test)/test_result.txt"
 
 	#modelPath = ""
 	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, classification=classification, visualize=visualize, radius=radius, pytorch_flag=pytorch_flag)
@@ -449,54 +503,148 @@ def single_test_ImgAndFeature():
 	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=3, pathID=pathID, pytorch_flag=pytorch_flag)
 
 def single_test_2_streams(subtask_id=-1):
-	train_folder = "trainAudi3"
-	val_folder = "valAudi3"
-	train_folder_add = "trainAudi4"
-	val_folder_add = "valAudi4"
+	train_folders = ["trainAudi5"]
+	val_folders = ["valAudi5"]
+	train_folders_add = ["trainAudi6"]
+	val_folders_add = ["valAudi6"]
 	#suffix = "_similarBN40"
 	labelsuffix = ""
 	suffix = labelsuffix
 	pathID = 0
 	modelPath = ""
 	pytorch_flag = True
-	BN_flag = 6
+	BN_flag = 9
 
 	if subtask_id == '0':
 		BN_flag = 6 # ADDA
-		suffix = suffix + "_10t"
+		# suffix = suffix + "_10t"
+		suffix = suffix + "_adda"
 	elif subtask_id == '1':	
 		BN_flag = 4 # DANN
-
-	if BN_flag == 4:
 		suffix = suffix + "_dann"
-	elif BN_flag == 6:
-		suffix = suffix + "_adda"
+	elif subtask_id == '2':	
+		BN_flag = 9 # HintNet
+		train_folders = ["trainAudi6"]
+		val_folders = ["valAudi6"]
+		train_folders_add = ["trainAudi6", "trainAudi6segall"]
+		val_folders_add = ["valAudi6", "valAudi6segall"] # not used inside
+		pack_flag = True
+		# suffix = suffix + "_hintnet_100Ia_2000r_1e"
+		suffix = suffix + "_hintnet_1_2000r_1e"
+	elif subtask_id == '3':	
+		BN_flag = 9 # HintNet
+		train_folders = ["trainAudi6"]
+		val_folders = ["valAudi6"]
+		train_folders_add = ["trainAudi6", "trainAudi6seginfer"]
+		val_folders_add = ["valAudi6", "valAudi6seginfer"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_100Ia_2000r_1e"
+	elif subtask_id == '4':	
+		BN_flag = 9 # HintNet
+		train_folders = ["trainAudi6"]
+		val_folders = ["valAudi6"]
+		train_folders_add = ["trainAudi6", "trainAudi6depthinfer"]
+		val_folders_add = ["valAudi6", "valAudi6depthinfer"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_100Ia_2000r_1e"
+	elif subtask_id == '5':	
+		BN_flag = 9 # HintNet
+		train_folders = ["trainAudi6"]
+		val_folders = ["valAudi6"]
+		train_folders_add = ["trainAudi6", "trainAudi6edgeinfer"]
+		val_folders_add = ["valAudi6", "valAudi6edgeinfer"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_100Ia_2000r_1e"
+	elif subtask_id == '6':	
+		BN_flag = 10 # HintResNet
+		train_folders = ["trainAudi6"]
+		val_folders = ["valAudi6"]
+		train_folders_add = ["trainAudi6", "trainAudi6segall"]
+		val_folders_add = ["valAudi6", "valAudi6segall"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_resnet_100Ia_2000r_1e"
+	elif subtask_id == '7':	
+		BN_flag = 10 # HintResNet
+		train_folders = ["trainAudi6"]
+		val_folders = ["valAudi6"]
+		train_folders_add = ["trainAudi6", "trainAudi6segall"]
+		val_folders_add = ["valAudi6", "valAudi6segall"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_resnet_100Ia_200r_10e"
+	elif subtask_id == '8':	
+		BN_flag = 9
+		train_folders = ["trainHonda100k"]
+		val_folders = ["valHonda100k"]
+		train_folders_add = ["trainHonda100k", "trainHonda100kdepthinfer"]
+		val_folders_add = ["valHonda100k", "valHonda100kdepthinfer"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_100Ia_40r_5e"
+	elif subtask_id == '9':	
+		BN_flag = 9
+		train_folders = ["trainHonda100k"]
+		val_folders = ["valHonda100k"]
+		train_folders_add = ["trainHonda100k", "trainHonda100kdepthinfer"]
+		val_folders_add = ["valHonda100k", "valHonda100kdepthinfer"] # not used inside
+		pack_flag = True
+		suffix = suffix + "_hintnet_100Ia_1000r_1e"
 
-	imagePath = DATASET_ROOT + train_folder + "/"
-	labelName = get_label_file_name(train_folder)
-	labelPath = DATASET_ROOT + labelName
+	# suffix = suffix + "_teacher_first"
+	# if BN_flag == 4:
+	# elif BN_flag == 6:
+	# elif BN_flag == 9:
+	# 	suffix = suffix + "_hintnet"
+		# suffix = suffix + "_hintnet_1_20r_100e"
+		# suffix = suffix + "_hintnet_r002_t02_2000r_1e_uniform"
+		# suffix = suffix + "_hintnet_0.01_100r_20e"
+		# suffix = suffix + "_hintnet_test"
 
-	imagePath_add = DATASET_ROOT + train_folder_add + "/"
-	labelName_add = get_label_file_name(train_folder_add, labelsuffix)
-	labelPath_add = DATASET_ROOT + labelName_add
 
+		# suffix = suffix + "_hintnet_1_2000r_1e"
+		# suffix = suffix + "_hintnet_r002_t02_2000r_1e_uniform_200pre"
 
-	outputPath = TRAIN_OUTPUT_ROOT + train_folder + "_" + train_folder_add + suffix + "/"
+		# suffix = suffix + "_hintnet_r002_t02_2000r_1e_uniform_200pre_recover"
+		# suffix = suffix + "_hintnet_basic_2000r_recover"
+		
+		# suffix = suffix + "_hintnet_r001_t01_2000r_1e_uniform_200pre"
+		# suffix = suffix + "_hintnet_r005_t05_2000r_1e_uniform_200pre"
+		# suffix = suffix + "_hintnet_r01_t05_2000r_1e_uniform_200pre"
+
+	imagePath_list = []
+	labelPath_list = []
+	for train_folder in train_folders:
+		imagePath = DATASET_ROOT + train_folder + "/"
+		labelName = get_label_file_name(train_folder)
+		labelPath = DATASET_ROOT + labelName
+		imagePath_list.append(imagePath)
+		labelPath_list.append(labelPath)
+
+	imagePath_list_add = []
+	labelPath_list_add = []
+	for train_folder in train_folders_add:
+		imagePath = DATASET_ROOT + train_folder + "/"
+		labelName = get_label_file_name(train_folder)
+		labelPath = DATASET_ROOT + labelName
+		imagePath_list_add.append(imagePath)
+		labelPath_list_add.append(labelPath)
+
+	outputPath = TRAIN_OUTPUT_ROOT + train_folders[0] + "_" + train_folders_add[1] + suffix + "/"
 	# modelPath = TRAIN_OUTPUT_ROOT + train_folder_add + "/model-final.h5"
-	modelPath = TRAIN_OUTPUT_ROOT + "trainAudi3_pytorch/model-final.pth"
-	train_network(imagePath, labelPath, outputPath, modelPath = modelPath, BN_flag=BN_flag, imagePath_advp=imagePath_add, labelPath_advp=labelPath_add, pytorch_flag=pytorch_flag)
+	# modelPath = TRAIN_OUTPUT_ROOT + "trainAudi3_pytorch/model-final.pth"
+	modelPath = ""
+	# train_network_multi(imagePath_list, labelPath_list, outputPath, modelPath = modelPath, BN_flag=BN_flag, imagePath_list_advp=imagePath_list_add, labelPath_list_advp=labelPath_list_add, pytorch_flag=pytorch_flag, pack_flag=pack_flag)
 
 	modelPath = outputPath + "/model-final.h5"
 	if pytorch_flag:
 		modelPath = outputPath + "/model-final.pth"
 
-	imagePath = DATASET_ROOT + val_folder + "/"
-	labelName = get_label_file_name(val_folder)
-	labelPath = DATASET_ROOT + labelName
+	for val_folder in val_folders:
+		imagePath = DATASET_ROOT + val_folder + "/"
+		labelName = get_label_file_name(val_folder)
+		labelPath = DATASET_ROOT + labelName
 
-	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + train_folder_add + suffix + ")_(" + val_folder + ")/test_result.txt"
-	#modelPath = ""
-	test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, pathID=pathID, pytorch_flag=pytorch_flag)
+		outputPath = TEST_OUTPUT_ROOT + "(" + train_folders[0] + ")_(" + train_folders_add[1] + suffix + ")_(" + val_folder + ")/test_result.txt"
+		#modelPath = ""
+		test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, pathID=pathID, pytorch_flag=pytorch_flag)
 
 
 def test_AdvProp(subtask_id=-1):
@@ -561,6 +709,7 @@ def multi_factor_search_test(subtask_id=-1):
 	BN_flag = 0
 	train_suffix = ""
 	pytorch_flag = False
+	withFFT = False
 
 	if subtask_id == '0':
 		train_folder = "trainB"
@@ -583,7 +732,7 @@ def multi_factor_search_test(subtask_id=-1):
 	elif subtask_id == '4':	
 		train_folder = "trainB"
 		val_folder = "valB"
-		BN_flag = 5
+		BN_flag = 5  # comma.ai
 		pytorch_flag = True
 	elif subtask_id == '5':	
 		train_folder = "trainHc"
@@ -595,6 +744,74 @@ def multi_factor_search_test(subtask_id=-1):
 		val_folder = "valAds"
 		BN_flag = 5
 		pytorch_flag = True
+	elif subtask_id == '7':	
+		train_folder = "trainHc"
+		val_folder = "valHc"
+		BN_flag = 8  # resnet
+		pytorch_flag = True
+	elif subtask_id == '8':	
+		train_folder = "trainB"
+		val_folder = "valB"
+		pytorch_flag = True
+		withFFT = True
+		train_suffix = "_test"
+	elif subtask_id == '9':	
+		train_folder = "trainB"
+		val_folder = "valB"
+		pytorch_flag = True
+		withFFT = False
+		train_suffix = "_Vonly"
+		modelPath = TRAIN_OUTPUT_ROOT + "trainB_all_rob_20round_20epoch_Vonly_pytorch/model-final.pth"
+	elif subtask_id == '10':	
+		train_folder = "trainHc"
+		val_folder = "valHc"
+		withFFT = True
+		pytorch_flag = True
+		# BN_flag = 5
+	elif subtask_id == '11':	
+		train_folder = "trainAds"
+		val_folder = "valAds"
+		withFFT = True
+		pytorch_flag = True
+		# BN_flag = 5
+	elif subtask_id == '12':	
+		train_folder = "trainHonda100k"
+		val_folder = "valHonda100k"
+		withFFT = True
+		pytorch_flag = True
+		# BN_flag = 5
+	elif subtask_id == '13':	
+		train_folder = "trainHonda100k"
+		val_folder = "valHonda100k"
+		withFFT = False
+		pytorch_flag = True
+		# BN_flag = 5
+	elif subtask_id == '14':	
+		train_folder = "trainWaymo"
+		val_folder = "valWaymo"
+		withFFT = False
+		pytorch_flag = True
+	elif subtask_id == '15':	
+		train_folder = "trainWaymo"
+		val_folder = "valWaymo"
+		withFFT = True
+		pytorch_flag = True
+	elif subtask_id == '16':	
+		train_folder = "trainB"
+		val_folder = "valB"
+		pytorch_flag = True
+		withFFT = False
+		train_suffix = "_VBBonly"
+		modelPath = TRAIN_OUTPUT_ROOT + "trainB_all_rob_20round_20epoch_VBBonly_pytorch/model-final.pth"
+	elif subtask_id == '17':	
+		train_folder = "trainB"
+		val_folder = "valB"
+		pytorch_flag = True
+		withFFT = False
+		train_suffix = "_VGNonly"
+	elif subtask_id == -1:	
+		train_suffix = "_test"
+		pytorch_flag = True
 	else:	
 		return
 
@@ -602,18 +819,22 @@ def multi_factor_search_test(subtask_id=-1):
 		train_suffix = train_suffix + "_BN" + str(BN_flag)
 	if pytorch_flag:
 		train_suffix = train_suffix + "_pytorch"
+	if withFFT:
+		train_suffix = train_suffix + "_withFFT"
 
-	imagePath = DATASET_ROOT + train_folder + "/"
 	labelName = get_label_file_name(train_folder)
 	labelPath = DATASET_ROOT + labelName
+	imagePath = DATASET_ROOT + train_folder + "/"
 
-	trainOurputFolder = train_folder + "_all_rob_20epoch_single" + train_suffix
+	trainOurputFolder = train_folder + "_all_rob_20round_20epoch" + train_suffix
 	# trainOurputFolder = train_folder + "_all_rob_20epoch_multi_retrain"
 	trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
 	#modelPath = TRAIN_OUTPUT_ROOT + "trainB_quality_channelGSY/model-final.h5"
-	train_network_multi_factor_search(imagePath, labelPath, trainOutputPath, modelPath=modelPath, BN_flag=BN_flag, pytorch_flag=pytorch_flag)
+	train_network_multi_factor_search(imagePath, labelPath, trainOutputPath, modelPath=modelPath, BN_flag=BN_flag, pytorch_flag=pytorch_flag, withFFT=withFFT)
 
 	modelPath = trainOutputPath + "/model-final.h5"
+	if pytorch_flag:
+		modelPath = trainOutputPath + "/model-final.pth"
 
 	imagePath = DATASET_ROOT + val_folder + "/"
 	labelName = get_label_file_name(val_folder, "")
@@ -642,7 +863,7 @@ def compute_mce(corruption_accs, base_accs):
     mce += ce / n
   return mce
 
-def unit_test_for_style():
+def unit_test_for_robust():
 	TRAIN_LIST = ["trainB_Maxup_pytorch"]
 	TRAIN_LIST = ["trainAds_pytorch"]
 	TRAIN_LIST = ["trainB"]
@@ -659,6 +880,39 @@ def unit_test_for_style():
 	TRAIN_LIST = ["trainAds_all_rob_20epoch_single_commaai_pytorch"]
 	# TRAIN_LIST = ["trainHc_augmix_pytorch"]
 	# TRAIN_LIST = ["trainAds_augmix_pytorch"]
+
+	TRAIN_LIST = ["trainHc_augmix_pytorch"]
+	TRAIN_LIST = ["trainBs_augmix_pytorch"]
+	# TRAIN_LIST = ["trainB_rob_quality_channel6x10_135"]
+	TRAIN_LIST = ["trainB_rob_quality_channel6x10_12345"]
+	TRAIN_LIST = ["trainHc_BN8_pytorch"]
+	TRAIN_LIST = ["trainHc_all_rob_20epoch_single_BN8_pytorch"]
+	TRAIN_LIST = ["trainHc_augmix_resnet_4000_pytorch"]
+	TRAIN_LIST = ["trainB_pytorch"]
+
+	TRAIN_LIST = ["trainB_all_rob_20epoch_pytorch_withFFT"]
+	# TRAIN_LIST = ["trainHc_all_rob_20epoch_pytorch_withFFT"]
+	# TRAIN_LIST = ["trainAds_all_rob_20epoch_pytorch_withFFT"]
+
+	# # TRAIN_LIST = ["trainAudi6_trainAudi6segall_hintnet_1_2000r_1e"]
+	# TRAIN_LIST = ["trainAudi6_trainAudi6segall_hintnet_r002_t02_2000r_1e_uniform_200pre"]
+	# TRAIN_LIST = ["trainAudi6"]
+	# TRAIN_LIST = ["trainAudi6_trainAudi6seginfer_hintnet_100Ia_2000r_1e"]
+
+	# TRAIN_LIST = ["trainHonda100k"]
+	# TRAIN_LIST = ["trainHonda100k_augmix"]
+	# TRAIN_LIST = ["trainHonda100k_all_rob_20round_5epoch_pytorch_withFFT"]
+	# TRAIN_LIST = ["trainHonda100k_all_rob_20round_5epoch_pytorch"]
+	# TRAIN_LIST = ["trainHonda100k_pytorch_retrain"]
+
+	TRAIN_LIST = ["trainWaymo_all_rob_50round_2epoch_pytorch"]
+	TRAIN_LIST = ["trainWaymo"]
+	TRAIN_LIST = ["trainWaymo_augmix"]
+	TRAIN_LIST = ["trainWaymo_all_rob_50round_2epoch_pytorch_withFFT"]
+
+	# TRAIN_LIST = ["trainB_all_rob_20round_20epoch_VBBonly_pytorch"]
+	TRAIN_LIST = ["trainB_all_rob_20round_20epoch_Vonly_pytorch"]
+	# TRAIN_LIST = ["trainB_all_rob_20round_20epoch_VGNonly_pytorch"]
 
 	VAL_LIST = ["valB", \
 				"valB_blur_1", "valB_blur_2", "valB_blur_3", "valB_blur_4", "valB_blur_5", \
@@ -695,11 +949,77 @@ def unit_test_for_style():
 				"valB_IMGC_fog_1", "valB_IMGC_fog_2", "valB_IMGC_fog_3", \
 				"valB_IMGC_fog_4", "valB_IMGC_fog_5"
 				]
+
+	#ImageNetC effects
+	# VAL_LIST = ["valAudi6", \
+	# 			"valAudi6_IMGC_defocus_blur_1", "valAudi6_IMGC_defocus_blur_2", "valAudi6_IMGC_defocus_blur_3", \
+	# 			"valAudi6_IMGC_defocus_blur_4", "valAudi6_IMGC_defocus_blur_5", \
+	# 			"valAudi6_IMGC_glass_blur_1", "valAudi6_IMGC_glass_blur_2", "valAudi6_IMGC_glass_blur_3", \
+	# 			"valAudi6_IMGC_glass_blur_4", "valAudi6_IMGC_glass_blur_5", \
+	# 			"valAudi6_IMGC_motion_blur_1", "valAudi6_IMGC_motion_blur_2", "valAudi6_IMGC_motion_blur_3", \
+	# 			"valAudi6_IMGC_motion_blur_4", "valAudi6_IMGC_motion_blur_5", \
+	# 			"valAudi6_IMGC_zoom_blur_1", "valAudi6_IMGC_zoom_blur_2", "valAudi6_IMGC_zoom_blur_3", \
+	# 			"valAudi6_IMGC_zoom_blur_4", "valAudi6_IMGC_zoom_blur_5", \
+	# 			"valAudi6_IMGC_gaussian_noise_1", "valAudi6_IMGC_gaussian_noise_2", "valAudi6_IMGC_gaussian_noise_3", \
+	# 			"valAudi6_IMGC_gaussian_noise_4", "valAudi6_IMGC_gaussian_noise_5", \
+	# 			"valAudi6_IMGC_shot_noise_1", "valAudi6_IMGC_shot_noise_2", "valAudi6_IMGC_shot_noise_3", \
+	# 			"valAudi6_IMGC_shot_noise_4", "valAudi6_IMGC_shot_noise_5", \
+	# 			"valAudi6_IMGC_impulse_noise_1", "valAudi6_IMGC_impulse_noise_2", "valAudi6_IMGC_impulse_noise_3", \
+	# 			"valAudi6_IMGC_impulse_noise_4", "valAudi6_IMGC_impulse_noise_5", \
+	# 			"valAudi6_IMGC_snow_1", "valAudi6_IMGC_snow_2", "valAudi6_IMGC_snow_3", \
+	# 			"valAudi6_IMGC_snow_4", "valAudi6_IMGC_snow_5", \
+	# 			"valAudi6_IMGC_frost_1", "valAudi6_IMGC_frost_2", "valAudi6_IMGC_frost_3", \
+	# 			"valAudi6_IMGC_frost_4", "valAudi6_IMGC_frost_5", \
+	# 			"valAudi6_IMGC_fog_1", "valAudi6_IMGC_fog_2", "valAudi6_IMGC_fog_3", \
+	# 			"valAudi6_IMGC_fog_4", "valAudi6_IMGC_fog_5", \
+	# 			"valAudi6_IMGC_brightness_1", "valAudi6_IMGC_brightness_2", "valAudi6_IMGC_brightness_3", \
+	# 			"valAudi6_IMGC_brightness_4", "valAudi6_IMGC_brightness_5", \
+	# 			"valAudi6_IMGC_contrast_1", "valAudi6_IMGC_contrast_2", "valAudi6_IMGC_contrast_3", \
+	# 			"valAudi6_IMGC_contrast_4", "valAudi6_IMGC_contrast_5", \
+	# 			# "valAudi6_IMGC_elastic_transform_1", "valAudi6_IMGC_elastic_transform_1", "valAudi6_IMGC_elastic_transform_1", \
+	# 			# "valAudi6_IMGC_elastic_transform_1", "valAudi6_IMGC_elastic_transform_1", \
+	# 			"valAudi6_IMGC_pixelate_1", "valAudi6_IMGC_pixelate_2", "valAudi6_IMGC_pixelate_3", \
+	# 			"valAudi6_IMGC_pixelate_4", "valAudi6_IMGC_pixelate_5", \
+	# 			"valAudi6_IMGC_jpeg_compression_1", "valAudi6_IMGC_jpeg_compression_2", "valAudi6_IMGC_jpeg_compression_3", \
+	# 			"valAudi6_IMGC_jpeg_compression_4", "valAudi6_IMGC_jpeg_compression_5", \
+	# 			# "valAudi6_IMGC_speckle_noise_1", "valAudi6_IMGC_speckle_noise_2", "valAudi6_IMGC_speckle_noise_3", \
+	# 			# "valAudi6_IMGC_speckle_noise_4", "valAudi6_IMGC_speckle_noise_5", \
+	# 			# "valAudi6_IMGC_gaussian_blur_1", "valAudi6_IMGC_gaussian_blur_2", "valAudi6_IMGC_gaussian_blur_3", \
+	# 			# "valAudi6_IMGC_gaussian_blur_4", "valAudi6_IMGC_gaussian_blur_5", \
+	# 			# "valAudi6_IMGC_spatter_1", "valAudi6_IMGC_spatter_2", "valAudi6_IMGC_spatter_3", \
+	# 			# "valAudi6_IMGC_spatter_4", "valAudi6_IMGC_spatter_5", \
+	# 			# "valAudi6_IMGC_saturate_1", "valAudi6_IMGC_saturate_2", "valAudi6_IMGC_saturate_3", \
+	# 			# "valAudi6_IMGC_saturate_4", "valAudi6_IMGC_saturate_5", \
+	# 			]
+
+	# VAL_LIST = ["trainB", \
+	# 			"trainB_blur_2", "trainB_blur_4", \
+	# 			"trainB_noise_2", "trainB_noise_4", \
+	# 			"trainB_distort_2", "trainB_distort_4", \
+	# 			"trainB_R_darker_3", \
+	# 			"trainB_R_lighter_3", \
+	# 			"trainB_G_darker_3", \
+	# 			"trainB_G_lighter_3", \
+	# 			"trainB_B_darker_3", \
+	# 			"trainB_B_lighter_3", \
+	# 			"trainB_H_darker_3", \
+	# 			"trainB_H_lighter_3", \
+	# 			"trainB_S_darker_3", \
+	# 			"trainB_S_lighter_3", \
+	# 			"trainB_V_darker_3", \
+	# 			"trainB_V_lighter_3", \
+	# 			"trainB_combined_1_0", "trainB_combined_2_0", "trainB_combined_3_0", \
+	# 			"trainB_combined_4_0", "trainB_combined_5_0", "trainB_combined_6_0", \
+	# 			"trainB_IMGC_motion_blur_4", \
+	# 			"trainB_IMGC_zoom_blur_4", \
+	# 			"trainB_IMGC_pixelate_4", \
+	# 			"trainB_IMGC_jpeg_compression_4", \
+	# 			"trainB_IMGC_snow_4", \
+	# 			"trainB_IMGC_frost_4", \
+	# 			"trainB_IMGC_fog_4"
+	# 			]
 	# VAL_LIST = ["valB"]
 
-	for i in range(len(VAL_LIST)):
-		# VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valHc')
-		VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valAds')
 
 	MA_list = []
 	for train_folder in TRAIN_LIST:
@@ -711,20 +1031,33 @@ def unit_test_for_style():
 			pytorch_flag = True
 		else:
 			pytorch_flag = False
+		pytorch_flag = True
+
+		withFFT = False
+		if "_withFFT" in train_folder:
+			withFFT = True
 
 		#train_network(imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag)
 
 		modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.h5"
 		if pytorch_flag:
 			modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final.pth"
+			# modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/checkpoint_999.pth"
+			# modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model_best.pth"
 
 		net=""
 		BN_flag = 0
 		if "commaai" in train_folder:
 			BN_flag = 5
-		if modelPath != "":
+		if ("resnet" in train_folder) or ("_BN8" in train_folder):
+			BN_flag = 8
+		if ("hintnet" in train_folder):
+			BN_flag = 9
+
+
+		if modelPath != "" and BN_flag!=9:
 			if pytorch_flag:
-				net = create_nvidia_network_pytorch(BN_flag)
+				net = create_nvidia_network_pytorch(BN_flag, withFFT=withFFT)
 				if "augmix" in train_folder:
 					net = torch.nn.DataParallel(net).cuda()
 					net.load_state_dict(torch.load(modelPath)['state_dict'])
@@ -736,6 +1069,45 @@ def unit_test_for_style():
 				net = create_nvidia_network(0, False, 0, 3)
 				net.load_weights(modelPath)
 
+		ratio = 1
+		if "trainHc" in train_folder:
+			for i in range(len(VAL_LIST)):
+				VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valHc')
+		elif "trainAds" in train_folder:
+			for i in range(len(VAL_LIST)):
+				VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valAds')
+		elif "trainAudi6" in train_folder:
+			for i in range(len(VAL_LIST)):
+				VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valAudi6')
+		elif "trainHonda100k" in train_folder:
+			ratio = 0.1
+			for i in range(len(VAL_LIST)):
+				VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valHonda100k')
+		elif "trainWaymo" in train_folder:
+			ratio = 0.1
+			for i in range(len(VAL_LIST)):
+				VAL_LIST[i] = VAL_LIST[i].replace('valB', 'valWaymo')
+				# VAL_LIST[i] = VAL_LIST[i].replace('valB', 'trainWaymo')
+
+
+		# N=15
+		# for model_id in range(N):
+		# 	modelPath = TRAIN_OUTPUT_ROOT + train_folder + "/model-final_"+str(model_id)+".pth"
+		# 	val_folder = VAL_LIST[0]
+		# 	imagePath = DATASET_ROOT + val_folder + "/"
+		# 	labelName = get_label_file_name(val_folder)
+		# 	labelPath = DATASET_ROOT + labelName
+		# 	outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
+		# 	MA=0
+		# 	MA = test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, pytorch_flag=pytorch_flag, net=net, withFFT=withFFT, ratio=ratio) #, visualize=True
+		# 	MA_list.append(MA)
+
+		# for model_id in range(N):
+		# 	print(model_id, " ", MA_list[model_id])
+		# asdf
+
+
+
 		for val_folder in VAL_LIST:
 			# val_folder = val_folder.replace("train", "val")
 
@@ -746,28 +1118,30 @@ def unit_test_for_style():
 			labelName = get_label_file_name(val_folder)
 			labelPath = DATASET_ROOT + labelName
 			outputPath = TEST_OUTPUT_ROOT + "(" + train_folder + ")_(" + val_folder + ")/test_result.txt"
-			MA = test_network(modelPath, imagePath, labelPath, outputPath, pytorch_flag=pytorch_flag, net=net) #, visualize=True
+			MA=0
+			MA = test_network(modelPath, imagePath, labelPath, outputPath, BN_flag=BN_flag, pytorch_flag=pytorch_flag, net=net, withFFT=withFFT, ratio=ratio) #, visualize=True
 			MA_list.append(MA)
 
 		MA_list = np.array(MA_list) * 100
 
-		for MA in MA_list:
-			print("{:.2f}\t".format(MA))
+		# print(MA_list[0])
+		# for i in range(int(len(MA_list)/5)):
+		# 	print(np.mean(MA_list[i*5+1:(i+1)*5+1]))
 
-		res_scene1 = MA_list[0]
-		res_scene2 = MA_list[1:76]
-		res_scene3 = MA_list[76:82]
-		res_scene4 = MA_list[82:117]
+		#TODO
+		# MA_list = [74.20, 74.29, 74.49, 74.82, 75.09, 76.28, 74.26, 74.79, 74.46, 74.97, 76.19, 74.14, 75.09, 65.83, 54.76, 57.11, 74.23, 73.96, 73.99, 74.05, 74.08, 74.26, 75.03, 74.35, 74.85, 76.73, 74.17, 74.14, 74.40, 74.46, 74.94, 74.23, 74.73, 75.12, 75.71, 75.33, 74.20, 74.02, 73.93, 73.99, 74.29, 74.20, 74.85, 74.67, 74.82, 75.80, 74.40, 74.43, 74.35, 74.17, 73.72, 74.26, 73.90, 74.11, 74.23, 73.69, 74.23, 74.61, 74.55, 74.43, 74.23, 74.20, 73.99, 74.40, 74.55, 74.20, 74.32, 74.26, 74.64, 74.52, 75.00, 74.14, 74.46, 74.05, 76.04, 82.56, 69.88, 74.85, 70.86, 74.61, 74.23, 69.49, 74.29, 74.46, 74.91, 75.06, 74.76, 73.66, 73.24, 73.36, 72.95, 72.35, 74.17, 74.23, 74.23, 74.26, 74.32, 74.35, 74.05, 74.20, 74.11, 74.23, 74.64, 75.12, 75.03, 73.96, 71.55, 75.24, 75.71, 75.77, 75.98, 76.40, 74.70, 74.94, 73.60, 72.86, 70.74]
+		# MA_list = [80.57, 80.74, 80.48, 79.82, 78.1, 73.21, 80.27, 80.39, 79.46, 77.59, 76.46, 80.03, 77.77, 75.3, 72.95, 43.72, 80.54, 79.94, 79.11, 78.99, 78.63, 80.6, 80.21, 79.38, 79.29, 77.83, 80.51, 80, 78.69, 78.51, 78.36, 80.39, 79.32, 78.04, 77.44, 78.27, 80.39, 79.76, 78.84, 78.81, 78.54, 80.6, 80.45, 79.7, 79.35, 78.42, 80.57, 79.82, 79.64, 78.87, 79.7, 80.57, 79.35, 79.43, 78.21, 79.73, 80.6, 80.57, 80.18, 79.43, 77.98, 80.57, 80.18, 79.11, 79.11, 76.96, 80.27, 78.45, 76.55, 76.31, 76.55, 80.71, 79.14, 77.14, 74.94, 67.77, 70.62, 64.64, 67.83, 75.89, 74.49, 57.62, 79.32, 78.63, 77.41, 74.91, 72.17, 78.96, 78.21, 77.38, 76.34, 74.88, 80.68, 80.65, 80.48, 80.68, 80.42, 80.54, 80.74, 80.27, 79.97, 79.85, 77.89, 53.33, 63.33, 70.62, 68.33, 76.37, 75.57, 74.05, 74.61, 73.93, 73.75, 71.31, 66.61, 62.83, 57.32]
+		# MA_list = np.array(MA_list)
+		
+		# base_MA_resnet_Hc = [82.20, 82.17, 81.52, 77.12, 71.86, 68.35, 82.15, 80.59, 75.46, 70.70, 67.80, 80.30, 76.37, 71.30, 66.95, 68.51, 82.05, 78.40, 70.93, 67.58, 62.02, 82.03, 77.71, 71.46, 70.46, 70.43, 82.12, 82.13, 82.03, 81.37, 80.24, 82.08, 80.92, 76.69, 74.79, 69.78, 82.10, 81.90, 78.45, 75.89, 72.19, 82.07, 77.19, 67.70, 62.50, 57.03, 82.03, 81.77, 81.55, 79.64, 77.56, 82.23, 81.65, 78.62, 77.97, 77.59, 82.10, 81.59, 80.10, 79.72, 77.91, 82.20, 80.29, 74.33, 72.18, 66.75, 82.10, 79.14, 71.28, 62.59, 58.34, 82.18, 75.54, 64.34, 64.10, 63.09, 70.26, 63.32, 69.95, 72.26, 65.15, 62.50, 82.07, 81.92, 80.77, 78.94, 77.66, 81.05, 80.54, 79.92, 79.32, 78.60, 82.17, 82.25, 82.17, 81.92, 81.83, 82.18, 82.10, 82.25, 81.95, 82.03, 74.04, 68.96, 68.33, 65.50, 64.14, 69.18, 64.60, 62.69, 62.84, 61.99, 64.97, 61.75, 57.91, 56.14, 52.91]
 
-		print("scene1\t{:.2f}".format(res_scene1))
-		print("scene2\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene2), np.min(res_scene2), np.max(res_scene2)))
-		print("scene3\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene3), np.min(res_scene3), np.max(res_scene3)))
-		print("scene4\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene4), np.min(res_scene4), np.max(res_scene4)))
+		# base_MA_nvidia_B = [88.36, 88.21, 88.06, 86.07, 81.16, 73.33, 88.33, 86.01, 81.42, 76.39, 73.15, 88.63, 74.97, 57.67, 48.83, 49.16, 87.81, 65.06, 57.91, 55.44, 53.24, 87.67, 61.36, 52.14, 47.44, 45.14, 88.54, 73, 53.54, 48.21, 44.16, 87.91, 69.55, 51.16, 43.66, 39.97, 88.18, 69.73, 54.25, 46.84, 43.03, 87.7, 66.22, 52.47, 47.14, 42.58, 88.09, 82.76, 63.06, 52.14, 51.28, 88.15, 69.25, 51.51, 51.33, 51.22, 88.06, 83.89, 72.56, 63.83, 58.36, 88.33, 74.46, 61.57, 56.48, 53.15, 88.51, 69.43, 54.61, 53.21, 52.63, 88.36, 70.35, 49.1, 43.21, 39.43, 59.73, 54.02, 40.89, 50.06, 54.02, 56.31, 76.4, 69.7, 62.62, 61.1, 60.33, 85.57, 83.66, 81.79, 79.97, 78.15, 88.15, 88.21, 88.04, 88.27, 88.1, 88.42, 88.01, 87.41, 85.39, 82.17, 62.77, 50.68, 54.94, 55.45, 55.33, 55.8, 52.14, 51.67, 51.67, 51.22, 58.72, 55, 52.44, 50.8, 48.12]
+		# base_MA = np.array(base_MA_nvidia_B)
+		
 
 		# MA_list = [89.29, 89.2, 89.46, 88.75, 82.36, 75.45, 89.08, 88.66, 88.54, 85.54, 82.74, 89.14, 85.51, 63.1, 56.49, 50.6, 89.4, 89.49, 89.35, 88.81, 87.29, 89.35, 89.35, 89.7, 89.11, 87.44, 89.4, 89.55, 89.67, 89.32, 88.39, 89.29, 89.46, 89.7, 89.38, 88.54, 89.38, 89.2, 89.49, 89.49, 88.99, 89.29, 89.4, 89.52, 89.29, 88.9, 89.2, 88.48, 89.05, 88.36, 88.69, 89.17, 89.14, 88.36, 87.8, 88.66, 89.26, 89.02, 88.24, 87.77, 85.65, 89.29, 89.32, 88.54, 88.18, 84.52, 89.32, 89.73, 86.76, 80.6, 61.88, 89.29, 89.08, 81.37, 74.49, 77.71, 71.28, 61.13, 65.6, 83.3, 85.62, 54.52, 76.04, 68.07, 59.4, 57.92, 58.12, 87.38, 85.83, 83.6, 81.76, 79.88, 89.61, 89.67, 89.61, 89.61, 89.52, 89.49, 89.52, 89.64, 89.23, 89.38, 86.9, 56.16, 66.88, 75.8, 74.64, 84.91, 81.46, 79.17, 79.26, 77.59, 77.62, 73.15, 67.17, 63.42, 57.86]
 		# MA_list = np.array(MA_list)
 
-		MA_list = MA_list / 100.
 
 		MA_list_nvidia_Hc_augmix = [75.72, 75.67, 75.79, 74.89, 73.26, 68.15, 75.61, 75.64, 75.62, 75.49, 75.06, 75.37, 72.84, 69.41, 66.22, 67.25, 75.67, 75.64, 75.72, 75.66, 75.81, 75.57, 75.34, 75.67, 75.51, 75.54, 75.71, 75.59, 75.42, 75.49, 75.46, 75.71, 75.46, 75.71, 75.67, 75.67, 75.66, 75.69, 75.34, 75.36, 75.37, 75.69, 75.62, 75.67, 75.41, 74.99, 75.74, 75.54, 75.69, 75.51, 75.67, 75.57, 75.57, 75.47, 75.54, 75.59, 75.56, 75.41, 75.46, 75.37, 75.27, 75.71, 75.81, 75.79, 75.51, 75.24, 75.71, 75.61, 75.46, 75.51, 74.53, 75.66, 75.51, 74.66, 73.36, 65.47, 73.44, 70.05, 69.20, 74.56, 75.26, 70.88, 75.21, 74.76, 73.86, 72.93, 71.55, 74.96, 74.64, 74.43, 74.06, 73.33, 75.87, 75.57, 75.59, 75.62, 75.81, 75.62, 75.87, 75.79, 75.72, 75.32, 74.99, 74.09, 74.11, 72.69, 73.94, 74.74, 74.29, 73.89, 74.24, 73.66, 75.64, 75.37, 74.43, 73.48, 71.38]
 		MA_list_nvidia_Hc_ours = [78.32, 78.24, 78.32, 78.35, 76.96, 75.02, 78.29, 78.50, 78.39, 77.82, 76.44, 77.77, 74.44, 75.46, 76.04, 70.01, 78.40, 78.45, 78.64, 78.45, 78.77, 78.47, 78.60, 78.55, 78.24, 78.26, 78.40, 78.55, 78.65, 78.65, 78.45, 78.44, 78.62, 78.55, 78.47, 78.54, 78.37, 78.37, 78.40, 78.32, 78.04, 78.40, 78.60, 78.29, 78.27, 77.89, 78.44, 78.39, 78.44, 78.49, 78.29, 78.44, 78.26, 78.39, 78.35, 78.31, 78.45, 78.54, 78.21, 78.24, 77.71, 78.47, 78.49, 78.55, 78.22, 77.54, 78.42, 78.74, 78.04, 76.91, 58.99, 78.45, 77.99, 76.64, 75.19, 69.78, 72.41, 71.76, 75.02, 76.91, 78.21, 66.20, 78.27, 77.41, 76.64, 74.23, 72.86, 77.29, 76.76, 76.74, 76.27, 75.67, 78.31, 78.24, 78.44, 78.39, 78.31, 78.26, 78.47, 78.26, 77.87, 78.27, 76.89, 75.77, 74.91, 71.51, 73.94, 76.61, 75.52, 74.59, 74.51, 73.91, 75.46, 72.78, 67.37, 64.20, 59.27]
@@ -783,25 +1157,71 @@ def unit_test_for_style():
 
 		base_MA_nvidia_B = [88.36, 88.21, 88.06, 86.07, 81.16, 73.33, 88.33, 86.01, 81.42, 76.39, 73.15, 88.63, 74.97, 57.67, 48.83, 49.16, 87.81, 65.06, 57.91, 55.44, 53.24, 87.67, 61.36, 52.14, 47.44, 45.14, 88.54, 73, 53.54, 48.21, 44.16, 87.91, 69.55, 51.16, 43.66, 39.97, 88.18, 69.73, 54.25, 46.84, 43.03, 87.7, 66.22, 52.47, 47.14, 42.58, 88.09, 82.76, 63.06, 52.14, 51.28, 88.15, 69.25, 51.51, 51.33, 51.22, 88.06, 83.89, 72.56, 63.83, 58.36, 88.33, 74.46, 61.57, 56.48, 53.15, 88.51, 69.43, 54.61, 53.21, 52.63, 88.36, 70.35, 49.1, 43.21, 39.43, 59.73, 54.02, 40.89, 50.06, 54.02, 56.31, 76.4, 69.7, 62.62, 61.1, 60.33, 85.57, 83.66, 81.79, 79.97, 78.15, 88.15, 88.21, 88.04, 88.27, 88.1, 88.42, 88.01, 87.41, 85.39, 82.17, 62.77, 50.68, 54.94, 55.45, 55.33, 55.8, 52.14, 51.67, 51.67, 51.22, 58.72, 55, 52.44, 50.8, 48.12]
 		base_MA_nvidia_Hc = [75.84, 75.69, 75.44, 74.51, 70.05, 61.99, 75.87, 75.36, 74.83, 72.26, 69.81, 74.91, 69.06, 66.80, 71.50, 62.79, 75.77, 69.85, 58.47, 53.33, 46.47, 75.79, 66.73, 54.43, 51.25, 45.75, 75.77, 74.76, 65.85, 60.26, 46.72, 75.71, 70.38, 55.68, 47.57, 35.03, 75.86, 72.93, 52.61, 45.07, 42.66, 75.87, 67.35, 49.95, 44.17, 36.13, 75.86, 74.23, 73.14, 68.70, 65.53, 75.86, 73.71, 66.85, 65.88, 65.50, 75.77, 75.71, 73.76, 72.56, 70.81, 75.72, 71.60, 60.99, 56.74, 50.02, 75.77, 71.53, 57.84, 51.33, 60.51, 75.72, 70.38, 54.25, 51.12, 47.15, 47.47, 48.42, 66.22, 62.85, 50.08, 57.59, 74.86, 74.11, 72.91, 70.63, 68.95, 75.07, 74.78, 74.13, 73.69, 72.93, 75.61, 75.76, 75.61, 75.64, 75.74, 75.79, 75.42, 75.41, 75.44, 74.41, 71.74, 67.85, 67.28, 66.05, 64.80, 64.67, 60.04, 58.04, 58.36, 56.98, 61.85, 58.21, 53.90, 51.95, 49.15]
+		base_MA_nvidia_H100k = [90.13, 86.45, 76.12, 62.28, 55.82, 52.77, 85.90, 76.37, 59.18, 41.88, 33.32, 90.20, 88.75, 79.93, 66.22, 64.35, 90.67, 74.70, 54.10, 46.45, 40.38, 88.33, 49.00, 45.50, 49.23, 56.60, 90.45, 84.02, 68.22, 59.77, 48.10, 89.60, 68.20, 53.90, 53.27, 56.80, 88.50, 42.42, 59.80, 64.80, 66.13, 84.13, 19.63, 15.78, 16.60, 27.92, 90.45, 82.80, 44.28, 38.90, 38.95, 90.18, 88.40, 70.87, 55.65, 38.12, 90.05, 87.65, 76.12, 72.00, 57.97, 89.53, 72.08, 51.45, 49.10, 43.67, 90.18, 82.93, 47.35, 33.15, 60.37, 88.90, 62.92, 41.98, 40.70, 41.00, 17.47, 3.85, 71.62, 30.85, 14.40, 24.08, 81.87, 75.13, 69.60, 62.98, 60.38, 84.78, 85.05, 83.27, 82.88, 80.20, 89.98, 89.30, 87.88, 84.97, 82.97, 85.38, 79.07, 78.52, 75.82, 71.33, 66.95, 50.77, 50.62, 41.73, 35.00, 43.73, 30.23, 25.65, 25.83, 23.43, 30.60, 22.12, 18.33, 17.72, 13.67]
 		base_MA_nvidia_Ads = [91.08, 89.82, 88.59, 82.77, 68.88, 53.59, 89.50, 85.97, 69.65, 56.93, 47.25, 88.77, 49.30, 38.89, 4.93, 0.00, 91.53, 86.72, 76.05, 71.64, 63.54, 91.53, 85.27, 74.16, 69.70, 60.50, 79.51, 24.07, 6.00, 2.01, 0.33, 88.28, 39.15, 24.67, 20.61, 4.55, 81.14, 26.26, 6.26, 2.10, 0.23, 88.54, 39.43, 25.26, 21.15, 13.87, 87.98, 83.38, 64.17, 59.55, 33.71, 89.36, 52.85, 31.35, 49.30, 33.71, 91.81, 72.81, 49.14, 43.25, 30.95, 77.43, 23.76, 6.89, 6.44, 2.68, 67.83, 8.50, 0.37, 0.14, 0.00, 88.38, 34.34, 20.61, 11.18, 2.15, 15.92, 0.00, 28.99, 2.12, 37.07, 1.26, 86.04, 80.37, 71.08, 63.52, 57.77, 78.52, 74.39, 70.28, 67.81, 63.82, 89.73, 89.50, 90.15, 90.10, 89.96, 89.94, 89.26, 87.32, 81.61, 74.67, 18.53, 11.81, 11.83, 5.77, 2.57, 14.43, 10.85, 10.22, 11.06, 10.57, 12.89, 11.93, 9.85, 9.69, 8.43]
+		base_MA_nvidia_Waymo = [48.34, 50.26, 51.00, 51.51, 52.27, 50.34, 48.51, 47.80, 42.63, 31.52, 21.89, 48.65, 49.73, 50.69, 51.45, 38.73, 49.32, 48.01, 47.48, 47.31, 45.06, 49.05, 36.97, 24.67, 23.91, 23.50, 49.12, 49.06, 50.00, 48.91, 51.26, 48.72, 34.90, 36.12, 40.04, 45.14, 48.90, 38.96, 51.52, 52.60, 53.20, 49.57, 45.67, 41.36, 40.43, 38.36, 47.79, 41.04, 45.21, 44.04, 39.82, 49.69, 49.17, 46.46, 41.48, 39.47, 48.93, 48.17, 43.69, 40.25, 29.30, 48.91, 47.44, 45.87, 45.97, 45.73, 49.16, 45.97, 31.03, 27.86, 31.85, 50.30, 49.85, 42.17, 36.61, 28.11, 44.30, 54.20, 50.33, 47.34, 54.00, 50.71, 48.97, 49.04, 48.32, 46.72, 47.00, 49.28, 49.27, 49.32, 49.51, 49.61, 49.79, 49.01, 49.85, 48.87, 50.41, 49.24, 49.30, 50.13, 49.21, 45.13, 42.08, 26.54, 26.44, 14.63, 9.13, 34.91, 26.00, 22.35, 24.18, 21.86, 25.69, 19.71, 16.34, 16.04, 14.07]
 		base_MA_commaai_B = [81.96, 82.26, 82.50, 80.86, 77.56, 70.89, 82.71, 80.54, 77.74, 72.71, 67.68, 73.54, 49.49, 33.33, 54.32, 52.77, 81.76, 64.61, 51.73, 48.51, 46.67, 82.11, 57.95, 46.76, 45.57, 49.43, 82.41, 65.48, 51.93, 50.00, 47.38, 81.85, 66.04, 58.04, 57.41, 56.25, 82.65, 71.31, 60.51, 57.32, 50.95, 82.62, 70.89, 59.55, 58.21, 53.18, 81.43, 74.46, 66.19, 61.52, 53.84, 82.32, 67.80, 50.74, 53.04, 53.24, 83.15, 81.55, 73.15, 68.93, 57.14, 81.70, 74.11, 62.14, 58.27, 52.41, 82.86, 72.71, 47.02, 39.94, 37.68, 82.29, 76.25, 63.90, 60.45, 54.85, 54.64, 32.50, 36.88, 48.99, 60.65, 57.23, 82.23, 79.52, 78.07, 75.80, 73.45, 81.52, 80.18, 79.37, 78.01, 76.85, 82.35, 83.04, 82.62, 82.29, 83.01, 82.50, 82.11, 81.40, 80.15, 77.92, 66.99, 59.20, 57.92, 57.68, 57.23, 61.46, 60.51, 59.46, 60.18, 59.52, 62.02, 58.33, 55.74, 54.79, 52.38]
 		base_MA_commaai_Hc = [74.23, 72.58, 73.46, 71.61, 67.57, 61.85, 73.53, 71.94, 70.63, 67.87, 63.47, 71.71, 69.08, 70.35, 67.50, 71.11, 74.08, 68.66, 57.09, 52.91, 47.09, 72.66, 51.53, 33.60, 31.92, 31.87, 73.76, 65.32, 46.35, 42.22, 39.09, 73.14, 66.23, 47.30, 42.39, 36.36, 73.41, 69.43, 58.54, 53.33, 45.09, 73.71, 56.33, 29.62, 20.13, 10.31, 73.16, 68.32, 65.73, 61.29, 50.52, 73.96, 70.28, 60.31, 58.26, 50.35, 72.66, 73.38, 71.96, 71.35, 67.02, 72.73, 71.06, 62.02, 58.28, 51.32, 72.86, 72.61, 63.44, 60.89, 65.07, 72.44, 66.53, 38.41, 26.26, 15.85, 69.68, 68.80, 69.91, 63.80, 36.70, 67.35, 72.96, 72.49, 70.90, 69.66, 68.61, 71.74, 70.00, 70.10, 69.65, 69.68, 72.39, 73.13, 73.31, 73.01, 72.93, 73.14, 71.99, 72.98, 72.64, 72.08, 64.44, 47.40, 47.97, 41.03, 30.69, 45.75, 32.88, 28.01, 28.84, 26.96, 53.53, 50.27, 46.15, 46.30, 43.89]
 		base_MA_commaai_Ads = [79.34, 78.34, 78.08, 76.14, 67.81, 54.53, 78.76, 77.24, 72.99, 64.31, 54.95, 39.54, 5.72, 8.96, 3.06, 2.33, 77.33, 38.47, 4.20, 2.01, 1.31, 77.80, 49.56, 30.56, 29.74, 30.42, 78.27, 41.99, 4.55, 1.42, 0.63, 78.78, 62.98, 45.19, 40.64, 31.72, 75.00, 35.41, 22.53, 21.03, 17.79, 78.97, 32.66, 14.38, 9.92, 5.35, 78.66, 75.68, 59.59, 48.04, 44.89, 77.71, 70.17, 43.58, 32.96, 45.80, 78.06, 74.53, 63.94, 58.01, 46.17, 76.75, 40.45, 12.09, 9.64, 10.41, 73.83, 18.79, 1.73, 1.70, 1.82, 78.01, 43.77, 12.32, 4.53, 0.96, 11.41, 1.52, 6.82, 1.61, 33.59, 1.33, 77.66, 75.19, 71.36, 67.62, 61.74, 72.90, 70.28, 66.53, 64.17, 59.45, 78.22, 79.32, 78.36, 77.59, 78.38, 78.71, 77.92, 77.17, 76.28, 71.71, 25.75, 14.40, 14.85, 10.60, 6.68, 15.92, 11.95, 9.76, 10.74, 9.41, 21.66, 18.51, 18.09, 18.02, 18.65]
-		if "commaai" in train_folder:
+		
+		base_MA_resnet_Hc = [82.20, 82.17, 81.52, 77.12, 71.86, 68.35, 82.15, 80.59, 75.46, 70.70, 67.80, 80.30, 76.37, 71.30, 66.95, 68.51, 82.05, 78.40, 70.93, 67.58, 62.02, 82.03, 77.71, 71.46, 70.46, 70.43, 82.12, 82.13, 82.03, 81.37, 80.24, 82.08, 80.92, 76.69, 74.79, 69.78, 82.10, 81.90, 78.45, 75.89, 72.19, 82.07, 77.19, 67.70, 62.50, 57.03, 82.03, 81.77, 81.55, 79.64, 77.56, 82.23, 81.65, 78.62, 77.97, 77.59, 82.10, 81.59, 80.10, 79.72, 77.91, 82.20, 80.29, 74.33, 72.18, 66.75, 82.10, 79.14, 71.28, 62.59, 58.34, 82.18, 75.54, 64.34, 64.10, 63.09, 70.26, 63.32, 69.95, 72.26, 65.15, 62.50, 82.07, 81.92, 80.77, 78.94, 77.66, 81.05, 80.54, 79.92, 79.32, 78.60, 82.17, 82.25, 82.17, 81.92, 81.83, 82.18, 82.10, 82.25, 81.95, 82.03, 74.04, 68.96, 68.33, 65.50, 64.14, 69.18, 64.60, 62.69, 62.84, 61.99, 64.97, 61.75, 57.91, 56.14, 52.91]
+
+		if BN_flag == 5:
 			if "trainB" in train_folder:
-				base_MA = np.array(base_MA_commaai_B) / 100.
+				base_MA = np.array(base_MA_commaai_B)
 			elif "trainHc" in train_folder:
-				base_MA = np.array(base_MA_commaai_Hc) / 100.
+				base_MA = np.array(base_MA_commaai_Hc)
 			elif "trainAds" in train_folder:
-				base_MA = np.array(base_MA_commaai_Ads) / 100.
+				base_MA = np.array(base_MA_commaai_Ads)
+		elif BN_flag == 8:
+			if "trainB" in train_folder:
+				base_MA = np.array(base_MA_resnet_B)
+			elif "trainHc" in train_folder:
+				base_MA = np.array(base_MA_resnet_Hc)
+			elif "trainAds" in train_folder:
+				base_MA = np.array(base_MA_resnet_Ads)
 		else:
 			if "trainB" in train_folder:
-				base_MA = np.array(base_MA_nvidia_B) / 100.
+				base_MA = np.array(base_MA_nvidia_B)
 			elif "trainHc" in train_folder:
-				base_MA = np.array(base_MA_nvidia_Hc) / 100.
+				base_MA = np.array(base_MA_nvidia_Hc)
+			elif "trainHonda100k" in train_folder:
+				base_MA = np.array(base_MA_nvidia_H100k)
 			elif "trainAds" in train_folder:
-				base_MA = np.array(base_MA_nvidia_Ads) / 100.
+				base_MA = np.array(base_MA_nvidia_Ads)
+			elif "trainWaymo" in train_folder:
+				base_MA = np.array(base_MA_nvidia_Waymo)
 
+
+		base_scene1 = base_MA[0]
+		base_scene2 = base_MA[1:76]
+		base_scene3 = base_MA[76:82]
+		base_scene4 = base_MA[82:117]
+
+
+		for MA in MA_list:
+			print("{:.2f}\t".format(MA))
+
+		res_scene1 = MA_list[0]
+		res_scene2 = MA_list[1:76]
+		res_scene3 = MA_list[76:82]
+		res_scene4 = MA_list[82:117]
+
+
+		print("scene1\t{:.2f}".format(res_scene1))
+		print("scene2\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene2), np.min(res_scene2), np.max(res_scene2)))
+		print("scene3\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene3), np.min(res_scene3), np.max(res_scene3)))
+		print("scene4\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene4), np.min(res_scene4), np.max(res_scene4)))
+
+		print("scene1\t{:.2f}".format(res_scene1-base_scene1))
+		print("scene2\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene2-base_scene2), np.min(res_scene2-base_scene2), np.max(res_scene2-base_scene2)))
+		print("scene3\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene3-base_scene3), np.min(res_scene3-base_scene3), np.max(res_scene3-base_scene3)))
+		print("scene4\taverage\t{:.2f}\tmin\t{:.2f}\tmax\t{:.2f}".format(np.mean(res_scene4-base_scene4), np.min(res_scene4-base_scene4), np.max(res_scene4-base_scene4)))
+
+
+
+		MA_list = MA_list / 100.
+		base_MA = base_MA / 100.
 		corruption_accs_1, corruption_accs_2, corruption_accs_3, corruption_accs_4 = reformal_corruption_accs(MA_list)
 		base_accs_1, base_accs_2, base_accs_3, base_accs_4 = reformal_corruption_accs(base_MA)
 
@@ -1155,39 +1575,29 @@ def combination_test_for_style(subtask_id):
 	elif subtask_id == '48':
 		TRAIN_FOLDER_LIST = [["trainAudi5"]]
 		VAL_LIST = [["valAudi5"]]
-		VAL_LIST = [["trainAudi5"],["trainAudi6"]]
 		TRAIN_RATIO_LIST = [[0.2],[1]]
 	elif subtask_id == '49':
 		TRAIN_FOLDER_LIST = [["trainAudi6"]]
 		VAL_LIST = [["valAudi6"]]
-		VAL_LIST = [["trainAudi5"],["trainAudi6"]]
 		TRAIN_RATIO_LIST = [[0.2],[1]]
 	elif subtask_id == '50':
 		TRAIN_FOLDER_LIST = [["trainAudi5"]]
 		VAL_LIST = [["valAudi5"]]
-		VAL_LIST = [["valAudi5"],["valAudi6"]]
-		VAL_LIST = [["trainAudi5"],["trainAudi6"]]
 		TRAIN_RATIO_LIST = [[0.2],[1]]
 		BN_flag = 7
 	elif subtask_id == '51':
 		TRAIN_FOLDER_LIST = [["trainAudi6"]]
 		VAL_LIST = [["valAudi6"]]
-		VAL_LIST = [["valAudi5"],["valAudi6"]]
-		VAL_LIST = [["trainAudi5"],["trainAudi6"]]
 		TRAIN_RATIO_LIST = [[0.2],[1]]
 		BN_flag = 7
 	elif subtask_id == '52':
 		TRAIN_FOLDER_LIST = [["trainAudi5"]]
 		VAL_LIST = [["valAudi5"]]
-		VAL_LIST = [["valAudi5"],["valAudi6"]]
-		VAL_LIST = [["trainAudi5"],["trainAudi6"]]
 		TRAIN_RATIO_LIST = [[0.2],[1]]
 		BN_flag = 8
 	elif subtask_id == '53':
 		TRAIN_FOLDER_LIST = [["trainAudi6"]]
 		VAL_LIST = [["valAudi6"]]
-		VAL_LIST = [["valAudi5"],["valAudi6"]]
-		VAL_LIST = [["trainAudi5"],["trainAudi6"]]
 		TRAIN_RATIO_LIST = [[0.2],[1]]
 		BN_flag = 8
 	elif subtask_id == '54':
@@ -1394,7 +1804,126 @@ def combination_test_for_style(subtask_id):
 		pack_in_channel = True
 		BN_flag = 8
 		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_76_1_BN8_pack_channel_pytorch/model-final.pth"
+	elif subtask_id == '84':
+		TRAIN_FOLDER_LIST = [["trainAudi6"]]
+		VAL_LIST = [["valAudi6"]]
+		TRAIN_RATIO_LIST = [[1]]
+		suffix = suffix + "_base_noise_test"
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_84_0_base_noise_pytorch/model-final.pth"
+		# suffix = suffix + "_base_noise"
+		# suffix = suffix + "_ori"
+		# suffix = suffix + "_addconv"
+	elif subtask_id == '85':
+		TRAIN_FOLDER_LIST = [["trainAudi5", "trainAudi5seginfer", "trainAudi5edgeinfer", "trainAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+	elif subtask_id == '86':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6seginfer", "trainAudi6edgeinfer", "trainAudi6depthinfer"]]
+		VAL_LIST = [["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+	elif subtask_id == '87':
+		TRAIN_FOLDER_LIST = [["trainAudi5", "trainAudi5seginfer", "trainAudi5edgeinfer", "trainAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 7
+	elif subtask_id == '88':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6seginfer", "trainAudi6edgeinfer", "trainAudi6depthinfer"]]
+		VAL_LIST = [["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 7
+	elif subtask_id == '89':
+		TRAIN_FOLDER_LIST = [["trainAudi5", "trainAudi5seginfer", "trainAudi5edgeinfer", "trainAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 8
+	elif subtask_id == '90':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6seginfer", "trainAudi6edgeinfer", "trainAudi6depthinfer"]]
+		VAL_LIST = [["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 8
+	elif subtask_id == '91':
+		TRAIN_FOLDER_LIST = [["trainAudi5", "trainAudi5seginfer", "trainAudi5edgeinfer", "trainAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_86_1_pack_channel_pytorch/model-final.pth"
+		# BN_flag = 8
+	elif subtask_id == '92':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6seginfer", "trainAudi6edgeinfer", "trainAudi6depthinfer"]]
+		VAL_LIST = [["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_85_1_pack_channel_pytorch/model-final.pth"
+		# BN_flag = 8
+	elif subtask_id == '93':
+		TRAIN_FOLDER_LIST = [["trainAudi5", "trainAudi5seginfer", "trainAudi5edgeinfer", "trainAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 7
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_88_1_BN7_pack_channel_pytorch/model-final.pth"
+	elif subtask_id == '94':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6seginfer", "trainAudi6edgeinfer", "trainAudi6depthinfer"]]
+		VAL_LIST = [["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 7
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_87_1_BN7_pack_channel_pytorch/model-final.pth"
+	elif subtask_id == '95':
+		TRAIN_FOLDER_LIST = [["trainAudi5", "trainAudi5seginfer", "trainAudi5edgeinfer", "trainAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 8
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_90_1_BN8_pack_channel_pytorch/model-final.pth"
+	elif subtask_id == '96':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6seginfer", "trainAudi6edgeinfer", "trainAudi6depthinfer"]]
+		VAL_LIST = [["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		VAL_LIST = [["valAudi5", "valAudi5seginfer", "valAudi5edgeinfer", "valAudi5depthinfer"], \
+					["valAudi6", "valAudi6seginfer", "valAudi6edgeinfer", "valAudi6depthinfer"]]
+		TRAIN_RATIO_LIST = [[0.2],[1]]
+		pack_in_channel = True
+		BN_flag = 8
+		pretrain_model_path = TRAIN_OUTPUT_ROOT + "combine_89_1_BN8_pack_channel_pytorch/model-final.pth"
+	elif subtask_id == '97':
+		TRAIN_FOLDER_LIST = [["trainHonda100k", "trainHonda100kdepthinfer"]]
+		VAL_LIST = [["valHonda100k", "valHonda100kdepthinfer"]]
+		TRAIN_RATIO_LIST = [[1]]
+		pack_in_channel = True
 	elif subtask_id == '100':
+		TRAIN_FOLDER_LIST = [["trainAudi6", "trainAudi6segall"]]
+		VAL_LIST = [["valAudi6", "valAudi6segall"]]
+		TRAIN_RATIO_LIST = [[1]]
+		pack_in_channel = True
+	elif subtask_id == '1000':
 		#For test
 		TRAIN_FOLDER_LIST = [["trainB_blur"]]
 		TRAIN_RATIO_LIST = [[1]]
@@ -1415,10 +1944,10 @@ def combination_test_for_style(subtask_id):
 	for train_folder_list in TRAIN_FOLDER_LIST:
 		for train_ratio in TRAIN_RATIO_LIST:
 
-			trainOurputFolder = "combine_" + str(subtask_id) + "_" + str(i) + suffix
-			#trainOurputFolder = "combine_" + str(train_folder_list) + "_" + str(train_ratio) + suffix
+			trainOutputFolder = "combine_" + str(subtask_id) + "_" + str(i) + suffix
+			#trainOutputFolder = "combine_" + str(train_folder_list) + "_" + str(train_ratio) + suffix
 
-			trainOutputPath = TRAIN_OUTPUT_ROOT + trainOurputFolder + "/"
+			trainOutputPath = TRAIN_OUTPUT_ROOT + trainOutputFolder + "/"
 
 			imagePath_list = []
 			labelPath_list = []
@@ -1428,7 +1957,7 @@ def combination_test_for_style(subtask_id):
 				labelPath = DATASET_ROOT + labelName
 				imagePath_list.append(imagePath)
 				labelPath_list.append(labelPath)
-			train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio, pack_flag=pack_in_channel, pytorch_flag=pytorch_flag)
+			# train_network_multi(imagePath_list, labelPath_list, trainOutputPath, pretrain_model_path, BN_flag=BN_flag, trainRatio=train_ratio, pack_flag=pack_in_channel, pytorch_flag=pytorch_flag)
 
 			modelPath = trainOutputPath + "model-final.h5"
 			if pytorch_flag:
@@ -1444,7 +1973,7 @@ def combination_test_for_style(subtask_id):
 					imagePath_list.append(imagePath)
 					labelPath_list.append(labelPath)
 
-				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOurputFolder + ")_(" + str(val_folder_list) + ")/test_result.txt"
+				valOutputPath = TEST_OUTPUT_ROOT + "(" + trainOutputFolder + ")_(" + str(val_folder_list) + ")/test_result.txt"
 				res = test_network_multi(modelPath, imagePath_list, labelPath_list, valOutputPath, BN_flag=BN_flag, pack_flag=pack_in_channel, pytorch_flag=pytorch_flag)
 				res_array.append(res)
 			i += 1
@@ -1791,7 +2320,7 @@ if __name__ == "__main__":
 		elif args.task_id == '1':
 			single_test_with_config(args.subtask_id)
 		elif args.task_id == '2':
-			unit_test_for_style()
+			unit_test_for_robust()
 		elif args.task_id == '3':
 			unit_test_for_quality(args.subtask_id)
 		elif args.task_id == '4':
@@ -1814,14 +2343,14 @@ if __name__ == "__main__":
 			print("Unknown task: " + args.task_id)
 	else:
 		# single_test()
-		single_test_with_config('100')
+		# single_test_with_config('100')
 		#single_test_AdvProp()
 		#single_test_ImgAndFeature()
-		#single_test_2_streams()
-		#multi_factor_search_test()
-		#unit_test_for_style()
+		# single_test_2_streams('2')
+		# multi_factor_search_test()
+		unit_test_for_robust()
 		#unit_test_for_quality()
-		#combination_test_for_style('36')
+		# combination_test_for_style('61')
 		#combination_test_for_style_pretrain()
 		#test_AdvProp()
 		#calculate_FID_folder('11')

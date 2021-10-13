@@ -20,7 +20,7 @@ print('Dataset root: ', root)
 #### CHANGE THESE AS NEEDED ####
 NVIDIA = False
 Udacity = False
-Honda = False
+Honda = True
 Audi = False
 SPLIT = True
 
@@ -217,8 +217,10 @@ if NVIDIA:
     print("convert nvidia labels successfully!")
 
 if Honda:
-    input_file = root + "labelsHc_ori.csv"
-    output_file = root + "labelsHc_trainval.csv"
+    # input_file = root + "labelsHc_ori.csv"
+    # output_file = root + "labelsHc_trainval.csv"
+    input_file = root + "labelsHonda100k_ori.csv"
+    output_file = root + "labelsHonda100k_trainval.csv"
     convert_HONDA(input_file, output_file)
     print("convert honda labels successfully!")
 
@@ -246,10 +248,14 @@ if SPLIT:
         print("split nvidia labels successfully!")
 
     if Honda:
-        imgs_train_folder = root + 'trainHc/'
-        lables_trainval_filename = root + 'labelsHc_trainval.csv'
-        lables_train_filename = root + 'labelsHc_train.csv'
-        lables_val_filename = root + 'labelsHc_val.csv'
+        # imgs_train_folder = root + 'trainHc/'
+        # lables_trainval_filename = root + 'labelsHc_trainval.csv'
+        # lables_train_filename = root + 'labelsHc_train.csv'
+        # lables_val_filename = root + 'labelsHc_val.csv'
+        imgs_train_folder = root + 'trainHonda100k/'
+        lables_trainval_filename = root + 'labelsHonda100k_trainval.csv'
+        lables_train_filename = root + 'labelsHonda100k_train.csv'
+        lables_val_filename = root + 'labelsHonda100k_val.csv'
         split(imgs_train_folder, lables_trainval_filename, lables_train_filename, lables_val_filename)
         print("split Honda labels successfully!")
 

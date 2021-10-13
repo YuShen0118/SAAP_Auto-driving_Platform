@@ -614,7 +614,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	if BN_flag == 7: # LSTM
 		valid_size=0.1
 		split_pos = int(len(xList)*(1-valid_size))
-		print(split_pos)
+		# print(split_pos)
 		xTrainList = np.array(xList[0:split_pos])
 		xValidList = np.array(xList[split_pos:])
 
@@ -623,6 +623,17 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 	else:
 		xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 		yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
+
+
+	#TODO
+	# imageDir_list_valid=[imageDir_list[0].replace("trainWaymo", "valWaymo")]
+	# labelPath_list_valid=[labelPath_list[0].replace("train", "val")]
+	# # imageDir_list_valid=['/scratch/yushen/SAAP_Auto-driving_Platform/Data/udacityA_nvidiaB/valWaymo/']
+	# # labelPath_list_valid=['/scratch/yushen/SAAP_Auto-driving_Platform/Data/udacityA_nvidiaB/labelsWaymo_val.csv']
+	# xValidList, yValidList = load_train_data_multi(imageDir_list_valid, labelPath_list_valid, nRep, fThreeCameras, trainRatio, specialFilter=specialFilter)
+	# xValidList = np.array(xValidList)
+	# yValidList = np.array(yValidList)
+
 
 	# yTrainList/=15
 	# yValidList/=15
@@ -659,7 +670,7 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 		else:
 
 			size = (66, 200)
-			if BN_flag == 8: #resnet
+			if BN_flag == 8 or BN_flag == 10: #resnet
 				size = (64, 64)
 			transform=transforms.Compose([
 				# transforms.Resize((66, 200)),
@@ -1002,8 +1013,8 @@ def train_dnn_multi(imageDir_list, labelPath_list, outputPath, netType, flags, s
 			f_log.write("{:d},{:.4f},{:.4f},{:.4f},{:.4f}\n".format(epoch+1, running_loss / train_batch_num, train_acc, valid_loss / valid_batch_num, val_acc))
 			f_log.flush()
 
-			save_step = 100
-			if BN_flag == 7 or BN_flag == 8:
+			save_step = 10
+			if BN_flag == 7 or BN_flag == 8 or BN_flag == 10:
 				save_step = 1000
 			if epoch % save_step == 0:
 				torch.save(net.state_dict(), outputPath + 'model_' + str(epoch) + '.pth')
@@ -1072,6 +1083,10 @@ def train_dnn_multi_two_stream(imageDir_list, labelPath_list, outputPath, netTyp
 		xList, yList = load_train_data_multi_pack(imageDir_list, labelPath_list, nRep, fThreeCameras, trainRatio)
 		xList_advp, yList_advp = load_train_data_multi_pack(imageDir_list_advp, labelPath_list_advp, nRep, fThreeCameras, trainRatio_advp)
 
+	dict_major2hint = {}
+	for x_pair in xList_advp:
+		dict_major2hint[x_pair[0]]=x_pair[1]
+
 	xTrainList, xValidList = train_test_split(np.array(xList), test_size=0.1, random_state=42)
 	yTrainList, yValidList = train_test_split(np.array(yList), test_size=0.1, random_state=42)
 
@@ -1094,8 +1109,12 @@ def train_dnn_multi_two_stream(imageDir_list, labelPath_list, outputPath, netTyp
 	print('Valid2 data:', xValidList_advp.shape, yValidList_advp.shape)
 	print('##############################\n')
 	
+	size=(66, 200)
+	if (BN_flag == 10): #resnet
+		size=(64,64)
+
 	transform=transforms.Compose([
-		transforms.Resize((66, 200)),
+		transforms.Resize(size),
 		transforms.ToTensor(),
 		# transforms.Lambda(lambda rgb_img: 
 		# 	torch.matmul(rgb_img.permute(1, 2, 0), 
@@ -1160,22 +1179,20 @@ def train_dnn_multi_two_stream(imageDir_list, labelPath_list, outputPath, netTyp
 		train_ADDA(BN_flag, fClassifier, nClass, nChannel, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
 			trainGenerator_src, trainGenerator_dst, validGenerator_src, validGenerator_dst, 
 			loss_domain, loss_regression, thresh_holds, outputPath, f_log)
-	elif BN_flag == 9:
+	elif BN_flag == 9 or BN_flag == 10:
 		nChannel_base = 3
 		nChannel_hint = 6
-		hard_case_ratio = 0.02
-		hard_case_ratio_thresh = 0.2
+		hard_case_ratio = 1#0.02
+		hard_case_ratio_thresh = 1#0.2
 		train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nRound, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
-			trainGenerator_src, validGenerator_src, imageDir_list, imageDir_list_advp, transform, loss_regression, thresh_holds, outputPath, f_log, hard_case_ratio, hard_case_ratio_thresh)
+			trainGenerator_src, validGenerator_src, imageDir_list, imageDir_list_advp, dict_major2hint, transform, loss_regression, thresh_holds, outputPath, f_log, hard_case_ratio, hard_case_ratio_thresh)
 
 	f_log.close()
 
 def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nRound, nEpoch, batchSize, train_batch_num, valid_batch_num, modelPath,
-	trainGenerator_base, validGenerator_base, imageDir_list_base, imageDir_list_hint, transform, criterion, thresh_holds, outputPath, f_log, hard_case_ratio = 0.01, hard_case_ratio_thresh=0.1):
+	trainGenerator_base, validGenerator_base, imageDir_list_base, imageDir_list_hint, dict_major2hint, transform, criterion, thresh_holds, outputPath, f_log, hard_case_ratio = 0.01, hard_case_ratio_thresh=0.1):
 
-	net_f_ori = net_nvidia_pytorch_CNN(nChannel_base)
-	net_f_hint = net_nvidia_pytorch_CNN(nChannel_hint)
-	net_d = net_nvidia_pytorch_regressor()
+	net_f_ori, net_f_hint, net_d = create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel=nChannel_base, nChannel_hint=nChannel_hint)
 
 	net_f_ori.cuda()
 	net_f_hint.cuda()
@@ -1211,7 +1228,7 @@ def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nR
 				# img_path = "a"
 				# s_label = s_label / 15
 
-				batch_size = len(img_base)
+				# batch_size = len(img_base)
 
 				feature_base = net_f_ori(input_data=img_base.cuda(non_blocking=True))
 				output_base,_ = net_d(feature_base)
@@ -1295,6 +1312,7 @@ def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nR
 			f_log.write("{:d},{:d},{:.4f},{:.4f},{:.4f},{:.4f}\n".format(round_id+1, epoch+1, running_loss / train_batch_num, train_acc, valid_loss / valid_batch_num, val_acc))
 			f_log.flush()
 
+		# 10% round general training first, then begin hintnet training
 		# if round_id < nRound * 0.1:
 		# 	continue
 
@@ -1324,36 +1342,43 @@ def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nR
 		hard_case_label_list = []
 		for img_path in dict_hard_cover:
 			label = dict_hard_cover[img_path]
-			element1 = [img_path]
-			for new_folder in imageDir_list_hint:
-				element1.append(img_path.replace(imageDir_list_base[0], new_folder))
-			element1[-1] = element1[-1].replace("_camera_", "_label_")
+			element1 = [img_path, img_path, dict_major2hint[img_path]]
+
+			# for new_folder in imageDir_list_hint:
+			# 	element1.append(img_path.replace(imageDir_list_base[0], new_folder))
+			# element1[-1] = element1[-1].replace("_camera_", "_label_") # for segall
 
 			hard_case_list.append(element1)
 			hard_case_label_list.append(label)
 
 		hard_case_dataset = DrivingDataset_pytorch(hard_case_list, hard_case_label_list, transform=transform)
-		batch_size = 64
+		# batch_size = 64
 
 		if platform == "win32":
-			hard_case_generator = DataLoader(hard_case_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+			hard_case_generator = DataLoader(hard_case_dataset, batch_size=batchSize, shuffle=True, num_workers=0, pin_memory=True)
 			# hard_case_generator = trainGenerator_base
 		else:
-			hard_case_generator = DataLoader(hard_case_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
+			hard_case_generator = DataLoader(hard_case_dataset, batch_size=batchSize, shuffle=True, num_workers=8, pin_memory=True)
 			# hard_case_generator = trainGenerator_base
 
 		# copy net_f_ori parameter to net_f_hint
-		net_f_hint.conv1.weight.data = torch.zeros(net_f_hint.conv1.weight.data.shape)
-		net_f_hint.conv1.weight.data[:,0:3,:,:] = net_f_ori.conv1.weight.data
-		net_f_hint.conv1.bias.data = net_f_ori.conv1.bias.data
-		net_f_hint.conv2.weight.data = net_f_ori.conv2.weight.data
-		net_f_hint.conv2.bias.data = net_f_ori.conv2.bias.data
-		net_f_hint.conv3.weight.data = net_f_ori.conv3.weight.data
-		net_f_hint.conv3.bias.data = net_f_ori.conv3.bias.data
-		net_f_hint.conv4.weight.data = net_f_ori.conv4.weight.data
-		net_f_hint.conv4.bias.data = net_f_ori.conv4.bias.data
-		net_f_hint.conv5.weight.data = net_f_ori.conv5.weight.data
-		net_f_hint.conv5.bias.data = net_f_ori.conv5.bias.data
+		if BN_flag == 9:
+			net_f_hint.conv1.weight.data = torch.zeros(net_f_hint.conv1.weight.data.shape)
+			net_f_hint.conv1.weight.data[:,0:3,:,:] = net_f_ori.conv1.weight.data
+			net_f_hint.conv1.bias.data = net_f_ori.conv1.bias.data
+			net_f_hint.conv2.weight.data = net_f_ori.conv2.weight.data
+			net_f_hint.conv2.bias.data = net_f_ori.conv2.bias.data
+			net_f_hint.conv3.weight.data = net_f_ori.conv3.weight.data
+			net_f_hint.conv3.bias.data = net_f_ori.conv3.bias.data
+			net_f_hint.conv4.weight.data = net_f_ori.conv4.weight.data
+			net_f_hint.conv4.bias.data = net_f_ori.conv4.bias.data
+			net_f_hint.conv5.weight.data = net_f_ori.conv5.weight.data
+			net_f_hint.conv5.bias.data = net_f_ori.conv5.bias.data
+		elif BN_flag == 10:
+			net_f_hint.conv1.weight.data = torch.zeros(net_f_hint.conv1.weight.data.shape)
+			net_f_hint.conv1.weight.data[:,0:3,:,:] = net_f_ori.conv1.weight.data
+			net_f_hint.conv1.bias.data = net_f_ori.conv1.bias.data
+			net_f_hint.resnet152.load_state_dict(net_f_ori.resnet152.state_dict())
 
 		net_f_hint.cuda()
 
@@ -1404,17 +1429,38 @@ def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nR
 				optimizer_fh.zero_grad()
 				optimizer_d.zero_grad()
 
-				loss_1 = criterion(output_base, torch.Tensor(labels_2d).cuda(non_blocking=True))
+				# ************************ teacher and student learn together ************************
+				# loss_1 = criterion(output_base, torch.Tensor(labels_2d).cuda(non_blocking=True))
+				# loss_2 = criterion(output_hint, torch.Tensor(labels_2d).cuda(non_blocking=True))
+				# loss_3 = criterion(feature_base, feature_hint)
+
+				# loss = loss_1 + loss_2 + loss_3
+
+				# loss.backward()
+
+				# optimizer_fo.step()
+				# optimizer_fh.step()
+				# optimizer_d.step()
+
+
+
+				# ************************ teacher first, then student ************************
+				# teacher learn first
 				loss_2 = criterion(output_hint, torch.Tensor(labels_2d).cuda(non_blocking=True))
+				loss_2.backward(retain_graph=True)
+				optimizer_fh.step()
+
+				# student learn next
+				loss_1 = criterion(output_base, torch.Tensor(labels_2d).cuda(non_blocking=True))
 				loss_3 = criterion(feature_base, feature_hint)
 
-				loss = loss_1 + loss_2 + loss_3
-
+				loss = loss_1 + loss_3
 				loss.backward()
 
 				optimizer_fo.step()
-				optimizer_fh.step()
 				optimizer_d.step()
+
+
 
 				# print statistics
 				running_loss_hard += loss.item()
@@ -1487,7 +1533,7 @@ def train_hintnet(BN_flag, fClassifier, nClass, nChannel_base, nChannel_hint, nR
 			f_log.flush()
 
 		save_step = 1
-		if nRound == 1:
+		if nEpoch == 1 or BN_flag == 10:
 			save_step = 100
 		if round_id % save_step == 0:
 			torch.save(net_f_ori.state_dict(), outputPath + 'model_f_ori_' + str(round_id) + '.pth')
@@ -2545,7 +2591,7 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 	print('********************************************')
 
 	size = (66, 200)
-	if BN_flag == 8: #resnet
+	if BN_flag == 8 or BN_flag == 10: #resnet
 		size = (64, 64)
 
 	transform=transforms.Compose([
@@ -2568,13 +2614,19 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 	if not pack_flag:
 		for i in range(len(testImagePaths)):
 			image_path = testImagePaths[i]
-			img = resize_image(cv2.imread(image_path))
+			img = cv2.imread(image_path)
+			# if img == None:
+			# 	print(image_path)
+			img = resize_image(img)
 			testData.append(img)
 	else:
 		for i in range(len(testImagePaths)):
 			for j in range(len(testImagePaths[i])):
 				image_path = testImagePaths[i][j]
-				img_1 = resize_image(cv2.imread(image_path))
+				img_1 = cv2.imread(image_path)
+				# if img_1 == None:
+				# 	print(image_path)
+				img_1 = resize_image(img_1)
 				if j == 0:
 					img = img_1
 				else:
@@ -2600,7 +2652,7 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 	if net == "":
 		empty_net_flag = True
 		if pytorch_flag:
-			if BN_flag == 9:
+			if BN_flag == 9 or BN_flag == 10:
 				net_f_ori, net_f_hint, net_d = create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel)
 			else:
 				net = create_nvidia_network_pytorch(BN_flag, fClassifier, nClass, nChannel, withFFT=withFFT)
@@ -2620,7 +2672,7 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 	    ## load model weights
 		if modelPath != "":
 			if pytorch_flag:
-				if BN_flag == 9:
+				if BN_flag == 9 or BN_flag == 10:
 					modelPath1 = modelPath.replace("model-final", "model_f_ori-final")
 					net_f_ori.load_state_dict(torch.load(modelPath1))
 					modelPath1 = modelPath.replace("model-final", "model_f_hint-final")
@@ -2685,7 +2737,7 @@ def test_dnn_multi_pytorch(modelPath, imageDir_list, labelPath_list, outputPath,
 			inputs_seq = torch.stack(inputs_seq)
 			labels = torch.stack(labels_seq)
 			outputs,features = net(torch.Tensor(inputs_seq).cuda(non_blocking=True))
-		elif BN_flag == 9: # HintNet
+		elif BN_flag == 9 or BN_flag == 10: # HintNet
 			# outputs,features = net_f_ori(torch.Tensor(inputs).cuda(non_blocking=True))
 			features = net_f_ori(input_data=inputs.cuda(non_blocking=True))
 			outputs,_ = net_d(features)
