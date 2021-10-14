@@ -2,6 +2,9 @@
 IRL algorithm developed for the toy car obstacle avoidance problem
 '''
 
+import sys
+sys.path.append('rllab')
+
 import numpy as np
 import logging
 import scipy
@@ -13,6 +16,19 @@ from learning import QLearning      # get the Reinforcement learner
 import os
 import timeit
 import math
+
+
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
+from inverse_rl.models.airl_state import AIRL
+from inverse_rl.models.imitation_learning import GAIL
+from inverse_rl.models.imitation_learning import GAN_GCL
+from sandbox.rocky.tf.policies.gaussian_mlp_policy import GaussianMLPPolicy
+from sandbox.rocky.tf.policies.categorical_conv_policy import CategoricalConvPolicy
+from inverse_rl.algos.irl_trpo import IRLTRPO
+from rllab.baselines.linear_feature_baseline import LinearFeatureBaseline
+from inverse_rl.utils.log_utils import rllab_logdir, load_latest_experts, load_latest_experts_multiple_runs
+# from inverse_rl.envs.env_utils import CustomGymEnv
 
 
 
@@ -155,6 +171,29 @@ class IRLAgent:
         
         print("Updating Policy FE list finished!")
         return temp_hyper_dis, aver_score, aver_dist, stop_status
+
+
+    def UpdatePolicyFEListRewardNet(self, weights, reward_net, opt_count, scene_file_name, enlarge_lr):  
+        # store feature expecations of a newly learned policy and its difference to the expert policy   
+        print("Updating Policy FE list starts......")
+        
+        #start_time = timeit.default_timer()
+        model_name, stop_status = QLearning(self.num_features, self.num_actions, self.params, weights, self.results_folder, self.behavior_type, self.train_frames, opt_count, scene_file_name, enlarge_lr=enlarge_lr, reward_net=reward_net, continue_train=False) 
+        
+        # model_name = "results/models-city_RL_reward0/64-128-100-50000-2000.0-0.h5"
+        #print("Total consumed time: ", timeit.default_timer() - start_time, " s")
+            
+        # get the trained model
+        print("The latest Q-learning model is: ", model_name)
+        model = net1(self.num_features, self.num_actions, self.params['nn'], model_name)
+        
+        # get feature expectations by executing the learned model
+        path = play(model, weights, self.play_frames, play_rounds=1, scene_file_name=scene_file_name, reward_net=reward_net, return_path=True)
+        
+        self.model_list.append(model)
+        
+        print("Updating Policy FE list finished!")
+        return path
         
         
     def TestNewMixingPolicy(self, weights, scene_file_name):  
@@ -275,6 +314,7 @@ class IRLAgent:
             print("Total consumed time: ", (timeit.default_timer() - start_time)/3600.0, " h")
             print("===========================================================")
             print("\n")
+            break
             if self.current_dis <= self.epsilon: 
                 print("IRL finished!")
                 print("The final weights of IRL is: ", weights_new)
@@ -391,6 +431,135 @@ class IRLAgent:
 
 
 
+    def AIRL(self, scene_file_name):
+        exp_name = "test"
+
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+
+        # env = TfEnv(CustomGymEnv('CustomAnt-v0', record_video=False, record_log=False))
+        env = [self.num_features, self.num_actions]
+        # env = [self.num_features, 1]
+        # policy = GaussianMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
+        # policy = CategoricalConvPolicy(name='policy', env_spec=env, hidden_sizes=(32, 32))
+
+
+        # load ~2 iterations worth of data from each forward RL experiment as demos
+        # experts = load_latest_experts_multiple_runs('data/ant_data_collect', n=2)
+
+        expert_paths = play(None, None, self.play_frames*5, play_rounds=10, scene_file_name=scene_file_name, use_expert=True, return_path=True)
+
+
+        irl_model = AIRL(env=env, expert_trajs=expert_paths, state_only=True, fusion=True, max_itrs=10)
+
+        sess = tf.InteractiveSession()
+
+        tf.initialize_all_variables().run()
+
+        # with tf.Session() as sess:
+        #     sess.run(tf.global_variables_initializer())
+
+
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+        
+        enlarge_lr = 0
+
+        for t in range(10):
+            print("================ AIRL iteration number: ", t, " ================")
+            
+            path = self.UpdatePolicyFEListRewardNet(None, irl_model, t, scene_file_name, enlarge_lr)
+            irl_model.fit(path, policy=self.model_list[-1])
+
+
+    def GAIL(self, scene_file_name):
+        exp_name = "test"
+
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+
+        # env = TfEnv(CustomGymEnv('CustomAnt-v0', record_video=False, record_log=False))
+        env = [self.num_features, self.num_actions]
+        # env = [self.num_features, 1]
+        # policy = GaussianMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
+        # policy = CategoricalConvPolicy(name='policy', env_spec=env, hidden_sizes=(32, 32))
+
+
+        # load ~2 iterations worth of data from each forward RL experiment as demos
+        # experts = load_latest_experts_multiple_runs('data/ant_data_collect', n=2)
+
+        expert_paths = play(None, None, self.play_frames*5, play_rounds=10, scene_file_name=scene_file_name, use_expert=True, return_path=True)
+
+
+        irl_model = GAIL(env_spec=env, expert_trajs=expert_paths)
+
+        sess = tf.InteractiveSession()
+
+        tf.initialize_all_variables().run()
+
+        # with tf.Session() as sess:
+        #     sess.run(tf.global_variables_initializer())
+
+
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+        
+        enlarge_lr = 0
+
+        for t in range(10):
+            print("================ GAIL iteration number: ", t, " ================")
+            
+            path = self.UpdatePolicyFEListRewardNet(None, irl_model, t, scene_file_name, enlarge_lr)
+            irl_model.fit(path, policy=self.model_list[-1])
+
+
+    def GAN_GCL(self, scene_file_name):
+        exp_name = "test"
+
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+
+        # env = TfEnv(CustomGymEnv('CustomAnt-v0', record_video=False, record_log=False))
+        env = [self.num_features, self.num_actions]
+        # env = [self.num_features, 1]
+        # policy = GaussianMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
+        # policy = CategoricalConvPolicy(name='policy', env_spec=env, hidden_sizes=(32, 32))
+
+
+        # load ~2 iterations worth of data from each forward RL experiment as demos
+        # experts = load_latest_experts_multiple_runs('data/ant_data_collect', n=2)
+
+        expert_paths = play(None, None, self.play_frames*5, play_rounds=10, scene_file_name=scene_file_name, use_expert=True, return_path=True)
+        print(expert_paths)
+
+
+        irl_model = GAN_GCL(env_spec=env, expert_trajs=expert_paths)
+
+        sess = tf.InteractiveSession()
+
+        tf.initialize_all_variables().run()
+
+        # with tf.Session() as sess:
+        #     sess.run(tf.global_variables_initializer())
+
+
+        # create a folder for storing results
+        if not os.path.exists(self.results_folder):
+            os.makedirs(self.results_folder)
+        
+        enlarge_lr = 0
+
+        for t in range(10):
+            print("================ AIRL iteration number: ", t, " ================")
+            
+            path = self.UpdatePolicyFEListRewardNet(None, irl_model, t, scene_file_name, enlarge_lr)
+            irl_model.fit(path, policy=self.model_list[-1])
+        
                 
             
 if __name__ == '__main__':
@@ -434,9 +603,9 @@ if __name__ == '__main__':
     random_city_no_norm_fe_99 = [692.96580, 765.50164, 844.19555, 962.30012, 1111.86355, 1314.24535, 1602.83350, 1964.12510, 2422.89467, 2861.01471, 3290.37220, 3783.01214, 4081.32759, 4225.85403, 3327.85811, 2706.77085, 2181.52107, 1972.70783, 1841.97445, 1620.98429, 1357.73803, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 99.48760, 97.31135, 485.91348, 0.19696, 0.00000, 0.48562]
 
     # training parameters
-    # nn_param = [164, 150]
+    nn_param = [164, 150]
     # nn_param = [64, 128, 128, 128, 128, 128, 128, 128, 128, 64]
-    nn_param = [64, 128, 64, 32, 16, 8, 16, 32, 64, 128, 64]
+    # nn_param = [64, 128, 64, 32, 16, 8, 16, 32, 64, 128, 64]
     # nn_param = [32, 16, 64, 128, 64]
     params = {
         # "batch_size": 100,
@@ -447,9 +616,18 @@ if __name__ == '__main__':
     epsilon = 0.1 # termination when t<0.1
     num_features = 46
     num_actions = 25
-    train_frames = 20000   # number of RL training frames per iteration of IRL
+    # num_actions = 5
+    train_frames = 200000   # number of RL training frames per iteration of IRL
     play_frames = 2000 # the number of frames we play for getting the feature expectations of a policy online
-    behavior_type = 'city_RL_reward0' # yellow/brown/red/bumping
+    # behavior_type = 'city_MIRL_2layers0823'
+    # behavior_type = 'city_AIRL_2layers0823_5actions'
+    # behavior_type = 'city_RL_2layers0823'
+    behavior_type = 'city_RL_2layers0907_withexp'
+    # behavior_type = 'city_RL_2layers_5actions'
+    # behavior_type = 'city_AIRL_2layers'
+    # behavior_type = 'city_GAIL_2layers'
+    # behavior_type = 'city_GAN_GCL_2layers'
+    # behavior_type = 'city_RL_2layers_good'
     results_folder = 'results/'
     
     scene_file_name = 'scenes/scene-city-car.txt'
@@ -459,6 +637,8 @@ if __name__ == '__main__':
     irl_learner = IRLAgent(params, random_city_no_norm_fe_99, expert_city_no_norm_fe_99, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
-    # irl_learner.IRL(scene_file_name)
-    irl_learner.IRL_trust_region(scene_file_name)
-
+    irl_learner.IRL(scene_file_name)
+    # irl_learner.IRL_trust_region(scene_file_name)
+    # irl_learner.AIRL(scene_file_name)
+    # irl_learner.GAIL(scene_file_name)
+    # irl_learner.GAN_GCL(scene_file_name)

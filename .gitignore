@@ -102,3 +102,10 @@ IRL/results/
 *.suo
 UnitySimulator/obj/Debug/
 IRL/scene1.txt
+IRL/video/
+txt_backup/
+backup/
+toy_exp/dataset/
+toy_exp/dataset1/
+toy_exp/checkpoints/
+toy_exp/features/

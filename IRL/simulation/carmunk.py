@@ -48,24 +48,27 @@ class Vector2(Structure):
 
 
 class GameState:
-    def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=True):
+    def __init__(self, weights='', scene_file_name='', state_num=46, use_expert=True, reward_net=None, action_num=25):
         if use_expert:
             # for windows
             self.expert_lib = ctypes.WinDLL ("./3thPartLib/RVO2/RVO_warper.dll")
         self.driving_history = []
-        self.max_history_num = 50
+        self.max_history_num = 30
+        self.reward_net = reward_net
         
         self.driving_history_for_draw = []
 
         # Global-ish.
         self.crashed = False
 
-        # set weights for calculating the reward function
-        if len(weights) == state_num:
-            self.W = weights 
-        else:
-            #self.W = [1, 1, 1, 1, 1, 1, 1, 1] # randomly assign weights if not provided
-            self.W = np.ones(state_num)
+        if reward_net == None:
+            # set weights for calculating the reward function
+            # if weights != None and len(weights) == state_num:
+            if len(weights) == state_num:
+                self.W = weights 
+            else:
+                #self.W = [1, 1, 1, 1, 1, 1, 1, 1] # randomly assign weights if not provided
+                self.W = np.ones(state_num)
 
         # Physics stuff.
         self.draw_options = pymunk.pygame_util.DrawOptions(screen)
@@ -88,9 +91,16 @@ class GameState:
         self.steer_zero_section_no = 2
         self.steer_per_section = math.pi / 4
 
-        self.acc_section_number = 5
-        self.acc_zero_section_no = 1
-        self.acc_per_section = 5
+        if action_num == 25:
+            self.acc_section_number = 5
+            self.acc_zero_section_no = 1 # TODO
+            # self.acc_zero_section_no = 0
+            self.acc_per_section = 5
+        else:
+            self.acc_section_number = 0
+            self.acc_zero_section_no = 1
+            self.acc_per_section = 5
+
 
         self.preferred_speed = 10.0       # in meter, TODO
         self.max_speed = 20.0 * MULTI
@@ -548,8 +558,13 @@ class GameState:
 
     def get_instruction_from_action(self, action):
         #return [action[0] * self.max_steer, action[1] * self.max_acceleration]
-        steer_action = int(action / self.acc_section_number)
-        acc_action = action % self.acc_section_number
+
+        if (self.acc_section_number == 0):
+            steer_action = action
+            acc_action = 4
+        else:
+            steer_action = int(action / self.acc_section_number)
+            acc_action = action % self.acc_section_number
 
         steer_angle = (steer_action - self.steer_zero_section_no) * self.steer_per_section
         acceleration = (acc_action - self.acc_zero_section_no) * self.acc_per_section * MULTI
@@ -573,7 +588,8 @@ class GameState:
                 reward -= (3 - min_dist)/10 # -0.3 at most
 
             # print(readings[42])
-            reward += 0.005 - np.abs(readings[42])/1000
+            # reward += 0.005 - np.abs(readings[42])/1000
+            reward += 0.1 - np.abs(readings[42])/50
 
             reward = np.clip(reward, -1, 1)
             if normalize_reading == False:
@@ -613,6 +629,14 @@ class GameState:
         
         # print(reward)
         return reward
+
+    def get_reward_net(self, reward_net, readings, action):
+        readings = np.array(readings).reshape((1,46))
+
+        action_onehot_encoded = np.zeros((1,25))
+        action_onehot_encoded[0,action] = 1
+
+        return reward_net.eval_single(readings, action_onehot_encoded)
     
     def frame_step(self, action, effect=True, hitting_reaction_mode = 0, normalize_reading = False):
         self.crashed = False
@@ -721,7 +745,11 @@ class GameState:
         else:
             readings.append(0)
                       
-        reward = self.get_reward(self.W, readings, normalize_reading, reward_type=2)
+        if self.reward_net == None:
+            reward = self.get_reward(self.W, readings, normalize_reading, reward_type=0)
+        else:
+            reward = self.get_reward_net(self.reward_net, readings, action)
+
         state = np.array([readings])
 
         self.num_steps += 1

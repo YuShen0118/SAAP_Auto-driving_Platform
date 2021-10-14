@@ -42,7 +42,7 @@ def outPutW(weights, border=4):
             
             
 def QLearning(num_features, num_actions, params, weights, results_folder, behavior_type, train_frames, opt_count, scene_file_name, 
-              continue_train=True, hitting_reaction_mode=1, enlarge_lr=0):
+              continue_train=False, hitting_reaction_mode=2, enlarge_lr=0, reward_net=None):
     '''
     The goal of this function is to train a function approximator of Q which can take 
     a state (eight inputs) and predict the Q values of three actions (three outputs)
@@ -83,7 +83,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     model = net1(num_features, num_actions, params['nn'], weightsFile=pretrained_model, epochCount=epochCount, enlarge_lr=enlarge_lr)
      
     # create a new game instance and get the initial state by moving forward
-    game_state = carmunk.GameState(weights, scene_file_name)
+    game_state = carmunk.GameState(weights, scene_file_name, reward_net=reward_net, action_num=num_actions)
     _, state, _, _, _ = game_state.frame_step((11))
     #_, state, _ = game_state.frame_step((0,1))
 
@@ -113,7 +113,7 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
             action = game_state.get_expert_action()
             expert_count -= 1
         elif random.random() < epsilon or frame_idx < observe_frames:
-            action = np.random.randint(0, 25)  # produce action 0, 1, or 2
+            action = np.random.randint(0, num_actions)  # produce action 0, 1, or 2
             #action = np.random.random([2])*2-1
         else:
             # get Q values for each action. Q values are scores associated with each action (there are in total 3 actions)
@@ -233,13 +233,13 @@ def QLearning(num_features, num_actions, params, weights, results_folder, behavi
     log_results(results_folder, filename, survive_data, loss_log, score_log, dist_log)
     print("Q learning finished!")
 
-    K.clear_session()
+    # K.clear_session()
     return model_name, stop_status
     
     
 
 def log_results(results_folder, filename, survive_data, loss_log, score_log, dist_log):
-    log_dir = results_folder + 'models-city/logs/'
+    log_dir = results_folder + 'models-city_RL_2layers0907_withexp/logs/'
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
         

@@ -1,0 +1,30 @@
+
+training:
+conda activate irl_cpu
+python .\toy_car_IRL.py
+
+
+feature collection:
+python .\manualControl.py
+
+
+play:
+python .\playing.py
+
+feature
+21 distance
+21 obstacle type
+1 Goal direction
+1 goal closer distance
+1 arriving
+1 crash
+
+
+10, 31, 42, 45
+
+
+
+NUM_ACTIONS
+playing.py
+toy_car_IRL.py
+carmunk.py
