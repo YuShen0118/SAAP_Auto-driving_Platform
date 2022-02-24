@@ -25,7 +25,7 @@ def play(model, weights, play_frames=10000, play_rounds=10000, scene_file_name='
     return play_multi_model([model], [1], weights, play_frames, play_rounds, scene_file_name, reward_net=reward_net, use_expert=use_expert, return_path=return_path)
 
 
-def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_rounds=10000, scene_file_name='scenes/scene-city.txt', reward_net=None, use_expert=False, return_path=False):
+def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_rounds=10000, scene_file_name='scenes/scene-city.txt', reward_net=None, use_expert=False, return_path=False, max_step_1round=3000):
 
     # obs = [692.96580, 765.50164, 844.19555, 962.30012, 1111.86355, 1314.24535, 1602.83350, 1964.12510, 2422.89467, 2861.01471, 3290.37220, 3783.01214, 4081.32759, 4225.85403, 3327.85811, 2706.77085, 2181.52107, 1972.70783, 1841.97445, 1620.98429, 1357.73803, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 100.00000, 99.48760, 97.31135, 485.91348, 0.19696, 0.00000, 0.48562]
     # act = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -47,7 +47,8 @@ def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_ro
     dist_list = []
     dist_1round = 0
     step_1round = 0
-    max_step_1round = 3000
+    step_1round_list = []
+    
 
     time_list = []
 
@@ -103,6 +104,7 @@ def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_ro
 
         # Tell us something.
         if readings[-1]==1 or step_1round==max_step_1round:
+            step_1round_list.append(step_1round)
             step_1round = 0
             round_num += 1
             score_list.append(score)
@@ -133,6 +135,8 @@ def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_ro
             #print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
             #print("Dist in this round: ", dist_1round)
             #print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
+            if step_1round > 0:
+                step_1round_list.append(step_1round)
             break
 
         if play_rounds > 0 and round_num == play_rounds:
@@ -140,6 +144,10 @@ def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_ro
             #print("Aver Score in ", round_num, "rounds: ", np.average(score_list))
             #print("Dist in this round: ", dist_1round)
             #print("Aver dist in ", round_num, "rounds: ", np.average(dist_list))
+            score_list.append(score)
+            dist_list.append(dist_1round)
+            if step_1round > 0:
+                step_1round_list.append(step_1round)
             break
         
         state = next_state
@@ -159,7 +167,7 @@ def play_multi_model(model_list, lamda_list, weights, play_frames=10000, play_ro
     if return_path:
         return paths
 
-    return featureExp, np.average(score_list), np.average(dist_list)
+    return featureExp, np.average(score_list), np.average(dist_list), np.average(step_1round_list)
 
 if __name__ == "__main__": 
     #BEHAVIOR = sys.argv[1]

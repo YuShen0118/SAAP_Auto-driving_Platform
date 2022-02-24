@@ -159,7 +159,7 @@ class IRLAgent:
         model = net1(self.num_features, self.num_actions, self.params['nn'], model_name)
         
         # get feature expectations by executing the learned model
-        temp_fe, aver_score, aver_dist = play(model, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
+        temp_fe, aver_score, aver_dist, _ = play(model, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
         
         # t = (weights.tanspose)*(expertFE-newPolicyFE)
         # hyperdistance = t
@@ -232,7 +232,7 @@ class IRLAgent:
 
         return min_dist, aver_score, aver_dist, weights
 
-    def TestNewMixingPolicy_trustRegion(self, weights, scene_file_name, wm_pre, delta):  
+    def TestNewMixingPolicy_trustRegion(self, weights, scene_file_name, wm_pre, delta, max_step_1round=3000):  
 
         policy_fe_list = []
         policy_fe_diff_list = []
@@ -264,9 +264,9 @@ class IRLAgent:
         distance_list = np.abs(weights @ policy_fe_diff_list_mat.T)
         min_dist = np.min(distance_list)
 
-        temp_fe, aver_score, aver_dist = play_multi_model(self.model_list, lamda, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name)
+        temp_fe, aver_score, aver_dist, aver_step = play_multi_model(self.model_list, lamda, weights, self.play_frames, play_rounds=10, scene_file_name=scene_file_name, max_step_1round=max_step_1round)
 
-        return min_dist, aver_score, aver_dist, weights
+        return min_dist, aver_score, aver_dist, aver_step, weights
 
 
     def IRL(self, scene_file_name):
@@ -347,6 +347,8 @@ class IRLAgent:
         zero = 1e-4
         rej_cnt = 0
 
+        max_step_1round = 30
+
         weights_new = self.ComputeOptimalWeights_trustRegion(wm_pre, zero) 
         # weights_new = self.ComputeOptimalWeights() 
         # weights_new[-1] = wm_pre
@@ -363,7 +365,7 @@ class IRLAgent:
 
             print("UpdatePolicyFEList finished")
             # Main Step 2.5: use the latest model list to get a best policy (has most similar feature expectation with expert)
-            current_dis, score, car_dist, weights_new = self.TestNewMixingPolicy_trustRegion(weights_new, scene_file_name, wm_pre, delta)
+            current_dis, score, car_dist, aver_step, weights_new = self.TestNewMixingPolicy_trustRegion(weights_new, scene_file_name, wm_pre, delta, max_step_1round=max_step_1round)
 
 
             # Main Step 1: compute the new weights according to the list of policies and the expert policy
@@ -395,6 +397,10 @@ class IRLAgent:
 
             if rej_cnt == 0:
                 delta = min(1.1*delta, 0.05)
+
+                if aver_step >= 0.8*min(max_step_1round, 1000):
+                    max_step_1round = min((int)(max_step_1round * 1.1), 3000)
+                    print('max_step_1round updated!!!   ', str(max_step_1round))
             elif rej_cnt >= 5:
                 delta = max(0.9*delta, 0.001)
                 rej_cnt = 0
@@ -637,8 +643,8 @@ if __name__ == '__main__':
     irl_learner = IRLAgent(params, random_city_no_norm_fe_99, expert_city_no_norm_fe_99, epsilon, \
                             num_features, num_actions, train_frames, play_frames, \
                             behavior_type, results_folder)
-    irl_learner.IRL(scene_file_name)
-    # irl_learner.IRL_trust_region(scene_file_name)
+    # irl_learner.IRL(scene_file_name)
+    irl_learner.IRL_trust_region(scene_file_name)
     # irl_learner.AIRL(scene_file_name)
     # irl_learner.GAIL(scene_file_name)
     # irl_learner.GAN_GCL(scene_file_name)
